@@ -9,33 +9,38 @@ use indicatif::ProgressIterator;
 use osmpbf::{Element, ElementReader};
 
 #[derive(Clone, Copy, Debug)]
-pub struct Node {
+pub struct GeodeticCoordinate {
     pub lat: f64,
     pub lon: f64,
 }
 
 pub struct RawPlanet {
-    pub nodes: HashMap<i64, Node>,
+    pub nodes: HashMap<i64, GeodeticCoordinate>,
     pub coastlines: Vec<Vec<i64>>,
 }
 
 pub struct Planet {
-    pub coastlines: Vec<Vec<Node>>,
+    pub coastlines: Vec<Vec<GeodeticCoordinate>>,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Vec3 {
+pub struct SphericalCoordinate {
     pub x: f64,
     pub y: f64,
     pub z: f64,
 }
 
 // https://blog.mbedded.ninja/mathematics/geometry/spherical-geometry/finding-the-intersection-of-two-arcs-that-lie-on-a-sphere/
-pub fn does_intersect(p1: &Node, p2: &Node, p3: &Node, p4: &Node) -> bool {
-    let p1 = Vec3::from_node(p1);
-    let p2 = Vec3::from_node(p2);
-    let p3 = Vec3::from_node(p3);
-    let p4 = Vec3::from_node(p4);
+pub fn does_intersect(
+    p1: &GeodeticCoordinate,
+    p2: &GeodeticCoordinate,
+    p3: &GeodeticCoordinate,
+    p4: &GeodeticCoordinate,
+) -> bool {
+    let p1 = SphericalCoordinate::from_node(p1);
+    let p2 = SphericalCoordinate::from_node(p2);
+    let p3 = SphericalCoordinate::from_node(p3);
+    let p4 = SphericalCoordinate::from_node(p4);
 
     let n1 = p1.cross(&p2);
     let n2 = p3.cross(&p4);
@@ -46,12 +51,14 @@ pub fn does_intersect(p1: &Node, p2: &Node, p3: &Node, p4: &Node) -> bool {
     let mut i2 = i1.clone();
     i2.divide_by_scalar(-1.0);
 
-    (Vec3::is_point_within_arc(&i1, &p1, &p2) && Vec3::is_point_within_arc(&i1, &p3, &p4))
-        || (Vec3::is_point_within_arc(&i2, &p1, &p2) && Vec3::is_point_within_arc(&i2, &p3, &p4))
+    (SphericalCoordinate::is_point_within_arc(&i1, &p1, &p2)
+        && SphericalCoordinate::is_point_within_arc(&i1, &p3, &p4))
+        || (SphericalCoordinate::is_point_within_arc(&i2, &p1, &p2)
+            && SphericalCoordinate::is_point_within_arc(&i2, &p3, &p4))
 }
 
-impl Vec3 {
-    pub fn from_node(node: &Node) -> Self {
+impl SphericalCoordinate {
+    pub fn from_node(node: &GeodeticCoordinate) -> Self {
         let lat_rad = node.lat.to_radians();
         let lon_rad = node.lon.to_radians();
 
@@ -63,7 +70,7 @@ impl Vec3 {
     }
 
     pub fn cross(self, other: &Self) -> Self {
-        Vec3 {
+        SphericalCoordinate {
             x: self.y * other.z - self.z * other.y,
             y: self.z * other.x - self.x * other.z,
             z: self.x * other.y - self.y * other.x,
@@ -80,38 +87,43 @@ impl Vec3 {
         self.z /= scalar;
     }
 
-    pub fn normalize(&self) -> Vec3 {
+    pub fn normalize(&self) -> SphericalCoordinate {
         let mag = self.magnitude();
         if mag == 0.0 {
             panic!("Cannot normalize a zero vector");
         }
-        Vec3 {
+        SphericalCoordinate {
             x: self.x / mag,
             y: self.y / mag,
             z: self.z / mag,
         }
     }
 
-    pub fn dot(&self, other: &Vec3) -> f64 {
+    pub fn dot(&self, other: &SphericalCoordinate) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
-    pub fn angle_between(v1: &Vec3, v2: &Vec3) -> f64 {
+    pub fn angle_between(v1: &SphericalCoordinate, v2: &SphericalCoordinate) -> f64 {
         let angle = v1.dot(v2);
         let angle = angle / (v1.magnitude() * v2.magnitude());
         angle.acos()
     }
 
-    pub fn is_point_within_arc(point: &Vec3, arc_start: &Vec3, arc_end: &Vec3) -> bool {
-        let total_angle = Vec3::angle_between(arc_start, arc_end);
-        let angle_sum = Vec3::angle_between(arc_start, point) + Vec3::angle_between(point, arc_end);
+    pub fn is_point_within_arc(
+        point: &SphericalCoordinate,
+        arc_start: &SphericalCoordinate,
+        arc_end: &SphericalCoordinate,
+    ) -> bool {
+        let total_angle = SphericalCoordinate::angle_between(arc_start, arc_end);
+        let angle_sum = SphericalCoordinate::angle_between(arc_start, point)
+            + SphericalCoordinate::angle_between(point, arc_end);
         (angle_sum - total_angle).abs() < 1e-6 // account for floating point inaccuracies
     }
 }
 
 impl Planet {
     fn new(mut planet: RawPlanet) -> Self {
-        let coastlines: Vec<Vec<Node>> = planet
+        let mut coastlines: Vec<Vec<GeodeticCoordinate>> = planet
             .coastlines
             .iter_mut()
             .progress()
@@ -122,6 +134,9 @@ impl Planet {
                     .collect()
             })
             .collect();
+
+        coastlines.sort_unstable_by_key(|coastline| coastline.len());
+
         Self { coastlines }
     }
 
@@ -131,27 +146,14 @@ impl Planet {
         Planet::new(planet)
     }
 
-    pub fn to_file(self, path: &str) {
+    pub fn to_file(&self, path: &str) {
         let mut feature_collection = FeatureCollection {
             bbox: None,
             features: Vec::new(),
             foreign_members: None,
         };
 
-        let mut coastlines = self.coastlines.clone();
-
-        coastlines = coastlines
-            .into_iter()
-            .filter(|coastline| coastline.len() >= 1_000)
-            .map(|coastline| {
-                if coastline.len() >= 1_000 {
-                    return minimize_vec(coastline, 100);
-                }
-                coastline
-            })
-            .collect();
-
-        for coastline in coastlines.iter() {
+        for coastline in self.coastlines.iter() {
             let coastline = coastline
                 .iter()
                 .map(|node| vec![node.lon, node.lat])
@@ -173,13 +175,25 @@ impl Planet {
         writeln!(writer, "{}", feature_collection).unwrap();
         writer.flush().unwrap();
     }
+
+    pub fn simplify(&mut self) {
+        let coastlines: Vec<Vec<GeodeticCoordinate>> = self
+            .coastlines
+            .iter()
+            .cloned()
+            .filter(|coastline| coastline.len() >= 500_000)
+            .map(|coastline| {
+                if coastline.len() >= 10 {
+                    return minimize_vec(coastline, 5_000);
+                }
+                coastline
+            })
+            .collect();
+        self.coastlines = coastlines;
+    }
 }
 
-fn minimize_vec<T: Clone>(vec: Vec<T>, n: usize) -> Vec<T> {
-    if vec.is_empty() || n == 0 {
-        return Vec::new(); // return empty vector in case of an empty input vector or n being 0
-    }
-
+pub fn minimize_vec<T: Clone>(vec: Vec<T>, n: usize) -> Vec<T> {
     let mut result = Vec::new();
     result.push(vec[0].clone()); // push the first element
 
@@ -207,7 +221,7 @@ impl RawPlanet {
                     assert!((-90.0 <= dense_node.lat()) && (dense_node.lat() <= 90.0));
                     nodes.insert(
                         dense_node.id(),
-                        Node {
+                        GeodeticCoordinate {
                             lat: dense_node.lat(),
                             lon: dense_node.lon(),
                         },

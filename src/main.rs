@@ -1,9 +1,11 @@
+use rand::Rng;
+
 use std::io::Write;
 use std::{fs::File, io::BufWriter};
 
 use geojson::FeatureCollection;
-use geojson_writer::coastline_to_feature;
-use planet::Node;
+
+use planet::GeodeticCoordinate;
 
 use crate::planet::{does_intersect, Planet};
 
@@ -14,106 +16,59 @@ mod geojson_writer;
 mod planet;
 
 fn main() {
-    // let path = "data/planet-coastlinespbf-cleanedosmpbf.osm.pbf";
+    let path = "data/planet-coastlinespbf-cleanedosmpbf.osm.pbf";
 
-    // let planet = Planet::from_path(path);
+    let mut planet = Planet::from_path(path);
 
-    // planet.to_file("test.geojson")
+    planet.simplify();
+    //let continent = planet.coastlines.last().unwrap().clone();
 
+    planet.to_file("test.geojson");
+    println!("wrote planet to geojson");
+
+    let mut rng = rand::thread_rng();
     let mut feature_collection = FeatureCollection {
         bbox: None,
         features: Vec::new(),
         foreign_members: None,
     };
 
-    let p1 = Node { lat: 0.0, lon: 0.0 };
-    let p2 = Node {
-        lat: 90.0,
-        lon: 0.0,
-    };
-    let p3 = Node {
-        lat: 45.0,
-        lon: -90.0,
-    };
-    let p4 = Node {
-        lat: 45.0,
-        lon: 90.0,
-    };
+    for _ in 0..10_000 {
+        let south_pole = GeodeticCoordinate { lat: 0.0, lon: 0.0 };
+        let lat: f64 = rng.gen_range(-90.0..90.0);
+        let lon: f64 = rng.gen_range(-180.0..180.0);
+        let random_point = GeodeticCoordinate { lat, lon };
 
-    let coastline: Vec<Vec<f64>> = vec![p1, p2]
-        .iter()
-        .map(|node| vec![node.lon, node.lat])
-        .collect();
-    let geometry = Geometry::new(Value::LineString(coastline));
-    let feature = Feature {
-        bbox: None,
-        geometry: Some(geometry),
-        id: None,
-        properties: None,
-        foreign_members: None,
-    };
-    feature_collection.features.push(feature);
-    let coastline: Vec<Vec<f64>> = vec![p3, p4]
-        .iter()
-        .map(|node| vec![node.lon, node.lat])
-        .collect();
-    let geometry = Geometry::new(Value::LineString(coastline));
-    let feature = Feature {
-        bbox: None,
-        geometry: Some(geometry),
-        id: None,
-        properties: None,
-        foreign_members: None,
-    };
-    feature_collection.features.push(feature);
+        let ray: Vec<f64> = vec![random_point.lon, random_point.lat];
+        let ray = Geometry::new(Value::Point(ray));
+        let ray = Feature {
+            bbox: None,
+            geometry: Some(ray),
+            id: None,
+            properties: None,
+            foreign_members: None,
+        };
 
-    let result = does_intersect(&p1, &p2, &p3, &p4);
-    println!("{}", result); // Output: true
+        let intersections: Vec<bool> = planet
+            .coastlines
+            .iter()
+            .map(|continent| {
+                continent
+                    .windows(2)
+                    .map(|outline| {
+                        does_intersect(&south_pole, &random_point, &outline[0], &outline[1])
+                    })
+                    .collect()
+            })
+            .map(|intersections: Vec<bool>| intersections.iter().filter(|&&x| x).count() % 2 == 1)
+            .collect();
 
-    let p1 = Node { lat: 0.0, lon: 0.0 };
-    let p2 = Node {
-        lat: 10.0,
-        lon: 0.0,
-    };
-    let p3 = Node {
-        lat: 0.0,
-        lon: 90.0,
-    };
-    let p4 = Node {
-        lat: 90.0,
-        lon: 90.0,
-    };
-    let coastline: Vec<Vec<f64>> = vec![p1, p2]
-        .iter()
-        .map(|node| vec![node.lon, node.lat])
-        .collect();
-    let geometry = Geometry::new(Value::LineString(coastline));
-    let feature = Feature {
-        bbox: None,
-        geometry: Some(geometry),
-        id: None,
-        properties: None,
-        foreign_members: None,
-    };
-    feature_collection.features.push(feature);
-    let coastline: Vec<Vec<f64>> = vec![p3, p4]
-        .iter()
-        .map(|node| vec![node.lon, node.lat])
-        .collect();
-    let geometry = Geometry::new(Value::LineString(coastline));
-    let feature = Feature {
-        bbox: None,
-        geometry: Some(geometry),
-        id: None,
-        properties: None,
-        foreign_members: None,
-    };
-    feature_collection.features.push(feature);
+        if intersections.iter().all(|&x| x == false) {
+            feature_collection.features.push(ray);
+        }
+    }
 
-    let result = does_intersect(&p1, &p2, &p3, &p4);
-    println!("{}", result); // Output: false
-
-    let mut writer = BufWriter::new(File::create("lines.geojson").unwrap());
+    let mut writer = BufWriter::new(File::create("points.geojson").unwrap());
     let feature_collection = feature_collection.to_string();
     write!(writer, "{}", feature_collection).unwrap();
     writer.flush().unwrap();

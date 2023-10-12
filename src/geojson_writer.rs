@@ -1,6 +1,6 @@
-use crate::planet::Node;
+use crate::planet::GeodeticCoordinate;
 
-pub fn coastline_to_feature(coastline: Vec<Node>) -> String {
+pub fn coastline_to_feature(coastline: Vec<GeodeticCoordinate>) -> String {
     let begining = r#" { "type": "Feature", "geometry": { "type": "Polygon", "coordinates": [ [ "#;
     let formatted: Vec<String> = coastline
         .iter()
