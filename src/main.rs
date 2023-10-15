@@ -1,75 +1,63 @@
-use rand::Rng;
+use std::time::Instant;
 
-use std::io::Write;
-use std::{fs::File, io::BufWriter};
+use indicatif::ProgressIterator;
+use rayon::prelude::{
+    IntoParallelIterator, IntoParallelRefIterator, ParallelBridge, ParallelIterator,
+};
 
-use geojson::FeatureCollection;
+use crate::planet::Planet;
+use crate::planet_elements::coordinate::GeodeticCoordinate;
+use crate::planet_elements::new_planet::NewPlanet;
+use crate::planet_elements::polygon::Polygon;
+use crate::planet_writer::PlanetWriter;
+use crate::point_generator::PointGenerator;
 
-use planet::GeodeticCoordinate;
-
-use crate::planet::{does_intersect, Planet};
-
-use geojson::{Feature, Geometry, Value};
 mod exploration;
-mod geojson_writer;
 
 mod planet;
+pub mod planet_elements;
+pub mod planet_writer;
+pub mod point_generator;
 
 fn main() {
     let path = "data/planet-coastlinespbf-cleanedosmpbf.osm.pbf";
 
     let mut planet = Planet::from_path(path);
 
+    planet.to_file("geodata/planet_detailed.geo.json");
     planet.simplify();
-    //let continent = planet.coastlines.last().unwrap().clone();
+    planet.to_file("geodata/planet_simplified.geo.json");
 
-    planet.to_file("test.geojson");
     println!("wrote planet to geojson");
 
-    let mut rng = rand::thread_rng();
-    let mut feature_collection = FeatureCollection {
-        bbox: None,
-        features: Vec::new(),
-        foreign_members: None,
-    };
+    planet
+        .coastlines
+        .sort_unstable_by_key(|outline| -1 * outline.len() as isize);
 
-    for _ in 0..10_000 {
-        let south_pole = GeodeticCoordinate { lat: 0.0, lon: 0.0 };
-        let lat: f64 = rng.gen_range(-90.0..90.0);
-        let lon: f64 = rng.gen_range(-180.0..180.0);
-        let random_point = GeodeticCoordinate { lat, lon };
+    let land_mass: Vec<Polygon> = planet
+        .coastlines
+        .iter()
+        .cloned()
+        .map(|outline| Polygon::new(outline))
+        .collect();
 
-        let ray: Vec<f64> = vec![random_point.lon, random_point.lat];
-        let ray = Geometry::new(Value::Point(ray));
-        let ray = Feature {
-            bbox: None,
-            geometry: Some(ray),
-            id: None,
-            properties: None,
-            foreign_members: None,
-        };
+    let planet = NewPlanet { land_mass };
+    let mut planet_writer = PlanetWriter::new();
 
-        let intersections: Vec<bool> = planet
-            .coastlines
-            .iter()
-            .map(|continent| {
-                continent
-                    .windows(2)
-                    .map(|outline| {
-                        does_intersect(&south_pole, &random_point, &outline[0], &outline[1])
-                    })
-                    .collect()
-            })
-            .map(|intersections: Vec<bool>| intersections.iter().filter(|&&x| x).count() % 2 == 1)
-            .collect();
+    let n = 10;
+    let start = Instant::now();
+    let point_point = PointGenerator::new();
+    let points: Vec<GeodeticCoordinate> = point_point.take(n).progress_count(n as u64).collect();
 
-        if intersections.iter().all(|&x| x == false) {
-            feature_collection.features.push(ray);
-        }
-    }
+    let points: Vec<GeodeticCoordinate> = points
+        .into_par_iter()
+        .filter(|random_point| !planet.is_on_land(random_point))
+        .collect();
 
-    let mut writer = BufWriter::new(File::create("points.geojson").unwrap());
-    let feature_collection = feature_collection.to_string();
-    write!(writer, "{}", feature_collection).unwrap();
-    writer.flush().unwrap();
+    points
+        .iter()
+        .for_each(|random_point| planet_writer.add_point(&random_point));
+    println!("took {:?}", start.elapsed());
+
+    planet_writer.write(format!("geodata/points_{}.geo.json", n).as_str());
 }

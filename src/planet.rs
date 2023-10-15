@@ -8,11 +8,7 @@ use geojson::{Feature, FeatureCollection, Geometry, Value};
 use indicatif::ProgressIterator;
 use osmpbf::{Element, ElementReader};
 
-#[derive(Clone, Copy, Debug)]
-pub struct GeodeticCoordinate {
-    pub lat: f64,
-    pub lon: f64,
-}
+use crate::planet_elements::coordinate::GeodeticCoordinate;
 
 pub struct RawPlanet {
     pub nodes: HashMap<i64, GeodeticCoordinate>,
@@ -21,104 +17,6 @@ pub struct RawPlanet {
 
 pub struct Planet {
     pub coastlines: Vec<Vec<GeodeticCoordinate>>,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct SphericalCoordinate {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
-}
-
-// https://blog.mbedded.ninja/mathematics/geometry/spherical-geometry/finding-the-intersection-of-two-arcs-that-lie-on-a-sphere/
-pub fn does_intersect(
-    p1: &GeodeticCoordinate,
-    p2: &GeodeticCoordinate,
-    p3: &GeodeticCoordinate,
-    p4: &GeodeticCoordinate,
-) -> bool {
-    let p1 = SphericalCoordinate::from_node(p1);
-    let p2 = SphericalCoordinate::from_node(p2);
-    let p3 = SphericalCoordinate::from_node(p3);
-    let p4 = SphericalCoordinate::from_node(p4);
-
-    let n1 = p1.cross(&p2);
-    let n2 = p3.cross(&p4);
-
-    let l = n1.cross(&n2);
-
-    let i1 = l.normalize();
-    let mut i2 = i1.clone();
-    i2.divide_by_scalar(-1.0);
-
-    (SphericalCoordinate::is_point_within_arc(&i1, &p1, &p2)
-        && SphericalCoordinate::is_point_within_arc(&i1, &p3, &p4))
-        || (SphericalCoordinate::is_point_within_arc(&i2, &p1, &p2)
-            && SphericalCoordinate::is_point_within_arc(&i2, &p3, &p4))
-}
-
-impl SphericalCoordinate {
-    pub fn from_node(node: &GeodeticCoordinate) -> Self {
-        let lat_rad = node.lat.to_radians();
-        let lon_rad = node.lon.to_radians();
-
-        Self {
-            x: lat_rad.cos() * lon_rad.cos(),
-            y: lat_rad.cos() * lon_rad.sin(),
-            z: lat_rad.sin(),
-        }
-    }
-
-    pub fn cross(self, other: &Self) -> Self {
-        SphericalCoordinate {
-            x: self.y * other.z - self.z * other.y,
-            y: self.z * other.x - self.x * other.z,
-            z: self.x * other.y - self.y * other.x,
-        }
-    }
-
-    pub fn magnitude(&self) -> f64 {
-        (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
-    }
-
-    pub fn divide_by_scalar(&mut self, scalar: f64) {
-        self.x /= scalar;
-        self.y /= scalar;
-        self.z /= scalar;
-    }
-
-    pub fn normalize(&self) -> SphericalCoordinate {
-        let mag = self.magnitude();
-        if mag == 0.0 {
-            panic!("Cannot normalize a zero vector");
-        }
-        SphericalCoordinate {
-            x: self.x / mag,
-            y: self.y / mag,
-            z: self.z / mag,
-        }
-    }
-
-    pub fn dot(&self, other: &SphericalCoordinate) -> f64 {
-        self.x * other.x + self.y * other.y + self.z * other.z
-    }
-
-    pub fn angle_between(v1: &SphericalCoordinate, v2: &SphericalCoordinate) -> f64 {
-        let angle = v1.dot(v2);
-        let angle = angle / (v1.magnitude() * v2.magnitude());
-        angle.acos()
-    }
-
-    pub fn is_point_within_arc(
-        point: &SphericalCoordinate,
-        arc_start: &SphericalCoordinate,
-        arc_end: &SphericalCoordinate,
-    ) -> bool {
-        let total_angle = SphericalCoordinate::angle_between(arc_start, arc_end);
-        let angle_sum = SphericalCoordinate::angle_between(arc_start, point)
-            + SphericalCoordinate::angle_between(point, arc_end);
-        (angle_sum - total_angle).abs() < 1e-6 // account for floating point inaccuracies
-    }
 }
 
 impl Planet {
@@ -181,10 +79,10 @@ impl Planet {
             .coastlines
             .iter()
             .cloned()
-            .filter(|coastline| coastline.len() >= 500_000)
+            .filter(|coastline| coastline.len() >= 10_000)
             .map(|coastline| {
                 if coastline.len() >= 10 {
-                    return minimize_vec(coastline, 5_000);
+                    return minimize_vec(coastline, 500);
                 }
                 coastline
             })
@@ -209,6 +107,7 @@ pub fn minimize_vec<T: Clone>(vec: Vec<T>, n: usize) -> Vec<T> {
 
     result
 }
+
 impl RawPlanet {
     fn from_path(path: &str) -> RawPlanet {
         let mut nodes = HashMap::new();

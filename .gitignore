@@ -3,3 +3,5 @@
 /venv
 *.geo.json
 *.geojson
+*.mbtiles
+*.ldjson
