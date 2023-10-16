@@ -117,7 +117,6 @@ impl RawPlanet {
         reader
             .for_each(|element| match element {
                 Element::DenseNode(dense_node) => {
-                    assert!((-90.0 <= dense_node.lat()) && (dense_node.lat() <= 90.0));
                     nodes.insert(
                         dense_node.id(),
                         GeodeticCoordinate {
