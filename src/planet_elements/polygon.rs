@@ -1,20 +1,13 @@
-use indicatif::ProgressIterator;
-
-use super::{coordinate::GeodeticCoordinate, line::Line, rectangle::Rectangle};
+use super::{coordinate::GeodeticCoordinate, line::Line};
 
 #[derive(Clone, Debug)]
 pub struct Polygon {
     outline: Vec<GeodeticCoordinate>,
-    bounding_box: Rectangle,
 }
 
 impl Polygon {
     pub fn new(outline: Vec<GeodeticCoordinate>) -> Self {
-        let bounding_box = Rectangle::new(&outline);
-        Self {
-            outline,
-            bounding_box,
-        }
+        Self { outline }
     }
 
     pub fn contains(&self, point: &GeodeticCoordinate) -> bool {
@@ -26,6 +19,7 @@ impl Polygon {
             .outline
             .windows(2)
             .filter(|outline| {
+                // works only if no edge goes from -180 to 180
                 let min_lon_outline = f64::min(outline[0].lon, outline[1].lon);
                 let max_lon_outline = f64::max(outline[0].lon, outline[1].lon);
                 min_lon_outline <= point.lon && point.lon <= max_lon_outline
@@ -44,9 +38,5 @@ impl Polygon {
             .filter(|&x| x == true)
             .count();
         intersections % 2 == 1
-    }
-
-    pub fn contains_bounding_box(&self, point: &GeodeticCoordinate) -> bool {
-        self.bounding_box.contains(point)
     }
 }

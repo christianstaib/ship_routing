@@ -1,4 +1,3 @@
-use rayon::prelude::ParallelBridge;
 use rayon::prelude::*;
 
 use crate::planet::Planet;
@@ -11,8 +10,11 @@ pub struct NewPlanet {
 
 impl NewPlanet {
     pub fn from_planet(planet: &Planet) -> Self {
-        let land_mass: Vec<Polygon> = planet
-            .coastlines
+        let mut coastlines = planet.coastlines.clone();
+        // sort so that longest polygon is first, to make is_on_land faster
+        coastlines.sort_unstable_by_key(|coastline| -1 * coastline.len() as isize);
+
+        let land_mass: Vec<Polygon> = coastlines
             .iter()
             .cloned()
             .map(|outline| Polygon::new(outline))
@@ -24,7 +26,6 @@ impl NewPlanet {
     pub fn is_on_land(&self, point: &GeodeticCoordinate) -> bool {
         self.land_mass
             .par_iter()
-            //.filter(|polygon| polygon.contains_bounding_box(point))
             .any(|polygon| polygon.contains(point))
     }
 }

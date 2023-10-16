@@ -1,15 +1,11 @@
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::{BufWriter, Write},
-};
+use std::collections::HashMap;
 
-use geojson::{Feature, FeatureCollection, Geometry, Value};
 use indicatif::ProgressIterator;
 use osmpbf::{Element, ElementReader};
 
-use crate::planet_elements::coordinate::GeodeticCoordinate;
+use crate::{geojson_writer::GeoJsonWriter, planet_elements::coordinate::GeodeticCoordinate};
 
+/// a planet struct which ways are not cloesed
 pub struct RawPlanet {
     pub nodes: HashMap<i64, GeodeticCoordinate>,
     pub coastlines: Vec<Vec<i64>>,
@@ -27,7 +23,7 @@ impl Planet {
             .progress()
             .map(|coastline| {
                 coastline
-                    .drain(0..)
+                    .into_iter()
                     .map(|node_id| planet.nodes[&node_id])
                     .collect()
             })
@@ -41,71 +37,18 @@ impl Planet {
     pub fn from_path(path: &str) -> Self {
         let mut planet = RawPlanet::from_path(path);
         planet.close_coastline();
-        Planet::new(planet)
+        Self::new(planet)
     }
 
     pub fn to_file(&self, path: &str) {
-        let mut feature_collection = FeatureCollection {
-            bbox: None,
-            features: Vec::new(),
-            foreign_members: None,
-        };
+        let mut writer = GeoJsonWriter::new(path);
 
-        for coastline in self.coastlines.iter() {
-            let coastline = coastline
-                .iter()
-                .map(|node| vec![node.lon, node.lat])
-                .collect();
-            let geometry = Geometry::new(Value::Polygon(vec![coastline]));
-            let feature = Feature {
-                bbox: None,
-                geometry: Some(geometry),
-                id: None,
-                properties: None,
-                foreign_members: None,
-            };
-            feature_collection.features.push(feature);
-        }
-
-        let mut writer = BufWriter::new(File::create(path).unwrap());
-        let feature_collection = feature_collection.to_string();
-
-        writeln!(writer, "{}", feature_collection).unwrap();
-        writer.flush().unwrap();
-    }
-
-    pub fn simplify(&mut self) {
-        let coastlines: Vec<Vec<GeodeticCoordinate>> = self
-            .coastlines
+        self.coastlines
             .iter()
-            .cloned()
-            .filter(|coastline| coastline.len() >= 10_000)
-            .map(|coastline| {
-                if coastline.len() >= 10 {
-                    return minimize_vec(coastline, 500);
-                }
-                coastline
-            })
-            .collect();
-        self.coastlines = coastlines;
+            .for_each(|coastline| writer.add_polygon(coastline));
+
+        writer.flush();
     }
-}
-
-pub fn minimize_vec<T: Clone>(vec: Vec<T>, n: usize) -> Vec<T> {
-    let mut result = Vec::new();
-    result.push(vec[0].clone()); // push the first element
-
-    // iterate through the vector starting at nth element, stepping by n
-    for i in (n..vec.len()).step_by(n) {
-        result.push(vec[i].clone());
-    }
-
-    // push the last element if it hasn't been included in the previous step
-    if vec.len() % n != 1 {
-        result.push(vec.last().unwrap().clone());
-    }
-
-    result
 }
 
 impl RawPlanet {

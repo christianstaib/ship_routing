@@ -26,8 +26,8 @@ impl Line {
         let l = n1.cross_product(&n2);
 
         if l.magnitude() == 0.0 {
-            println!("magnitude is 0. return does not intersect");
-            println!("{:?} {:?}", self, other);
+            // println!("magnitude is 0. return does not intersect");
+            // println!("{:?} {:?}", self, other);
             return false;
         }
         let i1 = l.normalize();
