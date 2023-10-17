@@ -5,13 +5,26 @@ pub struct Line {
     pub start: GeodeticCoordinate,
     pub end: GeodeticCoordinate,
 }
+
 impl Line {
     pub fn new(start: GeodeticCoordinate, end: GeodeticCoordinate) -> Self {
         Self { start, end }
     }
 
-    pub fn lenght(&self) -> f64 {
-        0.0
+    pub fn length(&self) -> f64 {
+        let radius_of_earth: f64 = 6378.0;
+
+        let start_lat = (self.start.lat) * std::f64::consts::PI / 180.0;
+        let start_lon = (self.start.lon) * std::f64::consts::PI / 180.0;
+        let end_lat = (self.end.lat) * std::f64::consts::PI / 180.0;
+        let end_lon = (self.end.lon) * std::f64::consts::PI / 180.0;
+
+        let length = radius_of_earth
+            * (start_lat.sin() * end_lat.sin()
+                + start_lat.cos() * end_lat.cos() * (end_lon - start_lon).cos())
+            .acos();
+
+        length
     }
 
     pub fn does_intersect(&self, other: &Line) -> bool {
@@ -60,4 +73,31 @@ pub fn is_point_within_arc(
     let angle_sum = SphericalCoordinate::angle_between(arc_start, point)
         + SphericalCoordinate::angle_between(point, arc_end);
     (angle_sum - total_angle).abs() < 1e-6 // account for floating point inaccuracies
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_length() {
+        let start = GeodeticCoordinate { lat: 0.0, lon: 0.0 };
+        let end = GeodeticCoordinate { lat: 0.0, lon: 1.0 };
+        let line = Line::new(start, end);
+
+        let expected_length = 111.2;
+
+        let actual_length = line.length();
+
+        let tolerance_in_percent = 0.01;
+
+        let difference_in_percent = (actual_length - expected_length).abs() / expected_length;
+        assert!(
+            difference_in_percent < tolerance_in_percent,
+            "expected: {}, actual: {}, difference: {}%",
+            expected_length,
+            actual_length,
+            difference_in_percent * 100.0
+        );
+    }
 }

@@ -16,7 +16,7 @@ fn main() {
     let pbf_path = "data/planet-coastlinespbf-cleanedosmpbf.osm.pbf";
     let detailed_geojson_path = "geodata/planet_detailed.geo.json";
     let points_path = "geodata/points.geo.json";
-    let n = 10;
+    let n = 10_000;
 
     let start = Instant::now();
     let planet = Planet::from_path(pbf_path);
