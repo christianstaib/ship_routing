@@ -34,9 +34,9 @@ impl Polygon {
                     start: point.clone(),
                     end: north_pole,
                 };
-                ray.does_intersect(&line)
+                ray.intersection(&line)
             })
-            .filter(|&x| x == true)
+            .filter(|&x| x.is_some())
             .count();
         intersections % 2 == 1
     }

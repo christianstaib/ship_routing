@@ -27,7 +27,8 @@ impl Line {
         length
     }
 
-    pub fn does_intersect(&self, other: &Line) -> bool {
+    // https://blog.mbedded.ninja/mathematics/geometry/spherical-geometry/finding-the-intersection-of-two-arcs-that-lie-on-a-sphere/
+    pub fn intersection(&self, other: &Line) -> Option<SphericalCoordinate> {
         let p1 = SphericalCoordinate::from_node(&self.start);
         let p2 = SphericalCoordinate::from_node(&self.end);
         let p3 = SphericalCoordinate::from_node(&other.start);
@@ -41,14 +42,18 @@ impl Line {
         if l.magnitude() == 0.0 {
             // println!("magnitude is 0. return does not intersect");
             // println!("{:?} {:?}", self, other);
-            return false;
+            return None;
         }
         let i1 = l.normalize();
         let mut i2 = i1.clone();
         i2.divide_by_scalar(-1.0);
 
-        (is_point_within_arc(&i1, &p1, &p2) && is_point_within_arc(&i1, &p3, &p4))
-            || (is_point_within_arc(&i2, &p1, &p2) && is_point_within_arc(&i2, &p3, &p4))
+        if is_point_within_arc(&i1, &p1, &p2) && is_point_within_arc(&i1, &p3, &p4) {
+            return Some(i1);
+        } else if is_point_within_arc(&i2, &p1, &p2) && is_point_within_arc(&i2, &p3, &p4) {
+            return Some(i2);
+        }
+        return None;
     }
 
     pub fn contains_point(self, point: &GeodeticCoordinate) -> bool {
