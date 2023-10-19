@@ -1,4 +1,9 @@
-use super::{coordinate::GeodeticCoordinate, line::Line};
+use rayon::prelude::ParallelBridge;
+
+use super::{
+    coordinate::{subtended_angle, GeodeticCoordinate},
+    line::Line,
+};
 
 #[derive(Clone, Debug)]
 pub struct Polygon {
@@ -39,5 +44,16 @@ impl Polygon {
             .filter(|&x| x.is_some())
             .count();
         intersections % 2 == 1
+    }
+
+    pub fn winding_numer(&self, point: &GeodeticCoordinate) -> f64 {
+        self.outline
+            .windows(2)
+            .map(|l| subtended_angle(point, &l[0], &l[1]))
+            .sum()
+    }
+
+    pub fn contains_winding(&self, point: &GeodeticCoordinate) -> bool {
+        self.winding_numer(point) % std::f64::consts::PI <= 0.1
     }
 }

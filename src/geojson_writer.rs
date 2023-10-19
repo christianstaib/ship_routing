@@ -14,15 +14,15 @@ pub struct GeoJsonWriter {
 
 impl GeoJsonWriter {
     pub fn new(path: &str) -> Self {
-        let mut writer = BufWriter::new(File::create(path).unwrap());
-        writeln!(writer, r#"{{"features":["#).unwrap();
+        let writer = BufWriter::new(File::create(path).unwrap());
+        //writeln!(writer, r#"{{"features":["#).unwrap();
         let features = Vec::new();
         Self { writer, features }
     }
 
     pub fn flush(mut self) {
-        writeln!(self.writer, "{}", self.features.join(",\n")).unwrap();
-        writeln!(self.writer, r#"],"type":"FeatureCollection"}}"#).unwrap();
+        writeln!(self.writer, "{}", self.features.join("\n")).unwrap();
+        //writeln!(self.writer, r#"],"type":"FeatureCollection"}}"#).unwrap();
         self.writer.flush().unwrap();
     }
 

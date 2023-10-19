@@ -23,9 +23,15 @@ impl NewPlanet {
         Self { land_mass }
     }
 
-    pub fn is_on_land(&self, point: &GeodeticCoordinate) -> bool {
+    pub fn is_on_land_ray(&self, point: &GeodeticCoordinate) -> bool {
         self.land_mass
             .par_iter()
             .any(|polygon| polygon.contains(point))
+    }
+
+    pub fn is_on_land_winding(&self, point: &GeodeticCoordinate) -> bool {
+        self.land_mass
+            .par_iter()
+            .any(|polygon| polygon.contains_winding(point))
     }
 }
