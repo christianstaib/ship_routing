@@ -59,12 +59,12 @@ impl RawPlanet {
         let reader = ElementReader::from_path(path).unwrap();
         reader
             .for_each(|element| match element {
-                Element::DenseNode(dense_node) => {
+                Element::DenseNode(node) => {
                     nodes.insert(
-                        dense_node.id(),
+                        node.id(),
                         GeodeticCoordinate {
-                            lat: dense_node.lat(),
-                            lon: dense_node.lon(),
+                            lat: node.lat(),
+                            lon: node.lon(),
                         },
                     );
                 }
@@ -74,13 +74,7 @@ impl RawPlanet {
                         .find(|(key, value)| *key == "natural" && (*value == "coastline"))
                         .is_some()
                     {
-                        {
-                            let mut sub_coastline = Vec::new();
-                            way.refs().for_each(|node_id| {
-                                sub_coastline.push(node_id);
-                            });
-                            coastlines.push(sub_coastline);
-                        }
+                        coastlines.push(way.refs().collect());
                     }
                 }
                 _ => (),
