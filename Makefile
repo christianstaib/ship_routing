@@ -1,5 +1,5 @@
 GEOJSON_DIR := data/geojson
-MBTILES_DIR := data/mbtiles
+MBTILES_DIR := data/
 DOCKER_IMG := metacollin/tippecanoe
 
 generate_mbtiles:
@@ -24,4 +24,4 @@ generate_mbtiles:
   done
 
 start_tileserver:
-	docker run --rm -it -v ./$(MBTILES_DIR)/:/data -p 8080:8080 maptiler/tileserver-gl
+	docker run --rm -it -v ./$(MBTILES_DIR):/data -p 8080:8080 maptiler/tileserver-gl

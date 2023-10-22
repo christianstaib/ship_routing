@@ -1,13 +1,13 @@
-use rayon::prelude::ParallelBridge;
+use std::f64::consts::PI;
 
 use super::{
     coordinate::{subtended_angle, GeodeticCoordinate},
     line::Line,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Polygon {
-    outline: Vec<GeodeticCoordinate>,
+    pub outline: Vec<GeodeticCoordinate>,
 }
 
 impl Polygon {
@@ -54,6 +54,10 @@ impl Polygon {
     }
 
     pub fn contains_winding(&self, point: &GeodeticCoordinate) -> bool {
-        self.winding_numer(point) % std::f64::consts::PI <= 0.1
+        let winding_number = self.winding_numer(point);
+        let winding_number = winding_number % (2.0 * PI);
+        let winding_number = winding_number.abs();
+        println!("{}", winding_number);
+        winding_number >= 0.000_000_1
     }
 }

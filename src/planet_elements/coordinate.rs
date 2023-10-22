@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct GeodeticCoordinate {
     pub lat: f64,
     pub lon: f64,
@@ -73,17 +73,9 @@ pub fn subtended_angle(
     let b_spherical = SphericalCoordinate::from_node(b);
     let c_spherical = SphericalCoordinate::from_node(c);
 
-    let vector_ab = SphericalCoordinate {
-        x: b_spherical.x - a_spherical.x,
-        y: b_spherical.y - a_spherical.y,
-        z: b_spherical.z - a_spherical.z,
-    };
+    let vector_ab = a_spherical.cross_product(&b_spherical);
 
-    let vector_ac = SphericalCoordinate {
-        x: c_spherical.x - a_spherical.x,
-        y: c_spherical.y - a_spherical.y,
-        z: c_spherical.z - a_spherical.z,
-    };
+    let vector_ac = a_spherical.cross_product(&c_spherical);
 
     vector_ab.angle_between(&vector_ac)
 }
