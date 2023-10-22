@@ -24,4 +24,4 @@ generate_mbtiles:
   done
 
 start_tileserver:
-	docker run --rm -it -v ./$(MBTILES_DIR):/data -p 8080:8080 maptiler/tileserver-gl-light --config data/data/config.json
+	docker run --rm -it -v ./data:/data -p 8080:8080 maptiler/tileserver-gl-light --config /data/config.json
