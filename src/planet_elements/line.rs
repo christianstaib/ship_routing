@@ -11,22 +11,6 @@ impl Line {
         Self { start, end }
     }
 
-    pub fn length(&self) -> f64 {
-        let radius_of_earth: f64 = 6378.0;
-
-        let start_lat = self.start.lat.to_radians();
-        let start_lon = self.start.lon.to_radians();
-        let end_lat = self.end.lat.to_radians();
-        let end_lon = self.end.lon.to_radians();
-
-        let length = radius_of_earth
-            * (start_lat.sin() * end_lat.sin()
-                + start_lat.cos() * end_lat.cos() * (end_lon - start_lon).cos())
-            .acos();
-
-        length
-    }
-
     // https://blog.mbedded.ninja/mathematics/geometry/spherical-geometry/finding-the-intersection-of-two-arcs-that-lie-on-a-sphere/
     pub fn intersection(&self, other: &Line) -> Option<Coordinate> {
         let normal1 = (self.start.vec).cross(&self.end.vec);
