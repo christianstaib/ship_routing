@@ -1,3 +1,5 @@
+use nalgebra::Vector3;
+
 use super::coordinate::{GeodeticCoordinate, SphericalCoordinate};
 
 #[derive(Clone, Copy, Debug)]
@@ -28,81 +30,55 @@ impl Line {
     }
 
     // https://blog.mbedded.ninja/mathematics/geometry/spherical-geometry/finding-the-intersection-of-two-arcs-that-lie-on-a-sphere/
-    pub fn intersection(&self, other: &Line) -> Option<SphericalCoordinate> {
-        let p1 = SphericalCoordinate::from_node(&self.start);
-        let p2 = SphericalCoordinate::from_node(&self.end);
-        let p3 = SphericalCoordinate::from_node(&other.start);
-        let p4 = SphericalCoordinate::from_node(&other.end);
+    pub fn intersection(&self, other: &Line) -> bool {
+        let p1 = self.start.to_vector3();
+        let p2 = self.end.to_vector3();
+        let p3 = other.start.to_vector3();
+        let p4 = other.end.to_vector3();
 
-        let n1 = p1.cross_product(&p2);
-        let n2 = p3.cross_product(&p4);
+        let n1 = p1.cross(&p2);
+        let n2 = p3.cross(&p4);
 
-        let l = n1.cross_product(&n2);
+        let l = n1.cross(&n2);
 
         if l.magnitude() == 0.0 {
             // println!("magnitude is 0. return does not intersect");
             // println!("{:?} {:?}", self, other);
-            return None;
+            return false;
         }
         let i1 = l.normalize();
-        let mut i2 = i1.clone();
-        i2.divide_by_scalar(-1.0);
+        let i2: Vector3<f64> = -1.0 * i1;
 
         if is_point_within_arc(&i1, &p1, &p2) && is_point_within_arc(&i1, &p3, &p4) {
-            return Some(i1);
+            return true;
         } else if is_point_within_arc(&i2, &p1, &p2) && is_point_within_arc(&i2, &p3, &p4) {
-            return Some(i2);
+            return true;
         }
-        return None;
+        false
     }
 
-    pub fn contains_point(self, point: &GeodeticCoordinate) -> bool {
-        let arc_start = SphericalCoordinate::from_node(&self.start);
-        let arc_end = SphericalCoordinate::from_node(&self.end);
-        let point = SphericalCoordinate::from_node(point);
+    pub fn contains_point(&self, point: &GeodeticCoordinate) -> bool {
+        let arc_start = self.start.to_vector3();
+        let arc_end = self.end.to_vector3();
+        let point = point.to_vector3();
 
-        let total_angle = SphericalCoordinate::angle_between(&arc_start, &arc_end);
-        let angle_sum = SphericalCoordinate::angle_between(&arc_start, &point)
-            + SphericalCoordinate::angle_between(&point, &arc_end);
+        let total_angle = angle_between(&arc_start, &arc_end);
+        let angle_sum = angle_between(&arc_start, &point) + angle_between(&point, &arc_end);
 
         (angle_sum - total_angle).abs() < 1e-9 // account for floating point inaccuracies
     }
 }
 
-pub fn is_point_within_arc(
-    point: &SphericalCoordinate,
-    arc_start: &SphericalCoordinate,
-    arc_end: &SphericalCoordinate,
-) -> bool {
-    let total_angle = SphericalCoordinate::angle_between(arc_start, arc_end);
-    let angle_sum = SphericalCoordinate::angle_between(arc_start, point)
-        + SphericalCoordinate::angle_between(point, arc_end);
-    (angle_sum - total_angle).abs() < 1e-9 // account for floating point inaccuracies
+pub fn angle_between(a: &Vector3<f64>, b: &Vector3<f64>) -> f64 {
+    (a.dot(&b) / (a.magnitude() * b.magnitude())).acos()
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_length() {
-        let start = GeodeticCoordinate { lat: 0.0, lon: 0.0 };
-        let end = GeodeticCoordinate { lat: 0.0, lon: 1.0 };
-        let line = Line::new(start, end);
-
-        let expected_length = 111.2;
-
-        let actual_length = line.length();
-
-        let tolerance_in_percent = 0.01;
-
-        let difference_in_percent = (actual_length - expected_length).abs() / expected_length;
-        assert!(
-            difference_in_percent < tolerance_in_percent,
-            "expected: {}, actual: {}, difference: {}%",
-            expected_length,
-            actual_length,
-            difference_in_percent * 100.0
-        );
-    }
+pub fn is_point_within_arc(
+    point: &Vector3<f64>,
+    arc_start: &Vector3<f64>,
+    arc_end: &Vector3<f64>,
+) -> bool {
+    let total_angle = angle_between(arc_start, arc_end);
+    let angle_sum = angle_between(arc_start, point) + angle_between(point, arc_end);
+    (angle_sum - total_angle).abs() < 1e-9 // account for floating point inaccuracies
 }

@@ -1,11 +1,6 @@
-use std::f64::consts::PI;
-
 use geojson::{Feature, Geometry, Value};
 
-use super::{
-    coordinate::{subtended_angle, GeodeticCoordinate},
-    line::Line,
-};
+use super::{coordinate::GeodeticCoordinate, line::Line};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Polygon {
@@ -39,24 +34,9 @@ impl Polygon {
                 };
                 ray.intersection(&line)
             })
-            .filter(|&x| x.is_some())
+            .filter(|&x| x)
             .count();
         intersections % 2 == 1
-    }
-
-    pub fn winding_numer(&self, point: &GeodeticCoordinate) -> f64 {
-        self.outline
-            .windows(2)
-            .map(|l| subtended_angle(point, &l[0], &l[1]))
-            .sum()
-    }
-
-    pub fn contains_winding(&self, point: &GeodeticCoordinate) -> bool {
-        let winding_number = self.winding_numer(point);
-        let winding_number = winding_number % (2.0 * PI);
-        let winding_number = winding_number.abs();
-        println!("{}", winding_number);
-        winding_number >= 0.000_000_1
     }
 
     pub fn to_json(&self) -> String {

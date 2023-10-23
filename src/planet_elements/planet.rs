@@ -21,29 +21,24 @@ impl Planet {
     }
 
     pub fn is_on_land_ray(&self, point: &GeodeticCoordinate) -> bool {
-        let north_pole = GeodeticCoordinate {
-            lat: 90.0,
-            lon: 0.0,
-        };
+        // let north_pole = GeodeticCoordinate {
+        //     lat: 90.0,
+        //     lon: 0.0,
+        // };
         let sixty_point = GeodeticCoordinate {
             lat: -60.0,
             lon: point.lon,
         };
-        let check_north = self
-            .polygons
-            .par_iter()
-            .any(|polygon| polygon.contains(point, &north_pole));
+        // let check_north = self
+        //     .polygons
+        //     .par_iter()
+        //     .any(|polygon| polygon.contains(point, &north_pole));
         let check_south = self
             .polygons
             .par_iter()
             .any(|polygon| polygon.contains(point, &sixty_point));
-        check_south == check_north
-    }
-
-    pub fn is_on_land_winding(&self, point: &GeodeticCoordinate) -> bool {
-        self.polygons
-            .par_iter()
-            .any(|polygon| polygon.contains_winding(point))
+        // check_south == true || check_north == true
+        check_south
     }
 
     pub fn to_json(&self) -> String {

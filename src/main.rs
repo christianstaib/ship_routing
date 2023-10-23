@@ -15,7 +15,7 @@ const PBF_PLANET: &str = "data/osm/planet-coastlinespbf-cleanedosmpbf.osm.pbf";
 //const PGB_ANTARCTICA: &str = "data/osm/antarctica-latest.osm.pbf";
 const _PLANET_PATH: &str = "data/geojson/planet.geojson";
 const POINTS_PATH: &str = "data/geojson/points.geojson";
-const N: usize = 100;
+const N: usize = 5000;
 
 fn main() {
     _test_all();
