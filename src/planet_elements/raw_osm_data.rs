@@ -1,56 +1,36 @@
-use std::{collections::HashMap, time::Instant};
+use std::collections::HashMap;
 
-use indicatif::ProgressIterator;
 use osmpbf::{Element, ElementReader};
 
-use crate::{geojson_writer::GeoJsonWriter, planet_elements::coordinate::GeodeticCoordinate};
+use crate::planet_elements::coordinate::GeodeticCoordinate;
+
+use super::{planet::Planet, polygon::Polygon};
 
 /// a planet struct which ways are not cloesed
-pub struct RawPlanet {
+pub struct RawOsmData {
     pub nodes: HashMap<i64, GeodeticCoordinate>,
     pub coastlines: Vec<Vec<i64>>,
 }
 
-pub struct Planet {
-    pub coastlines: Vec<Vec<GeodeticCoordinate>>,
-}
+impl RawOsmData {
+    pub fn to_planet(&self) -> Planet {
+        let mut planet = Planet::new();
+        planet.polygons.extend(
+            self.coastlines
+                .iter()
+                .map(|coastline| {
+                    coastline
+                        .into_iter()
+                        .map(|node_id| self.nodes[&node_id])
+                        .collect()
+                })
+                .map(|coastline| Polygon::new(coastline)),
+        );
 
-impl Planet {
-    fn new(mut planet: RawPlanet) -> Self {
-        let coastlines: Vec<Vec<GeodeticCoordinate>> = planet
-            .coastlines
-            .iter_mut()
-            .progress()
-            .map(|coastline| {
-                coastline
-                    .into_iter()
-                    .map(|node_id| planet.nodes[&node_id])
-                    .collect()
-            })
-            .collect();
-
-        Self { coastlines }
+        planet
     }
 
-    pub fn from_path(path: &str) -> Self {
-        let mut planet = RawPlanet::from_path(path);
-        planet.close_coastline();
-        Self::new(planet)
-    }
-
-    pub fn to_file(&self, path: &str) {
-        let mut writer = GeoJsonWriter::new(path);
-
-        self.coastlines
-            .iter()
-            .for_each(|coastline| writer.add_polygon(coastline));
-
-        writer.flush();
-    }
-}
-
-impl RawPlanet {
-    fn from_path(path: &str) -> RawPlanet {
+    pub fn from_path(path: &str) -> RawOsmData {
         let mut nodes = HashMap::new();
         let mut coastlines = Vec::new();
 
@@ -79,7 +59,9 @@ impl RawPlanet {
             })
             .unwrap();
 
-        RawPlanet { nodes, coastlines }
+        let mut raw_osm_data = RawOsmData { nodes, coastlines };
+        raw_osm_data.close_coastline();
+        raw_osm_data
     }
 
     fn close_coastline(&mut self) {

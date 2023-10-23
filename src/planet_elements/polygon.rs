@@ -1,5 +1,7 @@
 use std::f64::consts::PI;
 
+use geojson::{Feature, Geometry, Value};
+
 use super::{
     coordinate::{subtended_angle, GeodeticCoordinate},
     line::Line,
@@ -15,11 +17,7 @@ impl Polygon {
         Self { outline }
     }
 
-    pub fn contains(&self, point: &GeodeticCoordinate) -> bool {
-        let north_pole = GeodeticCoordinate {
-            lat: 90.0,
-            lon: 0.0,
-        };
+    pub fn contains(&self, point: &GeodeticCoordinate, not_inside: &GeodeticCoordinate) -> bool {
         let intersections = self
             .outline
             .windows(2)
@@ -37,7 +35,7 @@ impl Polygon {
             .map(|line| {
                 let ray = Line {
                     start: point.clone(),
-                    end: north_pole,
+                    end: not_inside.clone(),
                 };
                 ray.intersection(&line)
             })
@@ -59,5 +57,23 @@ impl Polygon {
         let winding_number = winding_number.abs();
         println!("{}", winding_number);
         winding_number >= 0.000_000_1
+    }
+
+    pub fn to_json(&self) -> String {
+        let polygon = self
+            .outline
+            .iter()
+            .map(|&coordinate| vec![coordinate.lon, coordinate.lat])
+            .collect();
+
+        let polygon = Geometry::new(Value::Polygon(vec![polygon]));
+        let geometry = Feature {
+            bbox: None,
+            geometry: Some(polygon),
+            id: None,
+            properties: None,
+            foreign_members: None,
+        };
+        geometry.to_string()
     }
 }

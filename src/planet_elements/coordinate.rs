@@ -1,3 +1,5 @@
+use geojson::{Feature, Geometry, Value};
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct GeodeticCoordinate {
     pub lat: f64,
@@ -9,6 +11,21 @@ pub struct SphericalCoordinate {
     pub x: f64,
     pub y: f64,
     pub z: f64,
+}
+
+impl GeodeticCoordinate {
+    pub fn to_json(&self) -> String {
+        let point: Vec<f64> = vec![self.lon, self.lat];
+        let point = Geometry::new(Value::Point(point));
+        let geometry = Feature {
+            bbox: None,
+            geometry: Some(point),
+            id: None,
+            properties: None,
+            foreign_members: None,
+        };
+        geometry.to_string()
+    }
 }
 
 impl SphericalCoordinate {

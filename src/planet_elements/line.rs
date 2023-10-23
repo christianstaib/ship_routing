@@ -65,7 +65,7 @@ impl Line {
         let angle_sum = SphericalCoordinate::angle_between(&arc_start, &point)
             + SphericalCoordinate::angle_between(&point, &arc_end);
 
-        (angle_sum - total_angle).abs() < 1e-6 // account for floating point inaccuracies
+        (angle_sum - total_angle).abs() < 1e-9 // account for floating point inaccuracies
     }
 }
 
@@ -77,7 +77,7 @@ pub fn is_point_within_arc(
     let total_angle = SphericalCoordinate::angle_between(arc_start, arc_end);
     let angle_sum = SphericalCoordinate::angle_between(arc_start, point)
         + SphericalCoordinate::angle_between(point, arc_end);
-    (angle_sum - total_angle).abs() < 1e-6 // account for floating point inaccuracies
+    (angle_sum - total_angle).abs() < 1e-9 // account for floating point inaccuracies
 }
 
 #[cfg(test)]
