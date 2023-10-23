@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Instant};
 
 use indicatif::ProgressIterator;
 use osmpbf::{Element, ElementReader};
@@ -17,7 +17,7 @@ pub struct Planet {
 
 impl Planet {
     fn new(mut planet: RawPlanet) -> Self {
-        let mut coastlines: Vec<Vec<GeodeticCoordinate>> = planet
+        let coastlines: Vec<Vec<GeodeticCoordinate>> = planet
             .coastlines
             .iter_mut()
             .progress()
@@ -28,8 +28,6 @@ impl Planet {
                     .collect()
             })
             .collect();
-
-        coastlines.sort_unstable_by_key(|coastline| coastline.len());
 
         Self { coastlines }
     }
