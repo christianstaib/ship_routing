@@ -34,7 +34,7 @@ impl Polygon {
                 };
                 ray.intersection(&line)
             })
-            .filter(|&x| x)
+            .filter(|&x| x.is_some())
             .count();
         intersections % 2 == 1
     }
