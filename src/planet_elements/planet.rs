@@ -1,10 +1,10 @@
 use rayon::prelude::*;
 
-use super::{coordinate::GeodeticCoordinate, polygon::Polygon, raw_osm_data::RawOsmData};
+use super::{coordinate::Coordinate, polygon::Polygon, raw_osm_data::RawOsmData};
 
 pub struct Planet {
     pub polygons: Vec<Polygon>,
-    pub points: Vec<GeodeticCoordinate>,
+    pub points: Vec<Coordinate>,
 }
 
 impl Planet {
@@ -20,15 +20,12 @@ impl Planet {
         raw_osm_data.to_planet()
     }
 
-    pub fn is_on_land_ray(&self, point: &GeodeticCoordinate) -> bool {
+    pub fn is_on_land_ray(&self, point: &Coordinate) -> bool {
         // let north_pole = GeodeticCoordinate {
         //     lat: 90.0,
         //     lon: 0.0,
         // };
-        let sixty_point = GeodeticCoordinate {
-            lat: -60.0,
-            lon: point.lon,
-        };
+        let sixty_point = Coordinate::from_geodetic(-60.0, point.lon);
         // let check_north = self
         //     .polygons
         //     .par_iter()

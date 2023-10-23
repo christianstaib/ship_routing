@@ -1,18 +1,18 @@
 use geojson::{Feature, Geometry, Value};
 
-use super::{coordinate::GeodeticCoordinate, line::Line};
+use super::{coordinate::Coordinate, line::Line};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Polygon {
-    pub outline: Vec<GeodeticCoordinate>,
+    pub outline: Vec<Coordinate>,
 }
 
 impl Polygon {
-    pub fn new(outline: Vec<GeodeticCoordinate>) -> Self {
+    pub fn new(outline: Vec<Coordinate>) -> Self {
         Self { outline }
     }
 
-    pub fn contains(&self, point: &GeodeticCoordinate, not_inside: &GeodeticCoordinate) -> bool {
+    pub fn contains(&self, point: &Coordinate, not_inside: &Coordinate) -> bool {
         let intersections = self
             .outline
             .windows(2)

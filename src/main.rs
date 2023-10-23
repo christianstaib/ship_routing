@@ -4,6 +4,7 @@ use std::io::{BufWriter, Write};
 use std::time::Instant;
 
 use indicatif::ProgressIterator;
+use planet_elements::coordinate::Coordinate;
 
 use crate::planet_elements::planet::Planet;
 use crate::point_generator::PointGenerator;
@@ -15,9 +16,14 @@ const PBF_PLANET: &str = "data/osm/planet-coastlinespbf-cleanedosmpbf.osm.pbf";
 //const PGB_ANTARCTICA: &str = "data/osm/antarctica-latest.osm.pbf";
 const _PLANET_PATH: &str = "data/geojson/planet.geojson";
 const POINTS_PATH: &str = "data/geojson/points.geojson";
-const N: usize = 5000;
+const N: usize = 10000;
 
 fn main() {
+    let test = Coordinate::from_geodetic(23.45, 45.67);
+    println!("lat {} lon {}", test.lat, test.lon);
+    let test = Coordinate::from_spherical(&test.vec);
+    println!("lat {} lon {}", test.lat, test.lon);
+
     _test_all();
 }
 
@@ -32,6 +38,7 @@ fn _test_all() {
         .take(N)
         .progress_count(N as u64)
         .for_each(|random_point| points.points.push(random_point));
+
     let mut writer = BufWriter::new(File::create(POINTS_PATH).unwrap());
     points
         .points

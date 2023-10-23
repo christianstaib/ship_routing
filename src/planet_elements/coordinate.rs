@@ -2,28 +2,32 @@ use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct GeodeticCoordinate {
+pub struct Coordinate {
     pub lat: f64,
     pub lon: f64,
+    pub vec: Vector3<f64>,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct SphericalCoordinate {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
-}
+impl Coordinate {
+    pub fn from_geodetic(lat: f64, lon: f64) -> Self {
+        let lat_rad = lat.to_radians();
+        let lon_rad = lon.to_radians();
 
-impl GeodeticCoordinate {
-    pub fn to_vector3(&self) -> Vector3<f64> {
-        let lat_rad = self.lat.to_radians();
-        let lon_rad = self.lon.to_radians();
-
-        Vector3::new(
+        let vec = Vector3::new(
             lat_rad.cos() * lon_rad.cos(),
             lat_rad.cos() * lon_rad.sin(),
             lat_rad.sin(),
-        )
+        );
+
+        Self { lat, lon, vec }
+    }
+
+    pub fn from_spherical(vec: &Vector3<f64>) -> Self {
+        let lat = vec.z.asin().to_degrees();
+        let lon = vec.y.to_radians().atan2(vec.x.to_radians()).to_degrees();
+        let vec = vec.clone();
+
+        Self { lat, lon, vec }
     }
 
     pub fn to_json(&self) -> String {
@@ -37,18 +41,5 @@ impl GeodeticCoordinate {
             foreign_members: None,
         };
         geometry.to_string()
-    }
-}
-
-impl SphericalCoordinate {
-    pub fn from_node(node: &GeodeticCoordinate) -> Self {
-        let lat_rad = node.lat.to_radians();
-        let lon_rad = node.lon.to_radians();
-
-        Self {
-            x: lat_rad.cos() * lon_rad.cos(),
-            y: lat_rad.cos() * lon_rad.sin(),
-            z: lat_rad.sin(),
-        }
     }
 }

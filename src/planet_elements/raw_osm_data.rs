@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use osmpbf::{Element, ElementReader};
 
-use crate::planet_elements::coordinate::GeodeticCoordinate;
+use crate::planet_elements::coordinate::Coordinate;
 
 use super::{planet::Planet, polygon::Polygon};
 
 /// a planet struct which ways are not cloesed
 pub struct RawOsmData {
-    pub nodes: HashMap<i64, GeodeticCoordinate>,
+    pub nodes: HashMap<i64, Coordinate>,
     pub coastlines: Vec<Vec<i64>>,
 }
 
@@ -38,13 +38,7 @@ impl RawOsmData {
         reader
             .for_each(|element| match element {
                 Element::DenseNode(node) => {
-                    nodes.insert(
-                        node.id(),
-                        GeodeticCoordinate {
-                            lat: node.lat(),
-                            lon: node.lon(),
-                        },
-                    );
+                    nodes.insert(node.id(), Coordinate::from_geodetic(node.lat(), node.lon()));
                 }
                 Element::Way(way) => {
                     if way
