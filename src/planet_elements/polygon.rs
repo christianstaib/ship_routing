@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use geojson::{Feature, Geometry, Value};
 
 use super::{coordinate::Coordinate, line::Line};
@@ -36,6 +38,7 @@ impl Polygon {
             })
             .filter(|&x| x.is_some())
             .count();
+
         intersections % 2 == 1
     }
 

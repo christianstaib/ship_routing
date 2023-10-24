@@ -3,4 +3,5 @@
 *.osm.pbf
 *.geojson
 *.mbtiles
+*.mbtiles-journal
 *.ldjson

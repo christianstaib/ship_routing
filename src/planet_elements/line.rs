@@ -54,7 +54,7 @@ impl Line {
 
     pub fn central_angle(&self) -> f64 {
         let a = self.start.vec;
-        let b = self.start.vec;
+        let b = self.end.vec;
         (a.dot(&b) / (a.magnitude() * b.magnitude())).acos()
     }
 }
