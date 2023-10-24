@@ -45,12 +45,19 @@ impl Planet {
         Ok(planet)
     }
 
+    pub fn from_file(path: &str) -> Result<Planet, Box<dyn Error>> {
+        let mut reader = BufReader::new(File::open(path).unwrap());
+        let mut json = String::new();
+        reader.read_to_string(&mut json)?;
+        Planet::from_json(json.as_str())
+    }
+
     pub fn from_osm(path: &str) -> Self {
         let raw_osm_data = RawOsmData::from_path(path);
         raw_osm_data.to_planet()
     }
 
-    pub fn is_on_land_ray(&self, point: &Coordinate) -> bool {
+    pub fn is_on_land(&self, point: &Coordinate) -> bool {
         let north_pole = Coordinate::from_geodetic(90.0, 0.0);
         self.polygons
             .par_iter()
@@ -68,12 +75,5 @@ impl Planet {
         let mut writer = BufWriter::new(File::create(path).unwrap());
         write!(writer, "{}", self.to_json()).unwrap();
         writer.flush().unwrap();
-    }
-
-    pub fn from_file(path: &str) -> Result<Planet, Box<dyn Error>> {
-        let mut reader = BufReader::new(File::open(path).unwrap());
-        let mut json = String::new();
-        reader.read_to_string(&mut json)?;
-        Planet::from_json(json.as_str())
     }
 }

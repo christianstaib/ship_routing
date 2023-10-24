@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use geojson::{Feature, Geometry, Value};
 
 use super::{coordinate::Coordinate, line::Line};
