@@ -64,6 +64,12 @@ impl Planet {
             .any(|polygon| polygon.contains(point, &north_pole))
     }
 
+    pub fn true_is_on_land(&self, point: &Coordinate) -> bool {
+        self.polygons
+            .par_iter()
+            .any(|polygon| polygon.true_contains(point))
+    }
+
     pub fn to_json(&self) -> String {
         let mut json = String::new();
         json.extend(self.polygons.iter().map(|polygon| polygon.to_json() + "\n"));

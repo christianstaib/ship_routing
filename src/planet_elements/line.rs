@@ -49,7 +49,7 @@ impl Line {
         let true_angle = self.central_angle();
         let angled_sum = start_to_point.central_angle() + point_to_end.central_angle();
 
-        (angled_sum - true_angle).abs() < 1e-3
+        (angled_sum - true_angle).abs() < 0.05
     }
 
     pub fn central_angle(&self) -> f64 {

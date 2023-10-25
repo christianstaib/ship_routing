@@ -1,3 +1,4 @@
+use geo::Contains;
 use geojson::{Feature, Geometry, Value};
 
 use super::{coordinate::Coordinate, line::Line};
@@ -10,6 +11,18 @@ pub struct Polygon {
 impl Polygon {
     pub fn new(outline: Vec<Coordinate>) -> Self {
         Self { outline }
+    }
+
+    pub fn true_contains(&self, point: &Coordinate) -> bool {
+        let outline: Vec<(f64, f64)> = self
+            .outline
+            .iter()
+            .cloned()
+            .map(|coord| (100.0 * coord.lat, coord.lon))
+            .collect();
+        let polygon = geo::Polygon::new(geo::LineString::from(outline), vec![]);
+        let point = geo::Point::new(point.lat, point.lon);
+        polygon.contains(&point)
     }
 
     pub fn contains(&self, point: &Coordinate, not_inside: &Coordinate) -> bool {

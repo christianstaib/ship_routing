@@ -11,6 +11,9 @@
     },
     "points": {
       "mbtiles": "points.mbtiles"
+    },
+    "merged": {
+      "mbtiles": "merged.mbtiles"
     }
   }
 }
