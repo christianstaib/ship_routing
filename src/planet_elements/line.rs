@@ -2,21 +2,21 @@ use geojson::{Feature, Geometry, Value};
 
 use crate::EPSILON;
 
-use super::coordinate::Coordinate;
+use super::point::Point;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Line {
-    pub start: Coordinate,
-    pub end: Coordinate,
+    pub start: Point,
+    pub end: Point,
 }
 
 impl Line {
-    pub fn new(start: Coordinate, end: Coordinate) -> Self {
+    pub fn new(start: Point, end: Point) -> Self {
         Self { start, end }
     }
 
     // https://blog.mbedded.ninja/mathematics/geometry/spherical-geometry/finding-the-intersection-of-two-arcs-that-lie-on-a-sphere/
-    pub fn intersection(&self, other: &Line) -> Option<Coordinate> {
+    pub fn intersection(&self, other: &Line) -> Option<Point> {
         let normal1 = (self.start.vec).cross(&self.end.vec);
         let normal2 = (other.start.vec).cross(&other.end.vec);
 
@@ -29,8 +29,8 @@ impl Line {
         let intersection1 = line;
         let intersection2 = -1.0 * line;
 
-        let intersection1 = Coordinate::from_spherical(&intersection1);
-        let intersection2 = Coordinate::from_spherical(&intersection2);
+        let intersection1 = Point::from_spherical(&intersection1);
+        let intersection2 = Point::from_spherical(&intersection2);
 
         if self.contains_point(&intersection1) && other.contains_point(&intersection1) {
             return Some(intersection1);
@@ -40,7 +40,7 @@ impl Line {
         None
     }
 
-    pub fn contains_point(&self, point: &Coordinate) -> bool {
+    pub fn contains_point(&self, point: &Point) -> bool {
         let start_to_point = Line::new(self.start, *point);
         let point_to_end = Line::new(*point, self.end);
 

@@ -2,9 +2,9 @@ use std::time::Instant;
 
 use indicatif::ProgressIterator;
 
-use crate::planet_elements::coordinate::Coordinate;
-use crate::planet_elements::line::Line;
-use crate::planet_elements::planet::Planet;
+use crate::planet_elements::Line;
+use crate::planet_elements::Planet;
+use crate::planet_elements::Point;
 use crate::point_generator::PointGenerator;
 
 pub mod planet_elements;
@@ -29,9 +29,9 @@ fn _test_all() {
 
     let start = Instant::now();
 
-    let north_pole = Coordinate::from_geodetic(90.0, 0.0);
+    let north_pole = Point::from_geodetic(90.0, 0.0);
 
-    let mut points: Vec<Coordinate> = PointGenerator::new().take(N).collect();
+    let mut points: Vec<Point> = PointGenerator::new().take(N).collect();
     let mut points_planet = Planet::new();
 
     points
@@ -57,10 +57,10 @@ fn _test_all() {
 
             let mut lat = random_point.lat;
             let lon = random_point.lon;
-            let mut old_point = Coordinate::from_geodetic(lat, lon);
+            let mut old_point = Point::from_geodetic(lat, lon);
             while lat <= 89.0 {
                 lat += 0.1;
-                let new_point = Coordinate::from_geodetic(lat, lon);
+                let new_point = Point::from_geodetic(lat, lon);
                 points_planet.lines.push(Line::new(old_point, new_point));
                 old_point = new_point;
             }

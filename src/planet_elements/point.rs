@@ -2,13 +2,13 @@ use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Coordinate {
+pub struct Point {
     pub lat: f64,
     pub lon: f64,
     pub vec: Vector3<f64>,
 }
 
-impl Coordinate {
+impl Point {
     pub fn from_geodetic(lat: f64, lon: f64) -> Self {
         let lat_rad = lat.to_radians();
         let lon_rad = lon.to_radians();

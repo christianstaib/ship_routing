@@ -7,11 +7,11 @@ use std::{
 
 use geojson::{Feature, FeatureCollection, Value};
 
-use super::{coordinate::Coordinate, line::Line, polygon::Polygon, raw_osm_data::RawOsmData};
+use super::{line::Line, point::Point, polygon::Polygon, raw_osm_data::RawOsmData};
 
 pub struct Planet {
     pub polygons: Vec<Polygon>,
-    pub points: Vec<Coordinate>,
+    pub points: Vec<Point>,
     pub lines: Vec<Line>,
 }
 
@@ -29,13 +29,13 @@ impl Planet {
         for line in json.lines() {
             if let Some(geomtry) = Feature::from_str(line)?.geometry {
                 match geomtry.value {
-                    Value::Point(point) => planet
-                        .points
-                        .push(Coordinate::from_geodetic(point[1], point[0])),
+                    Value::Point(point) => {
+                        planet.points.push(Point::from_geodetic(point[1], point[0]))
+                    }
                     Value::Polygon(polygon) => {
                         let points = polygon[0]
                             .iter()
-                            .map(|x| Coordinate::from_geodetic(x[1], x[0]))
+                            .map(|x| Point::from_geodetic(x[1], x[0]))
                             .collect();
                         planet.polygons.push(Polygon::new(points))
                     }
@@ -58,7 +58,7 @@ impl Planet {
         raw_osm_data.to_planet()
     }
 
-    pub fn interctions(&self, line: &Line) -> Vec<Coordinate> {
+    pub fn interctions(&self, line: &Line) -> Vec<Point> {
         self.polygons
             .iter()
             .map(|polygon| polygon.intersections(line))
@@ -66,8 +66,8 @@ impl Planet {
             .collect()
     }
 
-    pub fn is_on_land(&self, point: &Coordinate) -> bool {
-        let north_pole = Coordinate::from_geodetic(90.0, 0.0);
+    pub fn is_on_land(&self, point: &Point) -> bool {
+        let north_pole = Point::from_geodetic(90.0, 0.0);
         self.polygons
             .iter()
             .any(|polygon| polygon.contains(point, &north_pole))

@@ -1,6 +1,11 @@
-pub mod coordinate;
-pub mod line;
-pub mod multiline;
-pub mod planet;
-pub mod polygon;
-pub mod raw_osm_data;
+mod line;
+mod planet;
+mod point;
+mod polygon;
+mod raw_osm_data;
+
+pub use line::Line;
+pub use planet::Planet;
+pub use point::Point;
+pub use polygon::Polygon;
+pub use raw_osm_data::RawOsmData;
