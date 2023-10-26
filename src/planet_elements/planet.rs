@@ -5,14 +5,14 @@ use std::{
     str::FromStr,
 };
 
-use geojson::{Feature, Value};
-use rayon::prelude::*;
+use geojson::{Feature, FeatureCollection, Value};
 
-use super::{coordinate::Coordinate, polygon::Polygon, raw_osm_data::RawOsmData};
+use super::{coordinate::Coordinate, line::Line, polygon::Polygon, raw_osm_data::RawOsmData};
 
 pub struct Planet {
     pub polygons: Vec<Polygon>,
     pub points: Vec<Coordinate>,
+    pub lines: Vec<Line>,
 }
 
 impl Planet {
@@ -20,6 +20,7 @@ impl Planet {
         Self {
             polygons: Vec::new(),
             points: Vec::new(),
+            lines: Vec::new(),
         }
     }
 
@@ -57,23 +58,45 @@ impl Planet {
         raw_osm_data.to_planet()
     }
 
+    pub fn interctions(&self, line: &Line) -> Vec<Coordinate> {
+        self.polygons
+            .iter()
+            .map(|polygon| polygon.intersections(line))
+            .flatten()
+            .collect()
+    }
+
     pub fn is_on_land(&self, point: &Coordinate) -> bool {
         let north_pole = Coordinate::from_geodetic(90.0, 0.0);
         self.polygons
-            .par_iter()
+            .iter()
             .any(|polygon| polygon.contains(point, &north_pole))
     }
 
-    pub fn true_is_on_land(&self, point: &Coordinate) -> bool {
-        self.polygons
-            .par_iter()
-            .any(|polygon| polygon.true_contains(point))
+    pub fn to_geojson(&self) -> String {
+        let mut features = Vec::new();
+        features.extend(self.points.iter().map(|point| point.to_feature()));
+        features.extend(self.polygons.iter().map(|polygon| polygon.to_feature()));
+        features.extend(self.lines.iter().map(|polygon| polygon.to_feature()));
+        FeatureCollection {
+            bbox: None,
+            features,
+            foreign_members: None,
+        }
+        .to_string()
+    }
+
+    pub fn to_geojson_file(&self, path: &str) {
+        let mut writer = BufWriter::new(File::create(path).unwrap());
+        write!(writer, "{}", self.to_geojson()).unwrap();
+        writer.flush().unwrap();
     }
 
     pub fn to_json(&self) -> String {
         let mut json = String::new();
         json.extend(self.polygons.iter().map(|polygon| polygon.to_json() + "\n"));
         json.extend(self.points.iter().map(|polygon| polygon.to_json() + "\n"));
+        json.extend(self.lines.iter().map(|polygon| polygon.to_json() + "\n"));
         json
     }
 

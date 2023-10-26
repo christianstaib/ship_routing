@@ -1,4 +1,3 @@
-use geo::Contains;
 use geojson::{Feature, Geometry, Value};
 
 use super::{coordinate::Coordinate, line::Line};
@@ -13,47 +12,27 @@ impl Polygon {
         Self { outline }
     }
 
-    pub fn true_contains(&self, point: &Coordinate) -> bool {
-        let outline: Vec<(f64, f64)> = self
-            .outline
-            .iter()
-            .cloned()
-            .map(|coord| (100.0 * coord.lat, coord.lon))
-            .collect();
-        let polygon = geo::Polygon::new(geo::LineString::from(outline), vec![]);
-        let point = geo::Point::new(point.lat, point.lon);
-        polygon.contains(&point)
-    }
-
     pub fn contains(&self, point: &Coordinate, not_inside: &Coordinate) -> bool {
-        let intersections = self
-            .outline
-            .windows(2)
-            .map(|line| Line {
-                start: line[0],
-                end: line[1],
-            })
-            .filter(|line| {
-                // speed up calculation. Works only if north pole is on water and
-                // if no edge goes from -180 to 180
-                let min_lon_outline = f64::min(line.start.lon, line.end.lon);
-                let max_lon_outline = f64::max(line.start.lon, line.end.lon);
-                min_lon_outline <= point.lon && point.lon <= max_lon_outline
-            })
-            .map(|line| {
-                let ray = Line {
-                    start: point.clone(),
-                    end: not_inside.clone(),
-                };
-                ray.intersection(&line)
-            })
-            .filter(|&x| x.is_some())
-            .count();
+        let ray = Line {
+            start: point.clone(),
+            end: not_inside.clone(),
+        };
+        let intersections = self.intersections(&ray).len();
 
         intersections % 2 == 1
     }
 
-    pub fn to_json(&self) -> String {
+    pub fn intersections(&self, line: &Line) -> Vec<Coordinate> {
+        self.outline
+            .windows(2)
+            .filter_map(|outline| {
+                let outline = Line::new(outline[0], outline[1]);
+                line.intersection(&outline)
+            })
+            .collect()
+    }
+
+    pub fn to_feature(&self) -> Feature {
         let polygon = self
             .outline
             .iter()
@@ -61,13 +40,16 @@ impl Polygon {
             .collect();
 
         let polygon = Geometry::new(Value::Polygon(vec![polygon]));
-        let geometry = Feature {
+        Feature {
             bbox: None,
             geometry: Some(polygon),
             id: None,
             properties: None,
             foreign_members: None,
-        };
-        geometry.to_string()
+        }
+    }
+
+    pub fn to_json(&self) -> String {
+        self.to_feature().to_string()
     }
 }

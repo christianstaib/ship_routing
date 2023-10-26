@@ -30,16 +30,19 @@ impl Coordinate {
         Self { lat, lon, vec }
     }
 
-    pub fn to_json(&self) -> String {
+    pub fn to_feature(&self) -> Feature {
         let point: Vec<f64> = vec![self.lon, self.lat];
         let point = Geometry::new(Value::Point(point));
-        let geometry = Feature {
+        Feature {
             bbox: None,
             geometry: Some(point),
             id: None,
             properties: None,
             foreign_members: None,
-        };
-        geometry.to_string()
+        }
+    }
+
+    pub fn to_json(&self) -> String {
+        self.to_feature().to_string()
     }
 }
