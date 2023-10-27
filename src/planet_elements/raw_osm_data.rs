@@ -2,9 +2,7 @@ use std::collections::HashMap;
 
 use osmpbf::{Element, ElementReader};
 
-use crate::planet_elements::point::Point;
-
-use super::{planet::Planet, polygon::Polygon};
+use super::{Planet, Point, Polygon};
 
 /// a planet struct which ways are not cloesed
 pub struct RawOsmData {

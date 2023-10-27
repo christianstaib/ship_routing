@@ -1,6 +1,6 @@
 use geojson::{Feature, Geometry, Value};
 
-use super::{point::Point, Line};
+use super::{Arc, Point};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Polygon {
@@ -8,12 +8,12 @@ pub struct Polygon {
 }
 
 impl Polygon {
-    pub fn new(outline: Vec<Point>) -> Self {
-        Self { outline }
+    pub fn new(outline: Vec<Point>) -> Polygon {
+        Polygon { outline }
     }
 
     pub fn contains(&self, point: &Point, not_inside: &Point) -> bool {
-        let ray = Line {
+        let ray = Arc {
             start: point.clone(),
             end: not_inside.clone(),
         };
@@ -22,11 +22,11 @@ impl Polygon {
         intersections % 2 == 1
     }
 
-    pub fn intersections(&self, line: &Line) -> Vec<Point> {
+    pub fn intersections(&self, line: &Arc) -> Vec<Point> {
         self.outline
             .windows(2)
             .filter_map(|outline| {
-                let outline = Line::new(outline[0], outline[1]);
+                let outline = Arc::new(outline[0], outline[1]);
                 line.intersection(&outline)
             })
             .collect()

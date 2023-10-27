@@ -1,10 +1,12 @@
-mod line;
+mod arc;
+mod path;
 mod planet;
 mod point;
 mod polygon;
 mod raw_osm_data;
 
-pub use line::Line;
+pub use arc::Arc;
+pub use path::Path;
 pub use planet::Planet;
 pub use point::Point;
 pub use polygon::Polygon;

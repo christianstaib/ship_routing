@@ -2,21 +2,21 @@ use geojson::{Feature, Geometry, Value};
 
 use crate::EPSILON;
 
-use super::point::Point;
+use super::Point;
 
 #[derive(Clone, Copy, Debug)]
-pub struct Line {
+pub struct Arc {
     pub start: Point,
     pub end: Point,
 }
 
-impl Line {
-    pub fn new(start: Point, end: Point) -> Self {
-        Self { start, end }
+impl Arc {
+    pub fn new(start: Point, end: Point) -> Arc {
+        Arc { start, end }
     }
 
     // https://blog.mbedded.ninja/mathematics/geometry/spherical-geometry/finding-the-intersection-of-two-arcs-that-lie-on-a-sphere/
-    pub fn intersection(&self, other: &Line) -> Option<Point> {
+    pub fn intersection(&self, other: &Arc) -> Option<Point> {
         let normal1 = (self.start.vec).cross(&self.end.vec);
         let normal2 = (other.start.vec).cross(&other.end.vec);
 
@@ -41,8 +41,8 @@ impl Line {
     }
 
     pub fn contains_point(&self, point: &Point) -> bool {
-        let start_to_point = Line::new(self.start, *point);
-        let point_to_end = Line::new(*point, self.end);
+        let start_to_point = Arc::new(self.start, *point);
+        let point_to_end = Arc::new(*point, self.end);
 
         let true_angle = self.central_angle();
         let angled_sum = start_to_point.central_angle() + point_to_end.central_angle();
@@ -56,10 +56,15 @@ impl Line {
         a.angle(&b)
     }
 
+    pub fn to_vec(&self) -> Vec<Vec<f64>> {
+        vec![self.start.to_vec(), self.end.to_vec()]
+    }
+
     pub fn to_feature(&self) -> Feature {
-        let start: Vec<f64> = vec![self.start.lon, self.start.lat];
-        let end: Vec<f64> = vec![self.end.lon, self.end.lat];
-        let point = Geometry::new(Value::LineString(vec![start, end]));
+        let point = Geometry::new(Value::LineString(vec![
+            self.start.to_vec(),
+            self.end.to_vec(),
+        ]));
         Feature {
             bbox: None,
             geometry: Some(point),

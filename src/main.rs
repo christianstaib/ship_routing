@@ -1,8 +1,9 @@
 use std::time::Instant;
 
 use indicatif::ProgressIterator;
+use rayon::prelude::*;
 
-use crate::planet_elements::Line;
+use crate::planet_elements::Arc;
 use crate::planet_elements::Planet;
 use crate::planet_elements::Point;
 use crate::point_generator::PointGenerator;
@@ -15,7 +16,7 @@ const EPSILON: f64 = 1e-10;
 const PBF_PLANET: &str = "data/osm/planet-coastlinespbf-cleaned.osm.pbf";
 const PLANET_PATH: &str = "data/geojson/planet.geojson";
 const POINTS_PATH: &str = "data/geojson/points.geojson";
-const N: usize = 1;
+const N: usize = 250;
 
 fn main() {
     _test_all();
@@ -23,7 +24,7 @@ fn main() {
 
 fn _test_all() {
     let start = Instant::now();
-    let planet = Planet::from_osm(PBF_PLANET);
+    let mut planet = Planet::from_osm(PBF_PLANET);
     // let planet = Planet::from_json(PLANET_PATH).unwrap();
     println!("loaded pbf file in {:?}", start.elapsed());
 
@@ -34,26 +35,28 @@ fn _test_all() {
     let mut points: Vec<Point> = PointGenerator::new().take(N).collect();
     let mut points_planet = Planet::new();
 
-    points
-        .iter_mut()
+    // points
+    //     .iter()
+    //     .progress()
+    //     .filter(|point| planet.is_on_land(point))
+    //     .for_each(|point| points_planet.points.push(*point));
+
+    let land_points: Vec<(f64, f64)> = points
+        .iter()
         .progress()
-        //.filter(|random_point| planet.is_on_land(&random_point))
-        .for_each(|&mut random_point| {
-            let line = Line::new(random_point, north_pole);
+        .map(|point| (point.lon, point.lat))
+        .par_bridge()
+        .filter(|(lon, lat)| planet.is_on_land(&Point::from_geodetic(*lat, *lon)))
+        .collect();
+
+    land_points
+        .iter()
+        .map(|(lon, lat)| Point::from_geodetic(*lat, *lon))
+        .for_each(|random_point| {
+            let line = Arc::new(random_point, north_pole);
             let intersections = planet.interctions(&line);
-            let min_intersection_lat = intersections
-                .iter()
-                .map(|cord| cord.lat)
-                .reduce(f64::min)
-                .unwrap_or(90.0);
-            //if min_intersection_lat < random_point.lat {
-            //    panic!(
-            //        "wrong intersections, min:{}, random:{}",
-            //        min_intersection_lat, random_point.lat
-            //    );
-            //}
-            points_planet.points.extend(intersections);
-            points_planet.points.push(random_point);
+            planet.points.extend(intersections);
+            // points_planet.points.push(random_point);
 
             let mut lat = random_point.lat;
             let lon = random_point.lon;
@@ -61,7 +64,7 @@ fn _test_all() {
             while lat <= 89.0 {
                 lat += 0.1;
                 let new_point = Point::from_geodetic(lat, lon);
-                points_planet.lines.push(Line::new(old_point, new_point));
+                planet.lines.push(Arc::new(old_point, new_point));
                 old_point = new_point;
             }
         });
@@ -73,6 +76,6 @@ fn _test_all() {
         end / N as u32
     );
 
-    // planet.to_file(PLANET_PATH);
+    planet.to_file(PLANET_PATH);
     points_planet.to_geojson_file(POINTS_PATH);
 }

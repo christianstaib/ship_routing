@@ -9,7 +9,7 @@ pub struct Point {
 }
 
 impl Point {
-    pub fn from_geodetic(lat: f64, lon: f64) -> Self {
+    pub fn from_geodetic(lat: f64, lon: f64) -> Point {
         let lat_rad = lat.to_radians();
         let lon_rad = lon.to_radians();
 
@@ -19,15 +19,19 @@ impl Point {
             lat_rad.sin(),
         );
 
-        Self { lat, lon, vec }
+        Point { lat, lon, vec }
     }
 
-    pub fn from_spherical(vec: &Vector3<f64>) -> Self {
+    pub fn from_spherical(vec: &Vector3<f64>) -> Point {
         let lat = vec.z.asin().to_degrees();
         let lon = vec.y.to_radians().atan2(vec.x.to_radians()).to_degrees();
         let vec = vec.clone();
 
-        Self { lat, lon, vec }
+        Point { lat, lon, vec }
+    }
+
+    pub fn to_vec(&self) -> Vec<f64> {
+        vec![self.lon, self.lat]
     }
 
     pub fn to_feature(&self) -> Feature {

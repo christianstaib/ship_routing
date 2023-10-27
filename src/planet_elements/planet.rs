@@ -7,12 +7,12 @@ use std::{
 
 use geojson::{Feature, FeatureCollection, Value};
 
-use super::{line::Line, point::Point, polygon::Polygon, raw_osm_data::RawOsmData};
+use super::{Arc, Point, Polygon, RawOsmData};
 
 pub struct Planet {
     pub polygons: Vec<Polygon>,
     pub points: Vec<Point>,
-    pub lines: Vec<Line>,
+    pub lines: Vec<Arc>,
 }
 
 impl Planet {
@@ -58,7 +58,7 @@ impl Planet {
         raw_osm_data.to_planet()
     }
 
-    pub fn interctions(&self, line: &Line) -> Vec<Point> {
+    pub fn interctions(&self, line: &Arc) -> Vec<Point> {
         self.polygons
             .iter()
             .map(|polygon| polygon.intersections(line))
@@ -95,8 +95,8 @@ impl Planet {
     pub fn to_json(&self) -> String {
         let mut json = String::new();
         json.extend(self.polygons.iter().map(|polygon| polygon.to_json() + "\n"));
-        json.extend(self.points.iter().map(|polygon| polygon.to_json() + "\n"));
-        json.extend(self.lines.iter().map(|polygon| polygon.to_json() + "\n"));
+        json.extend(self.points.iter().map(|point| point.to_json() + "\n"));
+        json.extend(self.lines.iter().map(|line| line.to_json() + "\n"));
         json
     }
 
