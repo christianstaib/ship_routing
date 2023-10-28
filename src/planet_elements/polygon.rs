@@ -4,14 +4,30 @@ use geojson::{Feature, Geometry, Value};
 
 use super::{Arc, Point};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Polygon {
     pub outline: Vec<Point>,
+    fast_outline: Vec<Vec<Arc>>,
 }
 
 impl Polygon {
     pub fn new(outline: Vec<Point>) -> Polygon {
-        Polygon { outline }
+        let mut fast_outline = vec![Vec::new(); 361];
+        outline
+            .windows(2)
+            .map(|arc| Arc::new(arc[0], arc[1]))
+            .for_each(|arc| {
+                let min_lon = arc.start.lon.min(arc.end.lon) as isize + 180;
+                let max_lon = arc.start.lon.max(arc.end.lon) as isize + 180;
+                fast_outline[min_lon as usize].push(arc);
+                if max_lon != min_lon {
+                    fast_outline[max_lon as usize].push(arc);
+                }
+            });
+        Polygon {
+            outline,
+            fast_outline,
+        }
     }
 
     pub fn from_vec(vec: Vec<Vec<f64>>) -> Result<Polygon, Box<dyn Error>> {
@@ -46,10 +62,8 @@ impl Polygon {
             start: point.clone(),
             end: north_pole.clone(),
         };
-        let intersections = self
-            .outline
-            .windows(2)
-            .map(|points| Arc::new(points[0], points[1]))
+        let intersections = self.fast_outline[(point.lon as isize + 180) as usize]
+            .iter()
             .filter(|arc| {
                 let lon_min = arc.start.lon.min(arc.end.lon);
                 let lon_max = arc.start.lon.max(arc.end.lon);
@@ -57,10 +71,6 @@ impl Polygon {
             })
             .filter(|arc| ray.intersects(arc))
             .count();
-
-        // if intersections % 2 == 1 {
-        //     println!("collision with {:?}", self.outline[0]);
-        // }
 
         intersections % 2 == 1
     }
