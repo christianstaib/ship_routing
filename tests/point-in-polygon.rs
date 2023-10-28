@@ -1,4 +1,4 @@
-use osm_test::{Arc, Planet, Point};
+use osm_test::Planet;
 
 #[test]
 fn test_point_on_land() {
