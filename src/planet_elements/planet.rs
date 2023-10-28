@@ -5,7 +5,7 @@ use std::{
     str::FromStr,
 };
 
-use geojson::{Feature, FeatureCollection, Value};
+use geojson::{FeatureCollection, Value};
 
 use super::{Arc, Point, Polygon, RawOsmData};
 
@@ -24,38 +24,24 @@ impl Planet {
         }
     }
 
-    pub fn from_json(json: &str) -> Result<Planet, Box<dyn Error>> {
-        let mut planet = Planet::new();
-        for line in json.lines() {
-            if let Some(geomtry) = Feature::from_str(line)?.geometry {
-                match geomtry.value {
-                    Value::Point(point) => {
-                        planet.points.push(Point::from_geodetic(point[1], point[0]))
-                    }
-                    Value::Polygon(polygon) => {
-                        let points = polygon[0]
-                            .iter()
-                            .map(|x| Point::from_geodetic(x[1], x[0]))
-                            .collect();
-                        planet.polygons.push(Polygon::new(points))
-                    }
-                    _ => (),
-                }
-            }
-        }
-        Ok(planet)
-    }
-
     pub fn from_file(path: &str) -> Result<Planet, Box<dyn Error>> {
         let mut reader = BufReader::new(File::open(path).unwrap());
         let mut json = String::new();
         reader.read_to_string(&mut json)?;
-        Planet::from_json(json.as_str())
+        Planet::from_geojson(json.as_str())
     }
 
     pub fn from_osm(path: &str) -> Self {
         let raw_osm_data = RawOsmData::from_path(path);
         raw_osm_data.to_planet()
+    }
+
+    pub fn fast_intersections(&self, point: &Point) -> Vec<Point> {
+        self.polygons
+            .iter()
+            .map(|polygon| polygon.fast_intersections(point))
+            .flatten()
+            .collect()
     }
 
     pub fn interctions(&self, line: &Arc) -> Vec<Point> {
@@ -73,11 +59,35 @@ impl Planet {
             .any(|polygon| polygon.contains(point, &north_pole))
     }
 
+    pub fn fast_is_on_land(&self, point: &Point) -> bool {
+        self.polygons
+            .iter()
+            .any(|polygon| polygon.fast_contains(point))
+    }
+
+    pub fn from_geojson(json: &str) -> Result<Planet, Box<dyn Error>> {
+        let feature_collection = FeatureCollection::from_str(json)?;
+        let mut planet = Planet::new();
+        feature_collection
+            .into_iter()
+            .filter_map(|feature| feature.geometry)
+            .for_each(|geometry| match geometry.value {
+                Value::Point(point) => planet.points.push(Point::from_vec(point).unwrap()),
+                Value::Polygon(polygon) => planet
+                    .polygons
+                    .push(Polygon::from_vec(polygon[0].clone()).unwrap()),
+                Value::LineString(line) => planet.lines.push(Arc::from_vec(line).unwrap()),
+                _ => (),
+            });
+
+        Ok(planet)
+    }
+
     pub fn to_geojson(&self) -> String {
         let mut features = Vec::new();
         features.extend(self.points.iter().map(|point| point.to_feature()));
         features.extend(self.polygons.iter().map(|polygon| polygon.to_feature()));
-        features.extend(self.lines.iter().map(|polygon| polygon.to_feature()));
+        features.extend(self.lines.iter().map(|line| line.to_feature()));
         FeatureCollection {
             bbox: None,
             features,
@@ -86,23 +96,27 @@ impl Planet {
         .to_string()
     }
 
-    pub fn to_geojson_file(&self, path: &str) {
+    pub fn to_file(&self, path: &str) {
         let mut writer = BufWriter::new(File::create(path).unwrap());
         write!(writer, "{}", self.to_geojson()).unwrap();
         writer.flush().unwrap();
     }
+}
 
-    pub fn to_json(&self) -> String {
-        let mut json = String::new();
-        json.extend(self.polygons.iter().map(|polygon| polygon.to_json() + "\n"));
-        json.extend(self.points.iter().map(|point| point.to_json() + "\n"));
-        json.extend(self.lines.iter().map(|line| line.to_json() + "\n"));
-        json
-    }
+#[cfg(test)]
+mod tests {
+    use crate::planet_elements::Planet;
 
-    pub fn to_file(&self, path: &str) {
-        let mut writer = BufWriter::new(File::create(path).unwrap());
-        write!(writer, "{}", self.to_json()).unwrap();
-        writer.flush().unwrap();
+    const PLANET_SIMPLIFIED_PATH: &str = "data/test_geojson/planet_simplified.geojson";
+    const PLANET_PATH: &str = "data/geojson/planet.geojson";
+
+    #[test]
+    fn load_save_reload() {
+        let planet = Planet::from_file(PLANET_SIMPLIFIED_PATH).unwrap();
+        planet.to_file(PLANET_PATH);
+        let planet_reloaded = Planet::from_file(PLANET_PATH).unwrap();
+        assert_eq!(planet.polygons.len(), planet_reloaded.polygons.len());
+        assert_eq!(planet.points.len(), planet_reloaded.points.len());
+        assert_eq!(planet.lines.len(), planet_reloaded.lines.len());
     }
 }

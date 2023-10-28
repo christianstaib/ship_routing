@@ -2,6 +2,8 @@ use rand::{rngs::ThreadRng, Rng};
 
 use crate::planet_elements::Point;
 
+pub const EPS: f64 = 0.001;
+
 pub struct PointGenerator {
     rng: ThreadRng,
 }

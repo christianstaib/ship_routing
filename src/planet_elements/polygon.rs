@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use geojson::{Feature, Geometry, Value};
 
 use super::{Arc, Point};
@@ -10,6 +12,57 @@ pub struct Polygon {
 impl Polygon {
     pub fn new(outline: Vec<Point>) -> Polygon {
         Polygon { outline }
+    }
+
+    pub fn from_vec(vec: Vec<Vec<f64>>) -> Result<Polygon, Box<dyn Error>> {
+        let outline = vec
+            .into_iter()
+            .map(|point| Point::from_vec(point).unwrap())
+            .collect();
+        Ok(Polygon::new(outline))
+    }
+
+    pub fn fast_intersections(&self, point: &Point) -> Vec<Point> {
+        let north_pole = Point::from_geodetic(90.0, 0.0);
+        let ray = Arc {
+            start: point.clone(),
+            end: north_pole.clone(),
+        };
+        self.outline
+            .windows(2)
+            .map(|points| Arc::new(points[0], points[1]))
+            .filter(|arc| {
+                let lon_min = arc.start.lon.min(arc.end.lon);
+                let lon_max = arc.start.lon.max(arc.end.lon);
+                lon_min <= point.lon && point.lon <= lon_max
+            })
+            .filter_map(|arc| ray.intersection(&arc))
+            .collect()
+    }
+
+    pub fn fast_contains(&self, point: &Point) -> bool {
+        let north_pole = Point::from_geodetic(90.0, 0.0);
+        let ray = Arc {
+            start: point.clone(),
+            end: north_pole.clone(),
+        };
+        let intersections = self
+            .outline
+            .windows(2)
+            .map(|points| Arc::new(points[0], points[1]))
+            .filter(|arc| {
+                let lon_min = arc.start.lon.min(arc.end.lon);
+                let lon_max = arc.start.lon.max(arc.end.lon);
+                lon_min <= point.lon && point.lon <= lon_max
+            })
+            .filter(|arc| ray.intersects(arc))
+            .count();
+
+        // if intersections % 2 == 1 {
+        //     println!("collision with {:?}", self.outline[0]);
+        // }
+
+        intersections % 2 == 1
     }
 
     pub fn contains(&self, point: &Point, not_inside: &Point) -> bool {
