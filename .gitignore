@@ -1,5 +1,4 @@
 /target
-/venv
 *.osm.pbf
 *.mbtiles
 *.mbtiles-journal
