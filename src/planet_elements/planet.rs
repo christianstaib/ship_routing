@@ -44,7 +44,7 @@ impl Planet {
             .collect()
     }
 
-    pub fn interctions(&self, line: &Arc) -> Vec<Point> {
+    pub fn intersections(&self, line: &Arc) -> Vec<Point> {
         self.polygons
             .iter()
             .map(|polygon| polygon.intersections(line))
@@ -76,7 +76,7 @@ impl Planet {
                 Value::Polygon(polygon) => planet
                     .polygons
                     .push(Polygon::from_vec(polygon[0].clone()).unwrap()),
-                Value::LineString(line) => planet.lines.push(Arc::from_vec(line).unwrap()),
+                Value::LineString(line) => planet.lines.push(Arc::from_vec(&line).unwrap()),
                 _ => (),
             });
 

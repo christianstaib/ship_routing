@@ -53,8 +53,4 @@ impl Point {
             foreign_members: None,
         }
     }
-
-    pub fn to_json(&self) -> String {
-        self.to_feature().to_string()
-    }
 }
