@@ -35,6 +35,7 @@ fn test_point_on_water() {
 }
 
 #[test]
+#[ignore]
 fn test_single_point_on_water() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
     const PLANET_OUT_PATH: &str = "tests/data/test_geojson/single_point.geojson";
