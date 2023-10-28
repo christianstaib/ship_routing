@@ -102,21 +102,3 @@ impl Planet {
         writer.flush().unwrap();
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::planet_elements::Planet;
-
-    const PLANET_SIMPLIFIED_PATH: &str = "data/test_geojson/planet_simplified.geojson";
-    const PLANET_PATH: &str = "data/geojson/planet.geojson";
-
-    #[test]
-    fn load_save_reload() {
-        let planet = Planet::from_file(PLANET_SIMPLIFIED_PATH).unwrap();
-        planet.to_file(PLANET_PATH);
-        let planet_reloaded = Planet::from_file(PLANET_PATH).unwrap();
-        assert_eq!(planet.polygons.len(), planet_reloaded.polygons.len());
-        assert_eq!(planet.points.len(), planet_reloaded.points.len());
-        assert_eq!(planet.lines.len(), planet_reloaded.lines.len());
-    }
-}

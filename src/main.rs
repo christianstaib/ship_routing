@@ -17,8 +17,8 @@ fn main() {
     let start = Instant::now();
     PointGenerator::new()
         .into_iter()
-        .take(100_000)
-        .progress_count(100_000)
+        .take(10_000)
+        .progress_count(10_000)
         .for_each(|point| match planet.fast_is_on_land(&point) {
             true => land_points.points.push(point),
             false => water_points.points.push(point),

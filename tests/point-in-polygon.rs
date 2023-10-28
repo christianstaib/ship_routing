@@ -2,12 +2,13 @@ use osm_test::Planet;
 
 #[test]
 fn test_point_on_land() {
-    const PLANET_PATH: &str = "data/test_geojson/planet_simplified.geojson";
-    const ON_LAND_PATH: &str = "data/test_geojson/true_land.geojson";
+    const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
+    const ON_LAND_PATH: &str = "tests/data/geojson/points_on_land.geojson";
 
     let planet = Planet::from_file(PLANET_PATH).unwrap();
     let on_land = Planet::from_file(ON_LAND_PATH).unwrap();
 
+    println!("points: {}", on_land.points.len());
     on_land.points.iter().for_each(|point| {
         assert!(
             planet.fast_is_on_land(point),
@@ -19,8 +20,8 @@ fn test_point_on_land() {
 
 #[test]
 fn test_point_on_water() {
-    const PLANET_PATH: &str = "data/test_geojson/planet_simplified.geojson";
-    const ON_WATER_PATH: &str = "data/test_geojson/true_water.geojson";
+    const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
+    const ON_WATER_PATH: &str = "tests/data/geojson/points_on_water.geojson";
 
     let planet = Planet::from_file(PLANET_PATH).unwrap();
     let on_water = Planet::from_file(ON_WATER_PATH).unwrap();
@@ -36,8 +37,8 @@ fn test_point_on_water() {
 
 // #[test]
 // fn test_single_point_on_water() {
-//     const PLANET_PATH: &str = "data/test_geojson/planet_simplified.geojson";
-//     const PLANET_OUT_PATH: &str = "data/geojson/planet.geojson";
+//     const PLANET_PATH: &str = "tests/data/test_geojson/planet_simplified.geojson";
+//     const PLANET_OUT_PATH: &str = "tests/data/geojson/planet.geojson";
 //     let mut planet = Planet::from_file(PLANET_PATH).unwrap();
 //     let mut water_point = Point::from_geodetic(-77.23507365492551, 227.42187500000443);
 //     let intersections = planet.fast_intersections(&water_point);
