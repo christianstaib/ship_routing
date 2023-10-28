@@ -1,7 +1,6 @@
 /target
 /venv
 *.osm.pbf
-/data/geojson
 *.mbtiles
 *.mbtiles-journal
 *.ldjson
