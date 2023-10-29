@@ -44,6 +44,12 @@ impl Planet {
             .collect()
     }
 
+    pub fn inside_is_on_land(&self, point: &Point) -> bool {
+        self.polygons
+            .iter()
+            .any(|polygon| polygon.contains_inside(point))
+    }
+
     pub fn is_on_land(&self, point: &Point) -> bool {
         let north_pole = Point::from_geodetic(90.0, 0.0);
         self.polygons

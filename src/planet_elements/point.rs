@@ -4,6 +4,8 @@ use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 use rand::Rng;
 
+use crate::Arc;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Point {
     lat: f64,
@@ -28,7 +30,10 @@ impl Point {
     }
 
     pub fn from_spherical(vec: &Vector3<f64>) -> Point {
-        let lat = vec.z.asin().to_degrees();
+        let lat = vec
+            .z
+            .atan2((vec.x.powi(2) + vec.y.powi(2)).sqrt())
+            .to_degrees(); //vec.z.asin().to_degrees();
         let lon = vec.y.to_radians().atan2(vec.x.to_radians()).to_degrees();
         let vec = vec.clone();
 
@@ -66,8 +71,9 @@ impl Point {
         &self.vec
     }
 
+    // 1 degree = 111 111m => 1m = 1.5707979e-7 degree => TODO
     pub fn equals(&self, other: &Point) -> bool {
-        (self.vec - other.vec).magnitude() <= 0.00005
+        Arc::new(self.clone(), other.clone()).central_angle() < 1.5707979e-7
     }
 
     pub fn antipode(&self) -> Point {

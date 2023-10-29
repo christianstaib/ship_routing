@@ -166,4 +166,18 @@ mod tests {
         let arc = Arc::new(from, to);
         assert!((arc.central_angle() - (PI / 2.0)).abs() < 1e-10);
     }
+
+    #[test]
+    fn test_intersection() {
+        let outline_from = Point::from_geodetic(10.9602021, 119.7085977);
+        let outline_to = Point::from_geodetic(10.9380527, 119.7102928);
+        let outline = Arc::new(outline_from, outline_to);
+
+        let ray_from = Point::from_geodetic(10.939165355971703, 119.71220924280686);
+        let ray_to = Point::from_geodetic(11.42324706114331, 119.42008985034511);
+        let ray = Arc::new(ray_from, ray_to);
+
+        let intersect = ray.intersects(&outline);
+        assert!(intersect)
+    }
 }
