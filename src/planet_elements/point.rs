@@ -2,6 +2,7 @@ use std::error::Error;
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
+use rand::Rng;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Point {
@@ -26,6 +27,33 @@ impl Point {
         Point { lat, lon, vec }
     }
 
+    pub fn from_spherical(vec: &Vector3<f64>) -> Point {
+        let lat = vec.z.asin().to_degrees();
+        let lon = vec.y.to_radians().atan2(vec.x.to_radians()).to_degrees();
+        let vec = vec.clone();
+
+        Point { lat, lon, vec }
+    }
+
+    pub fn random() -> Point {
+        let mut rng = rand::thread_rng();
+        let y: f64 = rng.gen_range(-1.0..1.0);
+        let lat_rad: f64 = y.asin();
+        let lat: f64 = lat_rad.to_degrees();
+        let lon: f64 = rng.gen_range(-180.0..180.0);
+        Point::from_geodetic(lat, lon)
+    }
+
+    // http://www.movable-type.co.uk/scripts/latlong-vectors.html
+    pub fn destination_point(start: &Point, bearing: f64, distance: f64) -> Point {
+        let n = Point::from_geodetic(90.0, 0.0);
+        let de = n.vec().cross(start.vec());
+        let dn = start.vec().cross(&de);
+        let d = dn * bearing.cos() + de * bearing.sin();
+        let b = start.vec() * distance.cos() + d * distance.sin();
+        Point::from_spherical(&b)
+    }
+
     pub fn lat(&self) -> f64 {
         self.lat
     }
@@ -46,14 +74,6 @@ impl Point {
         Point::from_spherical(&-self.vec)
     }
 
-    pub fn from_spherical(vec: &Vector3<f64>) -> Point {
-        let lat = vec.z.asin().to_degrees();
-        let lon = vec.y.to_radians().atan2(vec.x.to_radians()).to_degrees();
-        let vec = vec.clone();
-
-        Point { lat, lon, vec }
-    }
-
     pub fn to_vec(&self) -> Vec<f64> {
         vec![self.lon, self.lat]
     }
@@ -71,6 +91,19 @@ impl Point {
             id: None,
             properties: None,
             foreign_members: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Point;
+
+    #[test]
+    fn test_point_convertion() {
+        for _ in 0..100 {
+            let point = Point::random();
+            assert!(point.equals(&Point::from_spherical(point.vec())));
         }
     }
 }

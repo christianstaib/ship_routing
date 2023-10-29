@@ -19,11 +19,42 @@ impl Arc {
         }
     }
 
+    // http://www.movable-type.co.uk/scripts/latlong-vectors.html
+    // http://instantglobe.com/CRANES/GeoCoordTool.html
+    pub fn initial_bearing(&self) -> f64 {
+        let north_pole = Point::from_geodetic(90.0, 0.0);
+
+        let c1 = self.from.vec().cross(&self.to.vec());
+        let c2 = self.from.vec().cross(&north_pole.vec());
+
+        let mut sign = 1.0;
+        if c1.cross(&c2).dot(&self.from.vec()) < 0.0 {
+            sign = -1.0;
+        }
+
+        let sin_theta = c1.cross(&c2).magnitude() * sign;
+        let cos_theta = c1.dot(&c2);
+
+        let mut theta = sin_theta.atan2(cos_theta);
+
+        if theta < 0.0 {
+            theta += 2.0 * PI;
+        }
+
+        //theta * 180.0 / PI
+        theta
+    }
+
     pub fn from_vec(vec: Vec<Vec<f64>>) -> Result<Arc, Box<dyn Error>> {
         Ok(Arc::new(
             Point::from_vec(vec[0].clone())?,
             Point::from_vec(vec[1].clone())?,
         ))
+    }
+
+    pub fn middle(&self) -> Point {
+        Point::from_spherical(&(self.from().vec() + (self.to().vec() - self.from().vec()) * 0.5))
+        // Point::from_spherical(&(self.from.vec() + self.to.vec()))
     }
 
     pub fn from(&self) -> &Point {
@@ -77,7 +108,7 @@ impl Arc {
         self.intersection(other).is_some()
     }
 
-    fn normal(&self) -> Vector3<f64> {
+    pub fn normal(&self) -> Vector3<f64> {
         self.from.vec().cross(&self.to.vec()).normalize()
     }
 

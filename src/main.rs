@@ -1,4 +1,5 @@
 use std::{
+    f64::consts::PI,
     sync::{Arc, Mutex},
     time::Instant,
 };
@@ -8,7 +9,28 @@ use osm_test::{point_generator::PointGenerator, Planet, Point};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 fn main() {
-    _generate_points();
+    _get_normal();
+    // _generate_points();
+}
+
+fn _get_normal() {
+    const NORMAL_PLANET_TEST: &str = "tests/data/test_geojson/normal_test.geojson";
+    let mut planet = Planet::new();
+    let a = Point::from_geodetic(0.0, 0.0);
+    let b = Point::from_geodetic(-1.0, -1.0);
+    let ab = osm_test::Arc::new(a, b);
+    let middle = ab.middle();
+    let destination = Point::destination_point(&middle, ab.initial_bearing() + (PI / 2.0), 0.1);
+    let md = osm_test::Arc::new(middle, destination);
+
+    println!("inital bearing is {}", ab.initial_bearing());
+
+    planet.points.push(a);
+    planet.points.push(b);
+    planet.lines.push(ab);
+    planet.lines.push(md);
+    planet.points.push(middle);
+    planet.to_file(NORMAL_PLANET_TEST);
 }
 
 fn _generate_points() {
