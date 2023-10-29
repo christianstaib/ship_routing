@@ -26,6 +26,14 @@ impl Point {
         Point { lat, lon, vec }
     }
 
+    pub fn equals(&self, other: &Point) -> bool {
+        (self.vec - other.vec).magnitude() <= 0.00005
+    }
+
+    pub fn antipode(&self) -> Point {
+        Point::from_spherical(&-self.vec)
+    }
+
     pub fn from_spherical(vec: &Vector3<f64>) -> Point {
         let lat = vec.z.asin().to_degrees();
         let lon = vec.y.to_radians().atan2(vec.x.to_radians()).to_degrees();

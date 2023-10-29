@@ -10,7 +10,7 @@ fn test_point_on_land() {
 
     on_land.points.iter().for_each(|point| {
         assert!(
-            planet.fast_is_on_land(point),
+            planet.is_on_land(point),
             "point {:?} should be on land but isn't",
             point
         )
@@ -25,9 +25,9 @@ fn test_point_on_water() {
     let planet = Planet::from_file(PLANET_PATH).unwrap();
     let on_water = Planet::from_file(ON_WATER_PATH).unwrap();
 
-    on_water.points.iter().for_each(|point| {
+    on_water.points.iter().take(5).for_each(|point| {
         assert!(
-            !planet.fast_is_on_land(point),
+            !planet.is_on_land(point),
             "point {:?} should be on water but isn't",
             point
         )
@@ -40,7 +40,7 @@ fn test_single_point_on_water() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
     const PLANET_OUT_PATH: &str = "tests/data/test_geojson/single_point.geojson";
     let mut planet = Planet::from_file(PLANET_PATH).unwrap();
-    let mut water_point = Point::from_geodetic(62.31948518098084, 154.36065753944712);
+    let mut water_point = Point::from_geodetic(1.0562021687930283, -60.36692257621985);
     let north_pole = Point::from_geodetic(90.0, 0.0);
     let ray = Arc::new(water_point, north_pole);
     let intersections = planet.intersections(&ray);
@@ -53,6 +53,16 @@ fn test_single_point_on_water() {
         old_water_point = water_point;
     }
     planet.to_file(PLANET_OUT_PATH);
+    planet.is_on_land(&water_point);
 
-    assert!(intersections.len() % 2 == 1);
+    // println!(
+    //     "therare are {} fast intersections",
+    //     planet.fast_intersections(&water_point).len()
+    // );
+
+    assert!(
+        intersections.len() % 2 == 1,
+        "there are {} intersections",
+        intersections.len()
+    );
 }

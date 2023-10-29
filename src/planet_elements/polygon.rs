@@ -17,8 +17,8 @@ impl Polygon {
             .windows(2)
             .map(|arc| Arc::new(arc[0], arc[1]))
             .for_each(|arc| {
-                let min_lon = arc.start.lon.min(arc.end.lon) as isize + 180;
-                let max_lon = arc.start.lon.max(arc.end.lon) as isize + 180;
+                let min_lon = arc.from().lon.min(arc.to().lon) as isize + 180;
+                let max_lon = arc.from().lon.max(arc.to().lon) as isize + 180;
                 fast_outline[min_lon as usize].push(arc);
                 if max_lon != min_lon {
                     fast_outline[max_lon as usize].push(arc);
@@ -38,48 +38,8 @@ impl Polygon {
         Ok(Polygon::new(outline))
     }
 
-    pub fn fast_intersections(&self, point: &Point) -> Vec<Point> {
-        let north_pole = Point::from_geodetic(90.0, 0.0);
-        let ray = Arc {
-            start: point.clone(),
-            end: north_pole.clone(),
-        };
-        self.outline
-            .windows(2)
-            .map(|points| Arc::new(points[0], points[1]))
-            .filter(|arc| {
-                let lon_min = arc.start.lon.min(arc.end.lon);
-                let lon_max = arc.start.lon.max(arc.end.lon);
-                lon_min <= point.lon && point.lon <= lon_max
-            })
-            .filter_map(|arc| ray.intersection(&arc))
-            .collect()
-    }
-
-    pub fn fast_contains(&self, point: &Point) -> bool {
-        let north_pole = Point::from_geodetic(90.0, 0.0);
-        let ray = Arc {
-            start: point.clone(),
-            end: north_pole.clone(),
-        };
-        let intersections = self.fast_outline[(point.lon as isize + 180) as usize]
-            .iter()
-            .filter(|arc| {
-                let lon_min = arc.start.lon.min(arc.end.lon);
-                let lon_max = arc.start.lon.max(arc.end.lon);
-                lon_min <= point.lon && point.lon <= lon_max
-            })
-            .filter(|arc| ray.intersects(arc))
-            .count();
-
-        intersections % 2 == 1
-    }
-
     pub fn contains(&self, point: &Point, not_inside: &Point) -> bool {
-        let ray = Arc {
-            start: point.clone(),
-            end: not_inside.clone(),
-        };
+        let ray = Arc::new(point.clone(), not_inside.clone());
         let intersections = self.intersections(&ray).len();
 
         intersections % 2 == 1

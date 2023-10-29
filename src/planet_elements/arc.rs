@@ -1,18 +1,22 @@
-use std::error::Error;
+use std::{error::Error, f64::consts::PI};
 
 use geojson::{Feature, Geometry, Value};
+use nalgebra::Vector3;
 
 use super::Point;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Arc {
-    pub start: Point,
-    pub end: Point,
+    from: Point,
+    to: Point,
 }
 
 impl Arc {
     pub fn new(start: Point, end: Point) -> Arc {
-        Arc { start, end }
+        Arc {
+            from: start,
+            to: end,
+        }
     }
 
     pub fn from_vec(vec: Vec<Vec<f64>>) -> Result<Arc, Box<dyn Error>> {
@@ -22,28 +26,50 @@ impl Arc {
         ))
     }
 
-    // https://blog.mbedded.ninja/mathematics/geometry/spherical-geometry/finding-the-intersection-of-two-arcs-that-lie-on-a-sphere/
+    pub fn from(&self) -> &Point {
+        &self.from
+    }
+
+    pub fn to(&self) -> &Point {
+        &self.to
+    }
+
     pub fn intersection(&self, other: &Arc) -> Option<Point> {
-        let normal1 = (self.start.vec).cross(&self.end.vec);
-        let normal2 = (other.start.vec).cross(&other.end.vec);
-
-        let line = normal1.cross(&normal2);
-        if line.magnitude() == 0.0 {
-            return None;
+        // check if both end or start on same point
+        if self.from.equals(&other.from) || self.from.equals(&other.to) {
+            return Some(self.from);
+        } else if self.to.equals(&other.from) || self.to.equals(&other.to) {
+            return Some(self.to);
         }
-        let line = line.normalize();
 
-        let intersection1 = line;
-        let intersection2 = -1.0 * line;
-
-        let intersection1 = Point::from_spherical(&intersection1);
-        let intersection2 = Point::from_spherical(&intersection2);
-
-        if self.contains_point(&intersection1) && other.contains_point(&intersection1) {
-            return Some(intersection1);
-        } else if self.contains_point(&intersection2) && other.contains_point(&intersection2) {
-            return Some(intersection2);
+        // check if both arcs are near enough to each other that they could intersect
+        let summed_angle = self.central_angle() + other.central_angle();
+        if summed_angle < PI {
+            let summed_angle_cos = summed_angle.cos() - 0.0005;
+            if self.from.vec.dot(&other.from.vec) < summed_angle_cos
+                || self.from.vec.dot(&other.to.vec) < summed_angle_cos
+                || self.to.vec.dot(&other.from.vec) < summed_angle_cos
+                || self.to.vec.dot(&other.to.vec) < summed_angle_cos
+            {
+                return None;
+            }
         }
+
+        // check if intersection of both great circles lies on both arcs
+        let candidate = self.normal().cross(&other.normal()).normalize();
+        let candidate = Point::from_spherical(&candidate);
+        if self.validate_intersection_candidate(&candidate)
+            && other.validate_intersection_candidate(&candidate)
+        {
+            return Some(candidate);
+        }
+        let candidate = candidate.antipode();
+        if self.validate_intersection_candidate(&candidate)
+            && other.validate_intersection_candidate(&candidate)
+        {
+            return Some(candidate);
+        }
+
         None
     }
 
@@ -51,30 +77,40 @@ impl Arc {
         self.intersection(other).is_some()
     }
 
-    pub fn contains_point(&self, point: &Point) -> bool {
-        let start_to_point = Arc::new(self.start, *point);
-        let point_to_end = Arc::new(*point, self.end);
+    fn normal(&self) -> Vector3<f64> {
+        self.from.vec.cross(&self.to.vec).normalize()
+    }
 
-        let true_angle = self.central_angle();
-        let angled_sum = start_to_point.central_angle() + point_to_end.central_angle();
+    fn from_normal(&self) -> Vector3<f64> {
+        self.normal().cross(&self.from.vec).normalize()
+    }
 
-        (angled_sum - true_angle).abs() < 0.0005
+    fn to_normal(&self) -> Vector3<f64> {
+        self.normal().cross(&self.to.vec).normalize()
+    }
+
+    fn validate_intersection_candidate(&self, point: &Point) -> bool {
+        let a0 = point.vec.dot(&self.from_normal());
+        let a1 = point.vec.dot(&self.to_normal());
+
+        (a0 > 0.0 && a1 < 0.0)
+            || (a0 >= 0.0 && a1 <= 0.0 && (point.equals(&self.from) || point.equals(&self.to)))
     }
 
     pub fn central_angle(&self) -> f64 {
-        let a = self.start.vec;
-        let b = self.end.vec;
+        let a = self.from.vec;
+        let b = self.to.vec;
         a.angle(&b)
     }
 
     pub fn to_vec(&self) -> Vec<Vec<f64>> {
-        vec![self.start.to_vec(), self.end.to_vec()]
+        vec![self.from.to_vec(), self.to.to_vec()]
     }
 
     pub fn to_feature(&self) -> Feature {
         let point = Geometry::new(Value::LineString(vec![
-            self.start.to_vec(),
-            self.end.to_vec(),
+            self.from.to_vec(),
+            self.to.to_vec(),
         ]));
         Feature {
             bbox: None,
@@ -83,10 +119,6 @@ impl Arc {
             properties: None,
             foreign_members: None,
         }
-    }
-
-    pub fn to_json(&self) -> String {
-        self.to_feature().to_string()
     }
 }
 
@@ -98,9 +130,9 @@ mod tests {
 
     #[test]
     fn test_central_angle() {
-        let start = Point::from_geodetic(90.0, 0.0);
-        let end = Point::from_geodetic(0.0, 0.0);
-        let arc = Arc::new(start, end);
+        let from = Point::from_geodetic(90.0, 0.0);
+        let to = Point::from_geodetic(0.0, 0.0);
+        let arc = Arc::new(from, to);
         assert!((arc.central_angle() - (PI / 2.0)).abs() < 1e-10);
     }
 }

@@ -36,14 +36,6 @@ impl Planet {
         raw_osm_data.to_planet()
     }
 
-    pub fn fast_intersections(&self, point: &Point) -> Vec<Point> {
-        self.polygons
-            .iter()
-            .map(|polygon| polygon.fast_intersections(point))
-            .flatten()
-            .collect()
-    }
-
     pub fn intersections(&self, line: &Arc) -> Vec<Point> {
         self.polygons
             .iter()
@@ -57,12 +49,6 @@ impl Planet {
         self.polygons
             .iter()
             .any(|polygon| polygon.contains(point, &north_pole))
-    }
-
-    pub fn fast_is_on_land(&self, point: &Point) -> bool {
-        self.polygons
-            .iter()
-            .any(|polygon| polygon.fast_contains(point))
     }
 
     pub fn from_geojson(json: &str) -> Result<Planet, Box<dyn Error>> {
