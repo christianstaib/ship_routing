@@ -7,27 +7,11 @@ use super::{Arc, Point};
 #[derive(Clone, Debug)]
 pub struct Polygon {
     pub outline: Vec<Point>,
-    fast_outline: Vec<Vec<Arc>>,
 }
 
 impl Polygon {
     pub fn new(outline: Vec<Point>) -> Polygon {
-        let mut fast_outline = vec![Vec::new(); 361];
-        outline
-            .windows(2)
-            .map(|arc| Arc::new(arc[0], arc[1]))
-            .for_each(|arc| {
-                let min_lon = arc.from().lon.min(arc.to().lon) as isize + 180;
-                let max_lon = arc.from().lon.max(arc.to().lon) as isize + 180;
-                fast_outline[min_lon as usize].push(arc);
-                if max_lon != min_lon {
-                    fast_outline[max_lon as usize].push(arc);
-                }
-            });
-        Polygon {
-            outline,
-            fast_outline,
-        }
+        Polygon { outline }
     }
 
     pub fn from_vec(vec: Vec<Vec<f64>>) -> Result<Polygon, Box<dyn Error>> {
@@ -59,7 +43,7 @@ impl Polygon {
         let polygon = self
             .outline
             .iter()
-            .map(|&coordinate| vec![coordinate.lon, coordinate.lat])
+            .map(|&coordinate| vec![coordinate.lon(), coordinate.lat()])
             .collect();
 
         let polygon = Geometry::new(Value::Polygon(vec![polygon]));

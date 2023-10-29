@@ -46,10 +46,10 @@ impl Arc {
         let summed_angle = self.central_angle() + other.central_angle();
         if summed_angle < PI {
             let summed_angle_cos = summed_angle.cos() - 0.0005;
-            if self.from.vec.dot(&other.from.vec) < summed_angle_cos
-                || self.from.vec.dot(&other.to.vec) < summed_angle_cos
-                || self.to.vec.dot(&other.from.vec) < summed_angle_cos
-                || self.to.vec.dot(&other.to.vec) < summed_angle_cos
+            if self.from.vec().dot(&other.from.vec()) < summed_angle_cos
+                || self.from.vec().dot(&other.to.vec()) < summed_angle_cos
+                || self.to.vec().dot(&other.from.vec()) < summed_angle_cos
+                || self.to.vec().dot(&other.to.vec()) < summed_angle_cos
             {
                 return None;
             }
@@ -78,28 +78,28 @@ impl Arc {
     }
 
     fn normal(&self) -> Vector3<f64> {
-        self.from.vec.cross(&self.to.vec).normalize()
+        self.from.vec().cross(&self.to.vec()).normalize()
     }
 
     fn from_normal(&self) -> Vector3<f64> {
-        self.normal().cross(&self.from.vec).normalize()
+        self.normal().cross(&self.from.vec()).normalize()
     }
 
     fn to_normal(&self) -> Vector3<f64> {
-        self.normal().cross(&self.to.vec).normalize()
+        self.normal().cross(&self.to.vec()).normalize()
     }
 
     fn validate_intersection_candidate(&self, point: &Point) -> bool {
-        let a0 = point.vec.dot(&self.from_normal());
-        let a1 = point.vec.dot(&self.to_normal());
+        let a0 = point.vec().dot(&self.from_normal());
+        let a1 = point.vec().dot(&self.to_normal());
 
         (a0 > 0.0 && a1 < 0.0)
             || (a0 >= 0.0 && a1 <= 0.0 && (point.equals(&self.from) || point.equals(&self.to)))
     }
 
     pub fn central_angle(&self) -> f64 {
-        let a = self.from.vec;
-        let b = self.to.vec;
+        let a = self.from.vec();
+        let b = self.to.vec();
         a.angle(&b)
     }
 

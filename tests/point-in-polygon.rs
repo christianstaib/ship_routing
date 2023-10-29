@@ -36,7 +36,7 @@ fn test_point_on_water() {
 
 #[test]
 #[ignore]
-fn test_single_point_on_water() {
+fn visualize_single_point() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
     const PLANET_OUT_PATH: &str = "tests/data/test_geojson/single_point.geojson";
     let mut planet = Planet::from_file(PLANET_PATH).unwrap();
@@ -46,23 +46,12 @@ fn test_single_point_on_water() {
     let intersections = planet.intersections(&ray);
     planet.points.extend(intersections.clone());
     let mut old_water_point = water_point.clone();
-    while water_point.lat < 89.0 {
-        water_point.lat += 0.1;
+    while water_point.lat() < 89.0 {
+        water_point = Point::from_geodetic(water_point.lat() + 0.1, water_point.lon());
         let line = Arc::new(old_water_point, water_point);
         planet.lines.push(line);
         old_water_point = water_point;
     }
     planet.to_file(PLANET_OUT_PATH);
     planet.is_on_land(&water_point);
-
-    // println!(
-    //     "therare are {} fast intersections",
-    //     planet.fast_intersections(&water_point).len()
-    // );
-
-    assert!(
-        intersections.len() % 2 == 1,
-        "there are {} intersections",
-        intersections.len()
-    );
 }

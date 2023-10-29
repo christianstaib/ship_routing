@@ -5,9 +5,9 @@ use nalgebra::Vector3;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Point {
-    pub lat: f64,
-    pub lon: f64,
-    pub vec: Vector3<f64>,
+    lat: f64,
+    lon: f64,
+    vec: Vector3<f64>,
 }
 
 impl Point {
@@ -24,6 +24,18 @@ impl Point {
         );
 
         Point { lat, lon, vec }
+    }
+
+    pub fn lat(&self) -> f64 {
+        self.lat
+    }
+
+    pub fn lon(&self) -> f64 {
+        self.lon
+    }
+
+    pub fn vec(&self) -> &Vector3<f64> {
+        &self.vec
     }
 
     pub fn equals(&self, other: &Point) -> bool {
