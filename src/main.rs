@@ -8,8 +8,11 @@ use osm_test::{point_generator::PointGenerator, Planet, Point};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 fn main() {
+    _generate_points();
+}
+
+fn _generate_points() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
-    // const PLANET_PATH: &str = "data/osm/planet-coastlines.osm.pbf";
     const LAND_POINTS_PATH: &str = "tests/data/geojson/points_on_land.geojson";
     const WATER_POINTS_PATH: &str = "tests/data/geojson/points_on_water.geojson";
     const N: usize = 100_000;

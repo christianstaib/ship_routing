@@ -1,4 +1,5 @@
 use osm_test::{Arc, Planet, Point};
+use rayon::prelude::*;
 
 #[test]
 fn test_point_on_land() {
@@ -8,7 +9,7 @@ fn test_point_on_land() {
     let planet = Planet::from_file(PLANET_PATH).unwrap();
     let on_land = Planet::from_file(ON_LAND_PATH).unwrap();
 
-    on_land.points.iter().for_each(|point| {
+    on_land.points.par_iter().for_each(|point| {
         assert!(
             planet.is_on_land(point),
             "point {:?} should be on land but isn't",
@@ -25,7 +26,7 @@ fn test_point_on_water() {
     let planet = Planet::from_file(PLANET_PATH).unwrap();
     let on_water = Planet::from_file(ON_WATER_PATH).unwrap();
 
-    on_water.points.iter().take(5).for_each(|point| {
+    on_water.points.par_iter().for_each(|point| {
         assert!(
             !planet.is_on_land(point),
             "point {:?} should be on water but isn't",
