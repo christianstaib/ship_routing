@@ -50,13 +50,6 @@ impl Planet {
             .any(|polygon| polygon.contains_inside(point))
     }
 
-    pub fn is_on_land(&self, point: &Point) -> bool {
-        let north_pole = Point::from_geodetic(90.0, 0.0);
-        self.polygons
-            .iter()
-            .any(|polygon| polygon.contains(point, &north_pole))
-    }
-
     pub fn from_geojson(json: &str) -> Result<Planet, Box<dyn Error>> {
         let feature_collection = FeatureCollection::from_str(json)?;
         let mut planet = Planet::new();

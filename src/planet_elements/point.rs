@@ -73,7 +73,7 @@ impl Point {
 
     // 1 degree = 111 111m => 1m = 1.5707979e-7 degree => TODO
     pub fn equals(&self, other: &Point) -> bool {
-        Arc::new(self.clone(), other.clone()).central_angle() < 1.5707979e-7
+        Arc::new(self, other).central_angle() < 1.5707979e-7
     }
 
     pub fn antipode(&self) -> Point {

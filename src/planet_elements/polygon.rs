@@ -32,15 +32,15 @@ impl Polygon {
     }
 
     pub fn get_inside_point(&self) -> Point {
-        let ab = Arc::new(self.outline[0], self.outline[1]);
+        let ab = Arc::new(&self.outline[0], &self.outline[1]);
         let middle = ab.middle();
         let destination =
             Point::destination_point(&middle, ab.initial_bearing() + (PI / 2.0), -0.01);
-        let md = Arc::new(middle, destination);
+        let md = Arc::new(&middle, &destination);
         let mut intersections = self.intersections(&md);
         intersections.sort_by(|&a, &b| {
-            let a_dist = Arc::new(middle, a).central_angle();
-            let b_dist = Arc::new(middle, b).central_angle();
+            let a_dist = Arc::new(&middle, &a).central_angle();
+            let b_dist = Arc::new(&middle, &b).central_angle();
             a_dist.partial_cmp(&b_dist).unwrap()
         });
 
@@ -55,21 +55,14 @@ impl Polygon {
 
         intersections.push(destination);
 
-        Arc::new(intersections[0], intersections[1]).middle()
+        Arc::new(&intersections[0], &intersections[1]).middle()
     }
 
     pub fn contains_inside(&self, point: &Point) -> bool {
-        let ray = Arc::new(point.clone(), self.inside_point.clone());
+        let ray = Arc::new(point, &self.inside_point);
         let intersections = self.intersections(&ray).len();
 
         intersections % 2 == 0
-    }
-
-    pub fn contains(&self, point: &Point, not_inside: &Point) -> bool {
-        let ray = Arc::new(point.clone(), not_inside.clone());
-        let intersections = self.intersections(&ray).len();
-
-        intersections % 2 == 1
     }
 
     pub fn intersections(&self, line: &Arc) -> Vec<Point> {
@@ -77,9 +70,7 @@ impl Polygon {
             .outline
             .windows(2)
             .filter_map(|outline| {
-                let outline_from = Point::from_geodetic(10.9602021, 119.7085977);
-
-                let outline = Arc::new(outline[0], outline[1]);
+                let outline = Arc::new(&outline[0], &outline[1]);
                 line.intersection(&outline)
             })
             .collect();
