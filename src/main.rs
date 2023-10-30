@@ -4,14 +4,64 @@ use std::{
     time::Instant,
 };
 
+use geo::polygon;
 use indicatif::ProgressIterator;
-use osm_test::{point_generator::PointGenerator, Planet, Point};
+use osm_test::{point_generator::PointGenerator, Planet, Point, Polygon};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 fn main() {
     // _test_inside_point();
     // _get_normal();
-    _generate_points();
+    // _generate_points();
+    test_clipping();
+}
+
+fn test_clipping() {
+    const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
+    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/test_clipping.geojson";
+
+    // let planet = Planet::from_osm(PLANET_PATH);
+    let mut planet = Planet::from_file(PLANET_PATH).unwrap();
+    let mut out_planet = Planet::new();
+
+    let a = Point::from_geodetic(0.0, 0.0);
+    let b = Point::from_geodetic(0.0, 3.0);
+    let c = Point::from_geodetic(1.0, 3.0);
+    let d = Point::from_geodetic(1.0, 1.0);
+    let e = Point::from_geodetic(2.0, 1.0);
+    let f = Point::from_geodetic(2.0, 3.0);
+    let g = Point::from_geodetic(3.0, 3.0);
+    let h = Point::from_geodetic(3.0, 0.0);
+
+    let outline = vec![a, b, c, d, e, f, g, h, a];
+    let polygon = Polygon::new(outline);
+    // out_planet.polygons.push(polygon.clone());
+
+    let a = Point::from_geodetic(-1.0, 2.0);
+    let b = Point::from_geodetic(-1.0, 4.0);
+    let c = Point::from_geodetic(4.0, 4.0);
+    let d = Point::from_geodetic(4.0, 2.0);
+
+    let outline = vec![a, b, c, d, a];
+    let clipping_polygon = Polygon::new(outline);
+    // out_planet.polygons.push(clipping_polygon.clone());
+
+    let clipped = polygon.clip(&clipping_polygon, &mut out_planet);
+
+    out_planet.polygons.extend(clipped);
+    //clipping_polygon.clip(&polygon, &mut out_planet);
+
+    // let intersections = polygon.intersections_polygon(&clipping_polygon);
+    // intersections
+    //     .iter()
+    //     .for_each(|(self_arc, other_arc, intersection)| match intersection {
+    //         osm_test::PointClassification::InIntersection(point) => {
+    //             out_planet.points.push(point.clone())
+    //         }
+    //         _ => (),
+    //     });
+
+    out_planet.to_file(OUT_PLANET_PATH);
 }
 
 fn _test_inside_point() {

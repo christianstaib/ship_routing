@@ -5,7 +5,7 @@ use nalgebra::Vector3;
 
 use super::Point;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Arc {
     from: Point,
     to: Point,
