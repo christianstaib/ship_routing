@@ -110,8 +110,16 @@ impl Polygon {
     }
 
     // clip self by other
-    pub fn clip(&self, other: &Polygon, planet: &mut Planet) -> Vec<Polygon> {
+    pub fn clip(&self, other: &Polygon) -> Vec<Polygon> {
         let intersections = self.intersections_polygon(other);
+
+        if intersections.is_empty() {
+            if other.contains_inside(&self.outline[0]) {
+                return vec![self.clone()];
+            } else {
+                return Vec::new();
+            }
+        }
 
         let mut self_map: Vec<(Arc, Vec<PointClassification>)> = Vec::new();
         let mut other_map: Vec<(Arc, Vec<PointClassification>)> = Vec::new();
@@ -200,7 +208,6 @@ impl Polygon {
             self_orderd[idx] = PointClassification::Visited(incoming);
             'self_loop: loop {
                 idx = (idx - 1) % self_orderd.len();
-                println!("{:?}", self_orderd[idx].inner());
                 match self_orderd[idx] {
                     PointClassification::Visited(_) => panic!("should not happen"),
                     PointClassification::Unvisited(p) => {
@@ -219,13 +226,11 @@ impl Polygon {
                 .iter()
                 .position(|class| class.inner() == outline.last().unwrap())
                 .unwrap();
-            println!("class is {:?}", other_orderd[idx]);
             let incoming = other_orderd[idx].inner().clone();
             outline.push(incoming);
             other_orderd[idx] = PointClassification::Visited(incoming);
             'other_loop: loop {
                 idx = (idx - 1) % other_orderd.len();
-                println!("class is {:?}", other_orderd[idx]);
                 match other_orderd[idx] {
                     PointClassification::Visited(_) => panic!("visited should not happen"),
                     PointClassification::Unvisited(p) => {
