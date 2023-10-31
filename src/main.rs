@@ -21,18 +21,29 @@ fn test_clipping_three() {
     const OUT_PLANET_PATH: &str = "tests/data/test_geojson/test_clipping3.geojson";
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
     let planet = Planet::from_file(PLANET_PATH).unwrap();
-    let mut out_planet = Planet::new();
+    let mut out_planet = Arc::new(Mutex::new(Planet::new()));
 
-    (-3..4).progress().for_each(|lon| {
-        (48..53).for_each(|lat| {
+    let lon_min = -6;
+    let lon_max = 6;
+    let lat_min = 49;
+    let lat_max = 61;
+    let sw = Point::from_geodetic(lat_min as f64, lon_min as f64);
+    let ne = Point::from_geodetic(lat_max as f64, lon_max as f64);
+    let clipping_polygon = generate_rectangle(&sw, &ne);
+    let polygons: Vec<Polygon> = planet
+        .polygons
+        .iter()
+        .map(|polygon| polygon.clip(&clipping_polygon))
+        .flatten()
+        .collect();
+    (-5..5).progress().par_bridge().for_each(|lon| {
+        (50..60).for_each(|lat| {
+            println!("lat {} lon {}", lat, lon);
             let sw = Point::from_geodetic(lat as f64, lon as f64);
             let ne = Point::from_geodetic((lat + 1) as f64, (lon + 1) as f64);
-            println!("sw {:?}", sw);
-            println!("ne {:?}", ne);
             let clipping_polygon = generate_rectangle(&sw, &ne);
-            out_planet.polygons.extend(
-                planet
-                    .polygons
+            out_planet.lock().unwrap().polygons.extend(
+                polygons
                     .iter()
                     .map(|polygon| polygon.clip(&clipping_polygon))
                     .flatten(),
@@ -41,20 +52,22 @@ fn test_clipping_three() {
         })
     });
 
-    out_planet.to_file(OUT_PLANET_PATH);
+    out_planet.lock().unwrap().to_file(OUT_PLANET_PATH);
 }
 
 fn generate_rectangle(sw: &Point, ne: &Point) -> Polygon {
     assert!(sw.lat() < ne.lat());
     assert!(sw.lon() < ne.lon());
 
-    let outline = vec![
+    let mut outline = vec![
         Point::from_geodetic(sw.lat(), sw.lon()),
         Point::from_geodetic(sw.lat(), ne.lon()),
         Point::from_geodetic(ne.lat(), ne.lon()),
         Point::from_geodetic(ne.lat(), sw.lon()),
         Point::from_geodetic(sw.lat(), sw.lon()),
     ];
+    outline.dedup();
+    assert!(outline.len() >= 4);
     Polygon::new(outline)
 }
 

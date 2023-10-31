@@ -237,7 +237,6 @@ impl Polygon {
 
             'outer: loop {
                 let incoming = self_orderd[idx].inner().clone();
-                println!("incoming on {:?}", incoming);
                 outline.push(incoming);
                 self_orderd[idx] = PointClassification::Visited(incoming);
                 'self_loop: loop {
@@ -263,7 +262,6 @@ impl Polygon {
                     .position(|class| class.inner() == outline.last().unwrap())
                     .unwrap();
                 let outgoing = other_orderd[idx].inner().clone();
-                println!("outgoing on {:?}", outgoing);
                 outline.push(outgoing);
                 other_orderd[idx] = PointClassification::Visited(outgoing);
                 'other_loop: loop {
