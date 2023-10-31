@@ -13,8 +13,14 @@ fn main() {
     // _get_normal();
     // _generate_points();
     // test_clipping();
-    // test_clipping_two();
-    test_clipping_three();
+    //test_clipping_two();
+    // test_clipping_three();
+
+    let p1 = Point::from_geodetic(0.0, 0.0);
+    let p2 = Point::from_geodetic(1.0, 1.0);
+    let a1 = osm_test::Arc::new(&p1, &p2);
+    let a2 = osm_test::Arc::new(&p1, &p2);
+    println!("{:?}", a1.intersects(&a2));
 }
 
 fn test_clipping_three() {
@@ -72,20 +78,30 @@ fn generate_rectangle(sw: &Point, ne: &Point) -> Polygon {
 }
 
 fn test_clipping_two() {
-    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/test_clipping.geojson";
+    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/test_clipping_2.geojson";
     let mut out_planet = Planet::new();
 
-    let sw = Point::from_geodetic(0.0, -2.0);
+    let sw = Point::from_geodetic(0.0, -1.0);
     let ne = Point::from_geodetic(1.0, 2.0);
     let polygon = generate_rectangle(&sw, &ne);
     out_planet.polygons.push(polygon.clone());
 
-    let sw = Point::from_geodetic(-1.0, -1.0);
+    let sw = Point::from_geodetic(-0.0, -0.5);
     let ne = Point::from_geodetic(2.0, 0.0);
     let clipping_polygon = generate_rectangle(&sw, &ne);
     out_planet.polygons.push(clipping_polygon.clone());
 
-    out_planet.polygons.extend(polygon.clip(&clipping_polygon));
+    // out_planet.polygons.extend(polygon.clip(&clipping_polygon));
+    out_planet.points.extend(
+        polygon
+            .intersections_polygon(&clipping_polygon)
+            .iter()
+            .filter_map(|x| match x.2 {
+                osm_test::PointClassification::OutIntersection(p) => Some(p),
+                //osm_test::PointClassification::InIntersection(p) => Some(p),
+                _ => None,
+            }),
+    );
 
     out_planet.to_file(OUT_PLANET_PATH);
 }

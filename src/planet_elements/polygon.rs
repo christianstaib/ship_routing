@@ -126,11 +126,17 @@ impl Polygon {
                     .map(|other_arc| Arc::new(&other_arc[0], &other_arc[1]))
                     .for_each(|other_arc| {
                         if let Some(intersection) = self_arc.intersection(&other_arc) {
-                            let intersection =
-                                match self_arc.normal().dot(&other_arc.to().vec()) >= 0.0 {
-                                    true => PointClassification::InIntersection(intersection),
-                                    false => PointClassification::OutIntersection(intersection),
-                                };
+                            let dot_product = self_arc.normal().dot(&other_arc.to().vec());
+                            let self_bearing = self_arc.initial_bearing();
+                            let other_bearing = other_arc.initial_bearing();
+                            println!("{}", self_bearing / PI);
+                            println!("{}", other_bearing / PI);
+                            println!("");
+
+                            let intersection = match dot_product >= 0.0 {
+                                true => PointClassification::InIntersection(intersection),
+                                false => PointClassification::OutIntersection(intersection),
+                            };
                             intersections.push((self_arc, other_arc, intersection));
                         }
                     });

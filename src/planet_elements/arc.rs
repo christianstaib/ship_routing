@@ -125,7 +125,9 @@ impl Arc {
         let a1 = point.vec().dot(&self.to_normal());
 
         (a0 > 0.0 && a1 < 0.0)
-            || (a0 >= 0.0 && a1 <= 0.0 && (point.equals(&self.from) || point.equals(&self.to)))
+        //    || (a0 >= 0.0 && a1 <= 0.0 && (point.equals(&self.from) || point.equals(&self.to)))
+            || ( a1 <= 0.0 && (point.equals(&self.from) || point.equals(&self.to)))
+            || (a0 >= 0.0  && (point.equals(&self.from) || point.equals(&self.to)))
     }
 
     pub fn central_angle(&self) -> f64 {
