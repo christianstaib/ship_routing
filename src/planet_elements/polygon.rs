@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, f64::consts::PI};
+use std::{collections::HashMap, error::Error, f64::consts::PI, vec};
 
 use geojson::{Feature, Geometry, Value};
 
@@ -9,7 +9,7 @@ use super::{Arc, Point};
 #[derive(Clone, Debug)]
 pub struct Polygon {
     pub outline: Vec<Point>,
-    inside_point: Point,
+    pub inside_point: Point,
 }
 
 #[derive(Clone, Debug, Copy, PartialEq)]
@@ -48,6 +48,35 @@ impl Polygon {
             .map(|point| Point::from_vec(point).unwrap())
             .collect();
         Ok(Polygon::new(outline))
+    }
+
+    pub fn get_inside_point_better(&self, plnet: &mut Planet) -> Point {
+        let ab = Arc::new(&self.outline[0], &self.outline[1]);
+        let middle = ab.middle();
+        let destination =
+            Point::destination_point(&middle, ab.initial_bearing() + (PI / 2.0), -0.01);
+        let md = Arc::new(&middle, &destination);
+        let mut intersections = self.intersections(&md);
+        intersections.sort_by(|&a, &b| {
+            let a_dist = Arc::new(&middle, &a).central_angle();
+            let b_dist = Arc::new(&middle, &b).central_angle();
+            a_dist.partial_cmp(&b_dist).unwrap()
+        });
+
+        // make sure middle is in list
+        if let Some(first) = intersections.first() {
+            if !middle.equals(first) {
+                intersections.insert(0, middle);
+            }
+        } else {
+            intersections.insert(0, middle);
+        }
+
+        intersections.push(destination);
+
+        let arc = Arc::new(&intersections[0], &intersections[1]);
+        plnet.lines.push(arc);
+        arc.middle()
     }
 
     pub fn get_inside_point(&self) -> Point {
@@ -114,6 +143,9 @@ impl Polygon {
         let intersections = self.intersections_polygon(other);
 
         if intersections.is_empty() {
+            if self.contains_inside(&other.outline[0]) {
+                return vec![other.clone()];
+            }
             if other.contains_inside(&self.outline[0]) {
                 return vec![self.clone()];
             } else {
@@ -203,47 +235,53 @@ impl Polygon {
         }) {
             let mut outline = Vec::new();
 
-            let incoming = self_orderd[idx].inner().clone();
-            outline.push(incoming);
-            self_orderd[idx] = PointClassification::Visited(incoming);
-            'self_loop: loop {
-                idx = (idx - 1) % self_orderd.len();
-                match self_orderd[idx] {
-                    PointClassification::Visited(_) => panic!("should not happen"),
-                    PointClassification::Unvisited(p) => {
-                        outline.push(p);
-                        self_orderd[idx] = PointClassification::Visited(p);
-                    }
-                    PointClassification::InIntersection(_) => panic!("should not happen"),
-                    PointClassification::OutIntersection(p) => {
-                        self_orderd[idx] = PointClassification::Visited(p);
-                        outline.push(p);
-                        break 'self_loop;
-                    }
-                }
-            }
-            idx = other_orderd
-                .iter()
-                .position(|class| class.inner() == outline.last().unwrap())
-                .unwrap();
-            let incoming = other_orderd[idx].inner().clone();
-            outline.push(incoming);
-            other_orderd[idx] = PointClassification::Visited(incoming);
-            'other_loop: loop {
-                idx = (idx - 1) % other_orderd.len();
-                match other_orderd[idx] {
-                    PointClassification::Visited(_) => panic!("visited should not happen"),
-                    PointClassification::Unvisited(p) => {
-                        outline.push(p);
-                        other_orderd[idx] = PointClassification::Visited(p);
-                    }
-                    PointClassification::OutIntersection(_) => panic!("out should not happen"),
-                    PointClassification::InIntersection(p) => {
-                        other_orderd[idx] = PointClassification::Visited(p);
-                        outline.push(p);
-                        break 'other_loop;
+            'outer: loop {
+                let incoming = self_orderd[idx].inner().clone();
+                outline.push(incoming);
+                self_orderd[idx] = PointClassification::Visited(incoming);
+                'self_loop: loop {
+                    idx = (idx - 1) % self_orderd.len();
+                    match self_orderd[idx] {
+                        PointClassification::Visited(_) => break 'outer,
+                        PointClassification::Unvisited(p) => {
+                            outline.push(p);
+                            self_orderd[idx] = PointClassification::Visited(p);
+                        }
+                        PointClassification::InIntersection(_) => panic!("should not happen"),
+                        PointClassification::OutIntersection(p) => {
+                            self_orderd[idx] = PointClassification::Visited(p);
+                            outline.push(p);
+                            break 'self_loop;
+                        }
                     }
                 }
+                idx = other_orderd
+                    .iter()
+                    .position(|class| class.inner() == outline.last().unwrap())
+                    .unwrap();
+                let incoming = other_orderd[idx].inner().clone();
+                outline.push(incoming);
+                other_orderd[idx] = PointClassification::Visited(incoming);
+                'other_loop: loop {
+                    idx = (idx - 1) % other_orderd.len();
+                    match other_orderd[idx] {
+                        PointClassification::Visited(_) => break 'outer,
+                        PointClassification::Unvisited(p) => {
+                            outline.push(p);
+                            other_orderd[idx] = PointClassification::Visited(p);
+                        }
+                        PointClassification::OutIntersection(_) => panic!("out should not happen"),
+                        PointClassification::InIntersection(p) => {
+                            other_orderd[idx] = PointClassification::Visited(p);
+                            outline.push(p);
+                            break 'other_loop;
+                        }
+                    }
+                }
+                idx = self_orderd
+                    .iter()
+                    .position(|class| class.inner() == outline.last().unwrap())
+                    .unwrap();
             }
 
             polygons.push(Polygon::new(outline));
