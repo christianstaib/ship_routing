@@ -237,17 +237,20 @@ impl Polygon {
 
             'outer: loop {
                 let incoming = self_orderd[idx].inner().clone();
+                println!("incoming on {:?}", incoming);
                 outline.push(incoming);
                 self_orderd[idx] = PointClassification::Visited(incoming);
                 'self_loop: loop {
-                    idx = (idx - 1) % self_orderd.len();
+                    idx = (idx + self_orderd.len() - 1) % self_orderd.len();
                     match self_orderd[idx] {
                         PointClassification::Visited(_) => break 'outer,
                         PointClassification::Unvisited(p) => {
                             outline.push(p);
                             self_orderd[idx] = PointClassification::Visited(p);
                         }
-                        PointClassification::InIntersection(_) => panic!("should not happen"),
+                        PointClassification::InIntersection(p) => {
+                            panic!("in should not happen: {:?}", p)
+                        }
                         PointClassification::OutIntersection(p) => {
                             self_orderd[idx] = PointClassification::Visited(p);
                             outline.push(p);
@@ -259,18 +262,22 @@ impl Polygon {
                     .iter()
                     .position(|class| class.inner() == outline.last().unwrap())
                     .unwrap();
-                let incoming = other_orderd[idx].inner().clone();
-                outline.push(incoming);
-                other_orderd[idx] = PointClassification::Visited(incoming);
+                let outgoing = other_orderd[idx].inner().clone();
+                println!("outgoing on {:?}", outgoing);
+                outline.push(outgoing);
+                other_orderd[idx] = PointClassification::Visited(outgoing);
                 'other_loop: loop {
-                    idx = (idx - 1) % other_orderd.len();
+                    idx = (idx + other_orderd.len() - 1) % other_orderd.len();
+
                     match other_orderd[idx] {
                         PointClassification::Visited(_) => break 'outer,
                         PointClassification::Unvisited(p) => {
                             outline.push(p);
                             other_orderd[idx] = PointClassification::Visited(p);
                         }
-                        PointClassification::OutIntersection(_) => panic!("out should not happen"),
+                        PointClassification::OutIntersection(p) => {
+                            panic!("out should not happen {:?}", p)
+                        }
                         PointClassification::InIntersection(p) => {
                             other_orderd[idx] = PointClassification::Visited(p);
                             outline.push(p);

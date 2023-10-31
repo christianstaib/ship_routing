@@ -4,7 +4,6 @@ use std::{
     time::Instant,
 };
 
-use geo::polygon;
 use indicatif::ProgressIterator;
 use osm_test::{point_generator::PointGenerator, Planet, Point, Polygon};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
@@ -13,7 +12,69 @@ fn main() {
     // _test_inside_point();
     // _get_normal();
     // _generate_points();
-    test_clipping();
+    // test_clipping();
+    // test_clipping_two();
+    test_clipping_three();
+}
+
+fn test_clipping_three() {
+    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/test_clipping3.geojson";
+    const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
+    let planet = Planet::from_file(PLANET_PATH).unwrap();
+    let mut out_planet = Planet::new();
+
+    (-3..4).progress().for_each(|lon| {
+        (48..53).for_each(|lat| {
+            let sw = Point::from_geodetic(lat as f64, lon as f64);
+            let ne = Point::from_geodetic((lat + 1) as f64, (lon + 1) as f64);
+            println!("sw {:?}", sw);
+            println!("ne {:?}", ne);
+            let clipping_polygon = generate_rectangle(&sw, &ne);
+            out_planet.polygons.extend(
+                planet
+                    .polygons
+                    .iter()
+                    .map(|polygon| polygon.clip(&clipping_polygon))
+                    .flatten(),
+            );
+            // out_planet.polygons.push(polygon);
+        })
+    });
+
+    out_planet.to_file(OUT_PLANET_PATH);
+}
+
+fn generate_rectangle(sw: &Point, ne: &Point) -> Polygon {
+    assert!(sw.lat() < ne.lat());
+    assert!(sw.lon() < ne.lon());
+
+    let outline = vec![
+        Point::from_geodetic(sw.lat(), sw.lon()),
+        Point::from_geodetic(sw.lat(), ne.lon()),
+        Point::from_geodetic(ne.lat(), ne.lon()),
+        Point::from_geodetic(ne.lat(), sw.lon()),
+        Point::from_geodetic(sw.lat(), sw.lon()),
+    ];
+    Polygon::new(outline)
+}
+
+fn test_clipping_two() {
+    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/test_clipping.geojson";
+    let mut out_planet = Planet::new();
+
+    let sw = Point::from_geodetic(0.0, -2.0);
+    let ne = Point::from_geodetic(1.0, 2.0);
+    let polygon = generate_rectangle(&sw, &ne);
+    out_planet.polygons.push(polygon.clone());
+
+    let sw = Point::from_geodetic(-1.0, -1.0);
+    let ne = Point::from_geodetic(2.0, 0.0);
+    let clipping_polygon = generate_rectangle(&sw, &ne);
+    out_planet.polygons.push(clipping_polygon.clone());
+
+    out_planet.polygons.extend(polygon.clip(&clipping_polygon));
+
+    out_planet.to_file(OUT_PLANET_PATH);
 }
 
 fn test_clipping() {
@@ -22,33 +83,51 @@ fn test_clipping() {
 
     // let planet = Planet::from_osm(PLANET_PATH);
     let mut planet = Planet::from_file(PLANET_PATH).unwrap();
-    let mut out_planet = Planet::new();
-
-    let a = Point::from_geodetic(0.0, 0.0);
-    let b = Point::from_geodetic(0.0, 3.0);
-    let c = Point::from_geodetic(1.0, 3.0);
-    let d = Point::from_geodetic(1.0, 1.0);
-    let e = Point::from_geodetic(2.0, 1.0);
-    let f = Point::from_geodetic(2.0, 3.0);
-    let g = Point::from_geodetic(3.0, 3.0);
-    let h = Point::from_geodetic(3.0, 0.0);
-
-    let outline = vec![a, b, c, d, e, f, g, h, a];
-    let polygon = Polygon::new(outline);
+    let mut out_planet = planet.clone(); //Planet::new();
+    planet
+        .polygons
+        .sort_by_key(|polygon| -1 * polygon.outline.len() as isize);
+    // planet.polygons.iter().for_each(|polygon| {
+    //     let point = polygon.get_inside_point_better(&mut out_planet);
+    //     out_planet.points.push(point);
+    // });
+    // let polygon = planet.polygons[0].clone();
     // out_planet.polygons.push(polygon.clone());
+    // let point = polygon.get_inside_point_better(&mut out_planet);
+    // out_planet.points.push(point);
 
-    let a = Point::from_geodetic(-1.0, 2.0);
-    let b = Point::from_geodetic(-1.0, 4.0);
-    let c = Point::from_geodetic(4.0, 4.0);
-    let d = Point::from_geodetic(4.0, 2.0);
+    let sw = Point::from_geodetic(48.0, -3.0);
+    let ne = Point::from_geodetic(49.0, -2.0);
 
-    let outline = vec![a, b, c, d, a];
-    let clipping_polygon = Polygon::new(outline);
-    // out_planet.polygons.push(clipping_polygon.clone());
+    let clipping_polygon = generate_rectangle(&sw, &ne);
+    out_planet.polygons.push(clipping_polygon.clone());
 
-    let clipped = polygon.clip(&clipping_polygon, &mut out_planet);
+    planet.polygons.iter().for_each(|polygon| {
+        let clipped = polygon.intersections_polygon(&clipping_polygon);
+        out_planet
+            .points
+            .extend(clipped.iter().map(|x| x.2.inner()));
+        let clipped = polygon.clip(&clipping_polygon);
+        out_planet.polygons.extend(clipped);
+        // let out: Vec<Point> = polygon
+        //     .intersections_polygon(&clipping_polygon)
+        //     .iter()
+        //     .filter_map(|x| match x.2 {
+        //         osm_test::PointClassification::OutIntersection(p) => Some(p),
+        //         _ => None,
+        //     })
+        //     .collect();
+        // let inter: Vec<Point> = polygon
+        //     .intersections_polygon(&clipping_polygon)
+        //     .iter()
+        //     .filter_map(|x| match x.2 {
+        //         osm_test::PointClassification::InIntersection(p) => Some(p),
+        //         _ => None,
+        //     })
+        //     .collect();
+        // out_planet.points.extend(inter);
+    });
 
-    out_planet.polygons.extend(clipped);
     //clipping_polygon.clip(&polygon, &mut out_planet);
 
     // let intersections = polygon.intersections_polygon(&clipping_polygon);

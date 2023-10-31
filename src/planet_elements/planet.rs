@@ -9,6 +9,7 @@ use geojson::{FeatureCollection, Value};
 
 use super::{Arc, Point, Polygon, RawOsmData};
 
+#[derive(Clone)]
 pub struct Planet {
     pub polygons: Vec<Polygon>,
     pub points: Vec<Point>,
