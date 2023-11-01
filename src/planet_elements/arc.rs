@@ -53,8 +53,7 @@ impl Arc {
     }
 
     pub fn middle(&self) -> Point {
-        Point::from_spherical(&(self.from().vec() + (self.to().vec() - self.from().vec()) * 0.5))
-        // Point::from_spherical(&(self.from.vec() + self.to.vec()))
+        Point::from_spherical(&((self.from.vec() + self.to.vec()) / 2.0))
     }
 
     pub fn from(&self) -> &Point {
@@ -76,7 +75,7 @@ impl Arc {
         // check if both arcs are near enough to each other that they could intersect
         let summed_angle = self.central_angle() + other.central_angle();
         if summed_angle < PI {
-            let summed_angle_cos = summed_angle.cos() - 0.0005;
+            let summed_angle_cos = summed_angle.cos() - 0.05;
             if self.from.vec().dot(&other.from.vec()) < summed_angle_cos
                 || self.from.vec().dot(&other.to.vec()) < summed_angle_cos
                 || self.to.vec().dot(&other.from.vec()) < summed_angle_cos
