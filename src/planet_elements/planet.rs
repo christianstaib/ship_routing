@@ -45,7 +45,7 @@ impl Planet {
             .collect()
     }
 
-    pub fn inside_is_on_land(&self, point: &Point) -> bool {
+    pub fn is_on_polygon(&self, point: &Point) -> bool {
         self.polygons
             .iter()
             .any(|polygon| polygon.contains_inside(point))
