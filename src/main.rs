@@ -1,5 +1,5 @@
 use indicatif::ProgressIterator;
-use osm_test::{Arc, Planet, Point, Polygon};
+use osm_test::{Arc, Planet, Point, Polygon, RootQuadtree};
 
 fn main() {
     test_clipping();
@@ -21,62 +21,16 @@ fn generate_rectangle(sw: &Point, ne: &Point) -> Polygon {
     Polygon::new(outline)
 }
 
-fn split_recangle(rectangle: &Polygon) -> Vec<Polygon> {
-    assert!(rectangle.outline.len() == 5);
-    let arcs: Vec<Arc> = rectangle
-        .outline
-        .windows(2)
-        .map(|arc| Arc::new(&arc[0], &arc[1]))
-        .collect();
-
-    let o = rectangle.outline.clone();
-
-    let m: Vec<Point> = arcs.iter().map(|arc| arc.middle()).collect();
-
-    let d0 = Arc::new(&m[0], &m[2]);
-    let d1 = Arc::new(&m[1], &m[3]);
-
-    let middle = d0.intersection(&d1).expect("should intersection");
-    let p0 = Polygon::new(vec![
-        m[3].clone(),
-        middle.clone(),
-        m[2].clone(),
-        o[3].clone(),
-        m[3].clone(),
-    ]);
-
-    let p1 = Polygon::new(vec![
-        middle.clone(),
-        m[1].clone(),
-        o[2].clone(),
-        m[2].clone(),
-        middle.clone(),
-    ]);
-
-    let p2 = Polygon::new(vec![
-        m[0].clone(),
-        o[1].clone(),
-        m[1].clone(),
-        middle.clone(),
-        m[0].clone(),
-    ]);
-
-    let p3 = Polygon::new(vec![
-        o[0].clone(),
-        m[0].clone(),
-        middle.clone(),
-        m[3].clone(),
-        o[0].clone(),
-    ]);
-    vec![p0, p1, p2, p3]
-}
-
 fn test_clipping() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
     const OUT_PLANET_PATH: &str = "tests/data/test_geojson/grid.geojson";
 
-    let planet = Planet::from_file(PLANET_PATH).unwrap();
+    let mut planet = Planet::from_file(PLANET_PATH).unwrap();
     let mut out_planet = Planet::new();
+    planet
+        .polygons
+        .sort_by_key(|polygon| -1 * polygon.outline.len() as isize);
+    planet.polygons = vec![planet.polygons[0].clone()];
 
     let np = Point::from_geodetic(90.0, 0.0);
     let sp = Point::from_geodetic(-90.0, 0.0);
@@ -99,6 +53,8 @@ fn test_clipping() {
         .map(|&lon| Point::from_geodetic(0.0, lon))
         .collect();
 
+    let mut base_pixels = Vec::new();
+
     for i in 0..4 {
         let polygon = Polygon::new(vec![
             upper_ring[i].clone(),
@@ -107,7 +63,7 @@ fn test_clipping() {
             np.clone(),
             upper_ring[i].clone(),
         ]);
-        out_planet.polygons.push(polygon);
+        base_pixels.push(polygon);
 
         let polygon = Polygon::new(vec![
             lower_ring[i].clone(),
@@ -116,7 +72,7 @@ fn test_clipping() {
             mid_ring[i].clone(),
             lower_ring[i].clone(),
         ]);
-        out_planet.polygons.push(polygon);
+        base_pixels.push(polygon);
 
         let polygon = Polygon::new(vec![
             mid_ring[i].clone(),
@@ -125,26 +81,36 @@ fn test_clipping() {
             upper_ring[i + 1].clone(),
             mid_ring[i].clone(),
         ]);
-        out_planet.polygons.push(polygon);
-    }
-    for _ in 0..0 {
-        out_planet.polygons = out_planet
-            .polygons
-            .iter()
-            .map(|polygon| split_recangle(polygon))
-            .flatten()
-            .collect();
+        base_pixels.push(polygon);
     }
 
-    out_planet.polygons = vec![out_planet.polygons[8].clone()];
-    //.retain(|polygon| planet.is_on_polygon(&polygon.inside_point));
+    let mut quadtree = RootQuadtree::new(base_pixels);
 
-    for _ in 0..100000 {
-        let point = Point::random();
-        if out_planet.is_on_polygon(&point) {
-            out_planet.points.push(point);
-        }
-    }
+    planet
+        .polygons
+        .into_iter()
+        .progress()
+        .for_each(|polygon| quadtree.add_polygon(polygon));
+
+    println!("updating midpoints");
+    quadtree.update_midpoints();
+
+    // out_planet.polygons.extend(quadtree.get_polygons());
+    // out_planet
+    //     .points
+    //     .extend(quadtree.get_polygons().iter().map(|p| p.inside_point));
+
+    println!("generating points");
+    println!(
+        "is on land {}",
+        quadtree.is_on_polygon(&Point::from_geodetic(40.0701, -78.8347))
+    );
+    // for _ in (0..10_000).progress() {
+    //     let point = Point::random();
+    //     if quadtree.is_on_polygon(&point) {
+    //         out_planet.points.push(point);
+    //     }
+    // }
 
     out_planet.to_file(OUT_PLANET_PATH);
 }

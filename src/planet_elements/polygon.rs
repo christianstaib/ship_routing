@@ -87,6 +87,12 @@ impl Polygon {
         Arc::new(&intersections[0], &intersections[1]).middle()
     }
 
+    pub fn intescts_or_inside(&self, arc: &Arc) -> bool {
+        self.contains_inside(arc.from())
+            || self.contains_inside(&arc.to())
+            || !self.intersections(arc).is_empty()
+    }
+
     pub fn contains_inside(&self, point: &Point) -> bool {
         let ray = Arc::new(point, &self.inside_point);
         let intersections = self.intersections(&ray).len();

@@ -19,12 +19,73 @@ enum Node {
     Leaf(Vec<Arc>),          // a bucket of points
 }
 
+pub struct RootQuadtree {
+    quadtrees: Vec<Quadtree>,
+    planet: Planet,
+}
+
+const MAX_SIZE: usize = 100;
+
+impl RootQuadtree {
+    pub fn new(polygons: Vec<Polygon>) -> RootQuadtree {
+        RootQuadtree {
+            quadtrees: polygons
+                .into_iter()
+                .map(|polygon| Quadtree::new(polygon))
+                .collect(),
+            planet: Planet::new(),
+        }
+    }
+
+    pub fn add_polygon(&mut self, polygon: Polygon) {
+        polygon
+            .outline
+            .windows(2)
+            .map(|arc| Arc::new(&arc[0], &arc[1]))
+            .for_each(|arc| {
+                self.quadtrees.iter_mut().for_each(|quadtree| {
+                    if quadtree.polygon.intescts_or_inside(&arc) {
+                        quadtree.add_arc(&arc);
+                    }
+                })
+            });
+    }
+
+    pub fn update_midpoints(&mut self) {
+        self.quadtrees
+            .iter_mut()
+            .for_each(|quadtree| quadtree.update_midpoint(&self.planet));
+    }
+
+    pub fn is_on_polygon(&self, point: &Point) -> bool {
+        self.quadtrees
+            .iter()
+            .map(|quadtree| quadtree.is_on_polygon(point))
+            .any(|x| x == true)
+    }
+
+    pub fn get_polygons(&self) -> Vec<Polygon> {
+        self.quadtrees
+            .iter()
+            .map(|q| q.get_polygons())
+            .flatten()
+            .collect()
+    }
+}
+
 impl Quadtree {
     pub fn new(polygon: Polygon) -> Quadtree {
         Quadtree {
             polygon,
             data: Node::Leaf(Vec::new()),
             midpoint_status: PointStatus::Outside,
+        }
+    }
+
+    pub fn get_polygons(&self) -> Vec<Polygon> {
+        match &self.data {
+            Node::Internal(q) => return q.iter().map(|q| q.get_polygons()).flatten().collect(),
+            Node::Leaf(_) => vec![self.polygon.clone()],
         }
     }
 
@@ -36,30 +97,32 @@ impl Quadtree {
                 .collect(),
         );
     }
-    pub fn add_polygon(&mut self, polygon: &Polygon) {
+
+    fn add_arc(&mut self, arc: &Arc) {
         match &mut self.data {
             Node::Internal(quadtrees) => {
                 for quadtree in quadtrees.iter_mut() {
-                    quadtree.add_polygon(polygon);
+                    if quadtree.polygon.intescts_or_inside(arc) {
+                        quadtree.add_arc(arc);
+                    }
                 }
             }
             Node::Leaf(arcs) => {
-                arcs.extend(
-                    polygon
-                        .outline
-                        .windows(2)
-                        .map(|arc| Arc::new(&arc[0], &arc[1]))
-                        .filter(|arc| {
-                            self.polygon.contains_inside(arc.from())
-                                || self.polygon.contains_inside(arc.to())
-                                || !polygon.intersections(arc).is_empty()
-                        }),
-                );
-                if arcs.len() > 100 {
+                arcs.push(arc.clone());
+
+                if arcs.len() > MAX_SIZE {
                     self.split();
                 }
             }
         }
+    }
+
+    pub fn add_polygon(&mut self, polygon: &Polygon) {
+        polygon
+            .outline
+            .windows(2)
+            .map(|arc| Arc::new(&arc[0], &arc[1]))
+            .for_each(|arc| self.add_arc(&arc));
     }
 
     pub fn update_midpoint(&mut self, planet: &Planet) {
@@ -80,14 +143,17 @@ impl Quadtree {
     }
 
     pub fn is_on_polygon(&self, point: &Point) -> bool {
+        println!("hier. midpoint is {:?}", self.polygon.inside_point);
         if self.polygon.contains_inside(point) {
             match &self.data {
                 Node::Internal(quadtrees) => {
-                    return quadtrees
+                    let find = quadtrees
                         .iter()
-                        .find(|quadtree| quadtree.polygon.contains_inside(point))
-                        .expect("should be inside as it is in parent")
-                        .is_on_polygon(point)
+                        .find(|quadtree| quadtree.polygon.contains_inside(point));
+                    if find.is_none() {
+                        return false;
+                    }
+                    return find.unwrap().is_on_polygon(point);
                 }
                 Node::Leaf(arcs) => {
                     let ray = Arc::new(point, &self.polygon.inside_point);
