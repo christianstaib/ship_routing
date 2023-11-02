@@ -1,3 +1,4 @@
+use indicatif::ProgressIterator;
 use osm_test::{Arc, Planet, Point, Polygon};
 
 fn main() {
@@ -20,7 +21,7 @@ fn generate_rectangle(sw: &Point, ne: &Point) -> Polygon {
     Polygon::new(outline)
 }
 
-fn split_recangle(rectangle: &Polygon, planet: &mut Planet) -> Vec<Polygon> {
+fn split_recangle(rectangle: &Polygon) -> Vec<Polygon> {
     assert!(rectangle.outline.len() == 5);
     let arcs: Vec<Arc> = rectangle
         .outline
@@ -77,31 +78,73 @@ fn test_clipping() {
     let planet = Planet::from_file(PLANET_PATH).unwrap();
     let mut out_planet = Planet::new();
 
-    let sw = Point::from_geodetic(50.0, 50.0);
-    let ne = Point::from_geodetic(65.0, 60.0);
-    let rectangle = generate_rectangle(&sw, &ne);
-    // let rectangle = Polygon::new(vec![
-    //     Point::from_geodetic(4.251634083025594, -5.0),
-    //     Point::from_geodetic(4.263471412056005, -2.2518832583820663),
-    //     Point::from_geodetic(6.02062449764739, -2.2563497090195175),
-    //     Point::from_geodetic(6.0, -5.0),
-    //     Point::from_geodetic(4.251634083025594, -5.0),
-    // ]);
-    // out_planet.points.push(rectangle.inside_point);
+    let np = Point::from_geodetic(90.0, 0.0);
+    let sp = Point::from_geodetic(-90.0, 0.0);
+    let mid_ring: Vec<f64> = vec![-180.0, -90.0, 0.0, 90.0, 180.0];
+    let mid_ring: Vec<Point> = mid_ring
+        .iter()
+        .map(|&lon| Point::from_geodetic(0.0, lon))
+        .collect();
+    let upper_ring: Vec<Point> = mid_ring
+        .iter()
+        .map(|mid| Arc::new(&mid, &np).middle())
+        .collect();
+    let lower_ring: Vec<Point> = mid_ring
+        .iter()
+        .map(|mid| Arc::new(&mid, &sp).middle())
+        .collect();
+    let mid_ring: Vec<f64> = vec![-135.0, -45.0, 45.0, 135.0, -135.0];
+    let mid_ring: Vec<Point> = mid_ring
+        .iter()
+        .map(|&lon| Point::from_geodetic(0.0, lon))
+        .collect();
 
-    let mut sub_rectangles = vec![rectangle];
-    for _ in 0..6 {
-        sub_rectangles = sub_rectangles
+    for i in 0..4 {
+        let polygon = Polygon::new(vec![
+            upper_ring[i].clone(),
+            mid_ring[i].clone(),
+            upper_ring[i + 1].clone(),
+            np.clone(),
+            upper_ring[i].clone(),
+        ]);
+        out_planet.polygons.push(polygon);
+
+        let polygon = Polygon::new(vec![
+            lower_ring[i].clone(),
+            sp.clone(),
+            lower_ring[i + 1].clone(),
+            mid_ring[i].clone(),
+            lower_ring[i].clone(),
+        ]);
+        out_planet.polygons.push(polygon);
+
+        let polygon = Polygon::new(vec![
+            mid_ring[i].clone(),
+            lower_ring[i + 1].clone(),
+            mid_ring[i + 1].clone(),
+            upper_ring[i + 1].clone(),
+            mid_ring[i].clone(),
+        ]);
+        out_planet.polygons.push(polygon);
+    }
+    for _ in 0..0 {
+        out_planet.polygons = out_planet
+            .polygons
             .iter()
-            .map(|rectangle| split_recangle(rectangle, &mut out_planet))
+            .map(|polygon| split_recangle(polygon))
             .flatten()
             .collect();
-        println!("len is {}", sub_rectangles.len());
     }
 
-    out_planet.polygons.extend(sub_rectangles);
+    out_planet.polygons = vec![out_planet.polygons[8].clone()];
+    //.retain(|polygon| planet.is_on_polygon(&polygon.inside_point));
 
-    //out_planet.polygons.push(rectangle);
+    for _ in 0..100000 {
+        let point = Point::random();
+        if out_planet.is_on_polygon(&point) {
+            out_planet.points.push(point);
+        }
+    }
 
     out_planet.to_file(OUT_PLANET_PATH);
 }
