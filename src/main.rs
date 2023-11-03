@@ -34,7 +34,7 @@ fn test_clipping() {
 
     let np = Point::from_geodetic(90.0, 0.0);
     let sp = Point::from_geodetic(-90.0, 0.0);
-    let mid_ring: Vec<f64> = vec![-180.0, -90.0, 0.0, 90.0, 180.0];
+    let mid_ring: Vec<f64> = vec![180.0, -90.0, 0.0, 90.0, 180.0];
     let mid_ring: Vec<Point> = mid_ring
         .iter()
         .map(|&lon| Point::from_geodetic(0.0, lon))
@@ -88,12 +88,28 @@ fn test_clipping() {
 
     planet
         .polygons
-        .into_iter()
+        .iter()
+        .cloned()
         .progress()
         .for_each(|polygon| quadtree.add_polygon(polygon));
 
     println!("updating midpoints");
     quadtree.update_midpoints();
+
+    let mut outside = Vec::new();
+    for q in quadtree.get_quadtrees() {
+        match q.midpoint_status {
+            osm_test::PointStatus::Inside => (),
+            osm_test::PointStatus::Outside => {
+                let p = q.polygon.inside_point;
+                assert!(!planet.is_on_polygon(&p));
+                outside.push(p);
+            }
+        }
+        //
+    }
+
+    //     out_planet.points.extend(outside);
 
     // out_planet.polygons.extend(quadtree.get_polygons());
     // out_planet
@@ -101,16 +117,16 @@ fn test_clipping() {
     //     .extend(quadtree.get_polygons().iter().map(|p| p.inside_point));
 
     println!("generating points");
-    println!(
-        "is on land {}",
-        quadtree.is_on_polygon(&Point::from_geodetic(40.0701, -78.8347))
-    );
-    // for _ in (0..10_000).progress() {
-    //     let point = Point::random();
-    //     if quadtree.is_on_polygon(&point) {
-    //         out_planet.points.push(point);
-    //     }
-    // }
+    // println!(
+    //     "is on land {}",
+    //     quadtree.is_on_polygon(&Point::from_geodetic(40.0701, -78.8347), &mut out_planet)
+    // );
+    for _ in (0..1_000).progress() {
+        let point = Point::random();
+        if !quadtree.is_on_polygon(&point, &mut out_planet) {
+            out_planet.points.push(point);
+        }
+    }
 
     out_planet.to_file(OUT_PLANET_PATH);
 }
