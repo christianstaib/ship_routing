@@ -24,7 +24,7 @@ pub struct RootQuadtree {
     planet: Planet,
 }
 
-const MAX_SIZE: usize = 100;
+const MAX_SIZE: usize = 10_000;
 
 impl RootQuadtree {
     pub fn new(polygons: Vec<Polygon>) -> RootQuadtree {
@@ -62,17 +62,24 @@ impl RootQuadtree {
             .for_each(|quadtree| quadtree.update_midpoint(&self.planet));
     }
 
-    pub fn is_on_polygon(&self, point: &Point, planet: &mut Planet) -> bool {
+    pub fn get_intersctions(&self, point: &Point) -> (usize, Point) {
         self.quadtrees
             .iter()
-            .map(|quadtree| quadtree.is_on_polygon(point, planet))
+            .find_map(|quadtree| quadtree.get_intersctions(point))
+            .unwrap()
+    }
+
+    pub fn is_on_polygon(&self, point: &Point, out_planet: &mut Planet) -> bool {
+        self.quadtrees
+            .iter()
+            .map(|quadtree| quadtree.is_on_polygon(point, out_planet, &self.planet))
             .any(|x| x == true)
     }
 
     pub fn get_quadtrees(&self) -> Vec<Quadtree> {
         self.quadtrees
             .iter()
-            .map(|q| q.get_polygons())
+            .map(|q| q.get_quadtrees())
             .flatten()
             .collect()
     }
@@ -87,18 +94,54 @@ impl Quadtree {
         }
     }
 
-    pub fn get_polygons(&self) -> Vec<Quadtree> {
+    pub fn get_quadtrees(&self) -> Vec<Quadtree> {
         match &self.data {
-            Node::Internal(q) => return q.iter().map(|q| q.get_polygons()).flatten().collect(),
+            Node::Internal(q) => return q.iter().map(|q| q.get_quadtrees()).flatten().collect(),
             Node::Leaf(_) => vec![self.clone()],
         }
     }
 
+    pub fn get_intersctions(&self, point: &Point) -> Option<(usize, Point)> {
+        if self.polygon.contains_inside(point) {
+            match &self.data {
+                Node::Internal(quadtrees) => {
+                    let find = quadtrees
+                        .iter()
+                        .find(|quadtree| quadtree.polygon.contains_inside(point));
+                    if find.is_none() {
+                        panic!("error");
+                    }
+                    return find.unwrap().get_intersctions(point);
+                }
+                Node::Leaf(arcs) => {
+                    let ray = Arc::new(point, &self.polygon.inside_point);
+                    let intersections = arcs.iter().filter(|arc| ray.intersects(arc)).count();
+                    return Some((intersections, self.polygon.inside_point.clone()));
+                }
+            }
+        }
+        None
+    }
+
     fn split(&mut self) {
+        let mut arcs = Vec::new();
+        if let Node::Leaf(old_arcs) = &self.data {
+            arcs.extend(old_arcs);
+        }
         self.data = Node::Internal(
             split_recangle(&self.polygon)
                 .into_iter()
-                .map(|rectangle| Quadtree::new(rectangle))
+                .map(|rectangle| {
+                    let mut q = Quadtree::new(rectangle);
+                    set_midpoint(&mut q.polygon);
+
+                    for arc in &arcs {
+                        if q.polygon.intescts_or_inside(arc) {
+                            q.add_arc(arc);
+                        }
+                    }
+                    q
+                })
                 .collect(),
         );
     }
@@ -144,7 +187,7 @@ impl Quadtree {
         }
     }
 
-    pub fn is_on_polygon(&self, point: &Point, planet: &mut Planet) -> bool {
+    pub fn is_on_polygon(&self, point: &Point, out_planet: &mut Planet, planet: &Planet) -> bool {
         if self.polygon.contains_inside(point) {
             match &self.data {
                 Node::Internal(quadtrees) => {
@@ -155,18 +198,17 @@ impl Quadtree {
                         println!("error");
                         return false;
                     }
-                    return find.unwrap().is_on_polygon(point, planet);
+                    return find.unwrap().is_on_polygon(point, out_planet, planet);
                 }
                 Node::Leaf(arcs) => {
                     let ray = Arc::new(point, &self.polygon.inside_point);
-                    planet.lines.push(ray);
-                    let intersections = arcs.iter().filter(|arc| ray.intersects(arc)).count();
-                    // println!("intersections {}", intersections);
-                    // println!("midpoint_status {:?}", self.midpoint_status);
-                    // println!("midpoint {:?}", self.polygon.inside_point);
+                    let intersections: Vec<Point> = arcs
+                        .iter()
+                        .filter_map(|arc| ray.intersection(arc))
+                        .collect();
                     match self.midpoint_status {
-                        PointStatus::Inside => return intersections % 2 == 0,
-                        PointStatus::Outside => return intersections % 2 == 1,
+                        PointStatus::Inside => return intersections.len() % 2 == 0,
+                        PointStatus::Outside => return intersections.len() % 2 == 1,
                     }
                 }
             }
@@ -197,6 +239,7 @@ fn split_recangle(rectangle: &Polygon) -> Vec<Polygon> {
     let d1 = Arc::new(&m[1], &m[3]);
 
     let middle = d0.intersection(&d1).expect("should intersection");
+    let mut subs = Vec::new();
     let mut p0 = Polygon::new(vec![
         m[3].clone(),
         middle.clone(),
@@ -205,6 +248,7 @@ fn split_recangle(rectangle: &Polygon) -> Vec<Polygon> {
         m[3].clone(),
     ]);
     set_midpoint(&mut p0);
+    subs.push(p0);
 
     let mut p1 = Polygon::new(vec![
         middle.clone(),
@@ -214,6 +258,7 @@ fn split_recangle(rectangle: &Polygon) -> Vec<Polygon> {
         middle.clone(),
     ]);
     set_midpoint(&mut p1);
+    subs.push(p1);
 
     let mut p2 = Polygon::new(vec![
         m[0].clone(),
@@ -223,6 +268,7 @@ fn split_recangle(rectangle: &Polygon) -> Vec<Polygon> {
         m[0].clone(),
     ]);
     set_midpoint(&mut p2);
+    subs.push(p2);
 
     let mut p3 = Polygon::new(vec![
         o[0].clone(),
@@ -232,6 +278,7 @@ fn split_recangle(rectangle: &Polygon) -> Vec<Polygon> {
         o[0].clone(),
     ]);
     set_midpoint(&mut p3);
+    subs.push(p3);
 
-    vec![p0, p1, p2, p3]
+    subs
 }

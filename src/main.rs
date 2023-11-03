@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use indicatif::ProgressIterator;
 use osm_test::{Arc, Planet, Point, Polygon, RootQuadtree};
 
@@ -30,7 +32,8 @@ fn test_clipping() {
     planet
         .polygons
         .sort_by_key(|polygon| -1 * polygon.outline.len() as isize);
-    planet.polygons = vec![planet.polygons[0].clone()];
+    // planet.polygons = planet.polygons.iter().take(3).cloned().collect();
+    // out_planet.polygons = planet.polygons.clone();
 
     let np = Point::from_geodetic(90.0, 0.0);
     let sp = Point::from_geodetic(-90.0, 0.0);
@@ -96,37 +99,17 @@ fn test_clipping() {
     println!("updating midpoints");
     quadtree.update_midpoints();
 
-    let mut outside = Vec::new();
-    for q in quadtree.get_quadtrees() {
-        match q.midpoint_status {
-            osm_test::PointStatus::Inside => (),
-            osm_test::PointStatus::Outside => {
-                let p = q.polygon.inside_point;
-                assert!(!planet.is_on_polygon(&p));
-                outside.push(p);
-            }
-        }
-        //
-    }
-
-    //     out_planet.points.extend(outside);
-
-    // out_planet.polygons.extend(quadtree.get_polygons());
-    // out_planet
-    //     .points
-    //     .extend(quadtree.get_polygons().iter().map(|p| p.inside_point));
-
     println!("generating points");
-    // println!(
-    //     "is on land {}",
-    //     quadtree.is_on_polygon(&Point::from_geodetic(40.0701, -78.8347), &mut out_planet)
-    // );
-    for _ in (0..1_000).progress() {
+
+    let start = Instant::now();
+    let n = 10_000;
+    for _ in (0..n).progress() {
         let point = Point::random();
-        if !quadtree.is_on_polygon(&point, &mut out_planet) {
+        if quadtree.is_on_polygon(&point, &mut out_planet) {
             out_planet.points.push(point);
         }
     }
+    println!("{:?}", start.elapsed() / n);
 
     out_planet.to_file(OUT_PLANET_PATH);
 }

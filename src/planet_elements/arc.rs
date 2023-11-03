@@ -72,19 +72,6 @@ impl Arc {
             return Some(self.to);
         }
 
-        // // check if both arcs are near enough to each other that they could intersect
-        // let summed_angle = self.central_angle() + other.central_angle();
-        // if summed_angle < PI {
-        //     let summed_angle_cos = summed_angle.cos() - 0.05;
-        //     if self.from.vec().dot(&other.from.vec()) < summed_angle_cos
-        //         || self.from.vec().dot(&other.to.vec()) < summed_angle_cos
-        //         || self.to.vec().dot(&other.from.vec()) < summed_angle_cos
-        //         || self.to.vec().dot(&other.to.vec()) < summed_angle_cos
-        //     {
-        //         return None;
-        //     }
-        // }
-
         // check if intersection of both great circles lies on both arcs
         let candidate = self.normal().cross(&other.normal()).normalize();
         let candidate = Point::from_spherical(&candidate);
@@ -124,7 +111,7 @@ impl Arc {
         let a1 = point.vec().dot(&self.to_normal());
 
         (a0 > 0.0 && a1 < 0.0)
-            || ((a0 >= 0.0 || a1 <= 0.0) && (point.equals(&self.from) || point.equals(&self.to)))
+            || ((a0 >= 0.0 && a1 <= 0.0) && (point.equals(&self.from) || point.equals(&self.to)))
     }
 
     pub fn central_angle(&self) -> f64 {
