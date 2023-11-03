@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use indicatif::ProgressIterator;
-use osm_test::{Arc, Planet, Point, Polygon, RootQuadtree};
+use osm_test::{Arc, CollisionDetector, Planet, Point, Polygon};
 
 fn main() {
     test_clipping();
@@ -87,7 +87,7 @@ fn test_clipping() {
         base_pixels.push(polygon);
     }
 
-    let mut quadtree = RootQuadtree::new(base_pixels);
+    let mut quadtree = CollisionDetector::new(&base_pixels);
 
     planet
         .polygons
@@ -105,7 +105,7 @@ fn test_clipping() {
     let n = 10_000;
     for _ in (0..n).progress() {
         let point = Point::random();
-        if quadtree.is_on_polygon(&point, &mut out_planet) {
+        if quadtree.is_on_polygon(&point) {
             out_planet.points.push(point);
         }
     }

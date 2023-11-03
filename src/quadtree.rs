@@ -1,8 +1,8 @@
 use crate::{Arc, Planet, Point, Polygon};
 
 #[derive(Clone, Debug)]
-pub struct Quadtree {
-    pub polygon: Polygon,
+pub struct SpatialPartition {
+    pub boundary: Polygon,
     pub data: Node,
     pub midpoint_status: PointStatus,
 }
@@ -15,27 +15,21 @@ pub enum PointStatus {
 
 #[derive(Clone, Debug)]
 pub enum Node {
-    Internal(Vec<Quadtree>), // four children
-    Leaf(Vec<Arc>),          // a bucket of points
+    Internal(Vec<SpatialPartition>), // four children
+    Leaf(Vec<Arc>),                  // a bucket of points
 }
 
-pub struct RootQuadtree {
-    quadtrees: Vec<Quadtree>,
+pub struct CollisionDetector {
+    partition: SpatialPartition,
     planet: Planet,
 }
 
 const MAX_SIZE: usize = 10_000;
 
-impl RootQuadtree {
-    pub fn new(polygons: Vec<Polygon>) -> RootQuadtree {
-        RootQuadtree {
-            quadtrees: polygons
-                .into_iter()
-                .map(|mut polygon| {
-                    set_midpoint(&mut polygon);
-                    Quadtree::new(polygon)
-                })
-                .collect(),
+impl CollisionDetector {
+    pub fn new(polygons: &Vec<Polygon>) -> CollisionDetector {
+        CollisionDetector {
+            partition: SpatialPartition::new_root(polygons),
             planet: Planet::new(),
         }
     }
@@ -46,81 +40,55 @@ impl RootQuadtree {
             .windows(2)
             .map(|arc| Arc::new(&arc[0], &arc[1]))
             .for_each(|arc| {
-                self.quadtrees.iter_mut().for_each(|quadtree| {
-                    if quadtree.polygon.intescts_or_inside(&arc) {
-                        quadtree.add_arc(&arc);
-                    }
-                })
+                self.partition.add_arc(&arc);
             });
 
         self.planet.polygons.push(polygon);
     }
 
     pub fn update_midpoints(&mut self) {
-        self.quadtrees
-            .iter_mut()
-            .for_each(|quadtree| quadtree.update_midpoint(&self.planet));
+        self.partition.update_midpoint(&self.planet);
     }
 
-    pub fn get_intersctions(&self, point: &Point) -> (usize, Point) {
-        self.quadtrees
-            .iter()
-            .find_map(|quadtree| quadtree.get_intersctions(point))
-            .unwrap()
-    }
-
-    pub fn is_on_polygon(&self, point: &Point, out_planet: &mut Planet) -> bool {
-        self.quadtrees
-            .iter()
-            .map(|quadtree| quadtree.is_on_polygon(point, out_planet, &self.planet))
-            .any(|x| x == true)
-    }
-
-    pub fn get_quadtrees(&self) -> Vec<Quadtree> {
-        self.quadtrees
-            .iter()
-            .map(|q| q.get_quadtrees())
-            .flatten()
-            .collect()
+    pub fn is_on_polygon(&self, point: &Point) -> bool {
+        self.partition.is_on_polygon(point)
     }
 }
 
-impl Quadtree {
-    pub fn new(polygon: Polygon) -> Quadtree {
-        Quadtree {
-            polygon,
+impl SpatialPartition {
+    pub fn new_root(polygons: &Vec<Polygon>) -> SpatialPartition {
+        let polgon = Polygon::new(vec![
+            Point::from_geodetic(0.0, 0.0),
+            Point::from_geodetic(1.0, 1.0),
+            Point::from_geodetic(1.0, -1.0),
+            Point::from_geodetic(0.0, 0.0),
+        ]);
+        SpatialPartition {
+            boundary: polgon,
+            data: Node::Internal(
+                polygons
+                    .iter()
+                    .cloned()
+                    .map(|p| SpatialPartition::new_leaf(p))
+                    .collect(),
+            ),
+            midpoint_status: PointStatus::Outside,
+        }
+    }
+
+    pub fn new_leaf(polygon: Polygon) -> SpatialPartition {
+        SpatialPartition {
+            boundary: polygon,
             data: Node::Leaf(Vec::new()),
             midpoint_status: PointStatus::Outside,
         }
     }
 
-    pub fn get_quadtrees(&self) -> Vec<Quadtree> {
+    pub fn get_quadtrees(&self) -> Vec<SpatialPartition> {
         match &self.data {
             Node::Internal(q) => return q.iter().map(|q| q.get_quadtrees()).flatten().collect(),
             Node::Leaf(_) => vec![self.clone()],
         }
-    }
-
-    pub fn get_intersctions(&self, point: &Point) -> Option<(usize, Point)> {
-        if self.polygon.contains_inside(point) {
-            match &self.data {
-                Node::Internal(quadtrees) => {
-                    let find = quadtrees
-                        .iter()
-                        .find(|quadtree| quadtree.polygon.contains_inside(point));
-                    if find.is_none() {
-                        panic!("error");
-                    }
-                    return find.unwrap().get_intersctions(point);
-                }
-                Node::Leaf(arcs) => {
-                    let ray = Arc::new(point, &self.polygon.inside_point);
-                    let intersections = arcs.iter().filter(|arc| ray.intersects(arc)).count();
-                    return Some((intersections, self.polygon.inside_point.clone()));
-                }
-            }
-        }
-        None
     }
 
     fn split(&mut self) {
@@ -129,14 +97,14 @@ impl Quadtree {
             arcs.extend(old_arcs);
         }
         self.data = Node::Internal(
-            split_recangle(&self.polygon)
+            split_recangle(&self.boundary)
                 .into_iter()
                 .map(|rectangle| {
-                    let mut q = Quadtree::new(rectangle);
-                    set_midpoint(&mut q.polygon);
+                    let mut q = SpatialPartition::new_leaf(rectangle);
+                    set_midpoint(&mut q.boundary);
 
                     for arc in &arcs {
-                        if q.polygon.intescts_or_inside(arc) {
+                        if q.boundary.intescts_or_inside(arc) {
                             q.add_arc(arc);
                         }
                     }
@@ -150,7 +118,7 @@ impl Quadtree {
         match &mut self.data {
             Node::Internal(quadtrees) => {
                 for quadtree in quadtrees.iter_mut() {
-                    if quadtree.polygon.intescts_or_inside(arc) {
+                    if quadtree.boundary.intescts_or_inside(arc) {
                         quadtree.add_arc(arc);
                     }
                 }
@@ -174,7 +142,7 @@ impl Quadtree {
     }
 
     pub fn update_midpoint(&mut self, planet: &Planet) {
-        if planet.is_on_polygon(&self.polygon.inside_point) {
+        if planet.is_on_polygon(&self.boundary.inside_point) {
             self.midpoint_status = PointStatus::Inside;
         } else {
             self.midpoint_status = PointStatus::Outside;
@@ -187,33 +155,27 @@ impl Quadtree {
         }
     }
 
-    pub fn is_on_polygon(&self, point: &Point, out_planet: &mut Planet, planet: &Planet) -> bool {
-        if self.polygon.contains_inside(point) {
-            match &self.data {
-                Node::Internal(quadtrees) => {
-                    let find = quadtrees
-                        .iter()
-                        .find(|quadtree| quadtree.polygon.contains_inside(point));
-                    if find.is_none() {
-                        println!("error");
-                        return false;
-                    }
-                    return find.unwrap().is_on_polygon(point, out_planet, planet);
+    pub fn is_on_polygon(&self, point: &Point) -> bool {
+        match &self.data {
+            Node::Internal(quadtrees) => {
+                let find = quadtrees
+                    .iter()
+                    .find(|quadtree| quadtree.boundary.contains_inside(point));
+                if find.is_none() {
+                    println!("error");
+                    return false;
                 }
-                Node::Leaf(arcs) => {
-                    let ray = Arc::new(point, &self.polygon.inside_point);
-                    let intersections: Vec<Point> = arcs
-                        .iter()
-                        .filter_map(|arc| ray.intersection(arc))
-                        .collect();
-                    match self.midpoint_status {
-                        PointStatus::Inside => return intersections.len() % 2 == 0,
-                        PointStatus::Outside => return intersections.len() % 2 == 1,
-                    }
+                return find.unwrap().is_on_polygon(point);
+            }
+            Node::Leaf(arcs) => {
+                let ray = Arc::new(point, &self.boundary.inside_point);
+                let intersections = arcs.iter().filter_map(|arc| ray.intersection(arc)).count();
+                match self.midpoint_status {
+                    PointStatus::Inside => return intersections % 2 == 0,
+                    PointStatus::Outside => return intersections % 2 == 1,
                 }
             }
         }
-        false
     }
 }
 
