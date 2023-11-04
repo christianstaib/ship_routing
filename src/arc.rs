@@ -53,7 +53,7 @@ impl Arc {
     }
 
     pub fn is_on_righthand_side(&self, point: &Point) -> bool {
-        self.normal().dot(point.vec()) <= 0.0
+        self.normal().dot(point.vec()) > 0.0
     }
 
     pub fn middle(&self) -> Point {

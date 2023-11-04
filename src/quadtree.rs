@@ -1,8 +1,8 @@
-use crate::{Arc, Planet, Point, Polygon, SolidShape};
+use crate::{Arc, ConvecQuadrilateral, Planet, Point, Polygon, SolidShape};
 
 #[derive(Clone, Debug)]
 pub struct SpatialPartition {
-    pub boundary: Polygon,
+    pub boundary: ConvecQuadrilateral,
     pub node_type: NodeType,
     pub midpoint_flag: PointStatus,
 }
@@ -27,7 +27,7 @@ pub struct CollisionDetector {
 const MAX_SIZE: usize = 25_000;
 
 impl CollisionDetector {
-    pub fn new(polygons: &Vec<Polygon>) -> CollisionDetector {
+    pub fn new(polygons: &Vec<ConvecQuadrilateral>) -> CollisionDetector {
         CollisionDetector {
             spatial_partition: SpatialPartition::new_root(polygons),
             planet: Planet::new(),
@@ -56,8 +56,8 @@ impl CollisionDetector {
 }
 
 impl SpatialPartition {
-    pub fn new_root(polygons: &Vec<Polygon>) -> SpatialPartition {
-        let polgon = Polygon::new(vec![
+    pub fn new_root(polygons: &Vec<ConvecQuadrilateral>) -> SpatialPartition {
+        let polgon = ConvecQuadrilateral::new(&vec![
             Point::from_geodetic(0.0, 0.0),
             Point::from_geodetic(1.0, 1.0),
             Point::from_geodetic(1.0, -1.0),
@@ -76,7 +76,7 @@ impl SpatialPartition {
         }
     }
 
-    pub fn new_leaf(polygon: Polygon) -> SpatialPartition {
+    pub fn new_leaf(polygon: ConvecQuadrilateral) -> SpatialPartition {
         SpatialPartition {
             boundary: polygon,
             node_type: NodeType::Leaf(Vec::new()),
@@ -97,14 +97,10 @@ impl SpatialPartition {
             arcs.extend(old_arcs);
         }
         self.node_type = NodeType::Internal(
-            split_recangle(&self.boundary)
+            self.boundary
+                .split()
                 .into_iter()
-                .map(|rectangle| {
-                    let mut q = SpatialPartition::new_leaf(rectangle);
-                    set_midpoint(&mut q.boundary);
-
-                    q
-                })
+                .map(|rectangle| SpatialPartition::new_leaf(rectangle))
                 .collect(),
         );
 
@@ -135,7 +131,7 @@ impl SpatialPartition {
         }
     }
 
-    pub fn add_polygon(&mut self, polygon: &Polygon) {
+    pub fn add_polygon(&mut self, polygon: &ConvecQuadrilateral) {
         polygon
             .outline
             .windows(2)
@@ -177,70 +173,4 @@ impl SpatialPartition {
             }
         }
     }
-}
-
-fn set_midpoint(rectangle: &mut Polygon) {
-    let d0 = Arc::new(&rectangle.outline[0], &rectangle.outline[2]);
-    let d1 = Arc::new(&rectangle.outline[1], &rectangle.outline[3]);
-    rectangle.inside_point = d0.intersection(&d1).unwrap();
-}
-
-fn split_recangle(rectangle: &Polygon) -> Vec<Polygon> {
-    assert!(rectangle.outline.len() == 5);
-    let arcs: Vec<Arc> = rectangle
-        .outline
-        .windows(2)
-        .map(|arc| Arc::new(&arc[0], &arc[1]))
-        .collect();
-
-    let o = rectangle.outline.clone();
-
-    let m: Vec<Point> = arcs.iter().map(|arc| arc.middle()).collect();
-
-    let d0 = Arc::new(&m[0], &m[2]);
-    let d1 = Arc::new(&m[1], &m[3]);
-
-    let middle = d0.intersection(&d1).expect("should intersection");
-    let mut subs = Vec::new();
-    let mut p0 = Polygon::new(vec![
-        m[3].clone(),
-        middle.clone(),
-        m[2].clone(),
-        o[3].clone(),
-        m[3].clone(),
-    ]);
-    set_midpoint(&mut p0);
-    subs.push(p0);
-
-    let mut p1 = Polygon::new(vec![
-        middle.clone(),
-        m[1].clone(),
-        o[2].clone(),
-        m[2].clone(),
-        middle.clone(),
-    ]);
-    set_midpoint(&mut p1);
-    subs.push(p1);
-
-    let mut p2 = Polygon::new(vec![
-        m[0].clone(),
-        o[1].clone(),
-        m[1].clone(),
-        middle.clone(),
-        m[0].clone(),
-    ]);
-    set_midpoint(&mut p2);
-    subs.push(p2);
-
-    let mut p3 = Polygon::new(vec![
-        o[0].clone(),
-        m[0].clone(),
-        middle.clone(),
-        m[3].clone(),
-        o[0].clone(),
-    ]);
-    set_midpoint(&mut p3);
-    subs.push(p3);
-
-    subs
 }
