@@ -30,13 +30,13 @@ impl PointStatus {
 }
 
 pub struct CollisionDetector {
-    spatial_partition: SpatialPartition,
+    pub spatial_partition: SpatialPartition,
     planet: Planet,
     reference_point: Point,
     reference_point_status: PointStatus,
 }
 
-const MAX_SIZE: usize = 10_000;
+const MAX_SIZE: usize = 1_000;
 
 impl CollisionDetector {
     pub fn new() -> CollisionDetector {
@@ -151,13 +151,13 @@ impl SpatialPartition {
                     let contrains_to = quadtree.boundary.contains(arc.to());
                     if contrains_from && contrains_to {
                         quadtree.add_arc(arc);
-                        //  break;
-                    } else if contrains_from {
-                        quadtree.add_arc(arc);
-                        //  break;
-                    } else if contrains_to {
-                        quadtree.add_arc(arc);
-                        //  break;
+                        // break;
+                        // } else if contrains_from {
+                        //     quadtree.add_arc(arc);
+                        //     //  break;
+                        // } else if contrains_to {
+                        //     quadtree.add_arc(arc);
+                        //     //  break;
                     } else if quadtree.boundary.intersects(arc) {
                         quadtree.add_arc(arc);
                     }
@@ -198,14 +198,14 @@ impl SpatialPartition {
         match &self.node_type {
             NodeType::Internal(quadtrees) => quadtrees
                 .iter()
-                .filter(|quadtree| quadtree.boundary.intersects(ray))
+                // .filter(|quadtree| quadtree.boundary.intersects(ray))
                 .map(|quadtree| quadtree.intersections(ray))
                 .flatten()
                 .collect(),
             NodeType::Leaf(arcs) => arcs
                 .iter()
                 .filter_map(|arc| ray.intersection(arc))
-                .filter(|p| self.boundary.contains(p))
+                //.filter(|p| self.boundary.contains(p))
                 .collect(),
         }
     }
