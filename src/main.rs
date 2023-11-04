@@ -75,53 +75,16 @@ fn test_clipping() {
     });
 
     let start = Instant::now();
-    let n = 1_000;
+    let n = 100_000;
     for _ in (0..n).progress() {
-        // let point = Point::from_geodetic(43.9800, -114.0442); //Point::random();
-        // let point22 = Point::from_geodetic(19.9431, 96.5227); //Point::random();
-        let point = Point::random();
-        let point22 = Point::random();
-        let ray = Arc::new(&point, &point22);
-        let mut true_numb = planet.intersections(&ray);
-        let mut my_numb = quadtree.intersections(&ray);
-        let old_len_true = true_numb.len();
-        let old_len_my = my_numb.len();
-        true_numb.sort_by(|x, y| x.lon().total_cmp(&y.lon()));
-        my_numb.sort_by(|x, y| x.lon().total_cmp(&y.lon()));
-        true_numb.dedup();
-        let old_my_copy = my_numb.clone();
-        my_numb.dedup();
-        if true_numb.len() != old_len_true {
-            println!("true num contained dupes: ");
-        }
-        if my_numb.len() != old_len_my {
-            println!(
-                "my num contained dupes. old:{}, new:{}",
-                old_len_my,
-                my_numb.len()
-            );
-            let removed_elements: Vec<Point> = old_my_copy
-                .windows(2) // look at each pair of consecutive elements
-                .filter_map(|window| {
-                    if window[0] == window[1] {
-                        Some(window[0].clone()) // if they are the same, take one of them
-                    } else {
-                        None // otherwise, none of them was removed
-                    }
-                })
-                .collect();
-            out_planet.points.extend(removed_elements);
-        }
+        let point1 = Point::random();
+        let point2 = Point::random();
+        let ray = Arc::new(&point1, &point2);
+        let true_numb = planet.intersections(&ray);
+        let my_numb = quadtree.intersections(&ray);
 
-        //assert!(my_numb.len() == true_numb.len());
-        if true_numb.len() != my_numb.len() {
-            println!("true:{} my:{}", true_numb.len(), my_numb.len());
-            println!("{:?}", true_numb);
-            println!("{:?}", my_numb);
-            // my_numb.retain(|&p| true_numb.iter().any(|&x| p.equals(&x)));
-            out_planet.lines.extend(make_good_line(ray));
-            out_planet.points.extend(my_numb.clone());
-        }
+        assert!(my_numb.len() == true_numb.len());
+
         // assert_eq!(
         //     planet.intersections(&ray).len(),
         //     quadtree.intersections(&ray)
@@ -137,7 +100,7 @@ fn test_clipping() {
 
 fn make_good_line(line: Arc) -> Vec<Arc> {
     let mut arcs = vec![line];
-    while arcs[0].central_angle() > 0.025 {
+    while arcs[0].central_angle() > 0.005 {
         arcs = arcs
             .iter()
             .map(|arc| {

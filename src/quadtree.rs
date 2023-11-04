@@ -70,7 +70,8 @@ impl CollisionDetector {
 
     pub fn intersections(&self, ray: &Arc) -> Vec<Point> {
         let mut intersections = self.spatial_partition.intersections(ray);
-        intersections.dedup(); // if intersections of poylgon and arc on border of
+        intersections.sort_by(|x, y| x.lon().partial_cmp(&y.lon()).unwrap());
+        intersections.dedup(); // i dont know exactly why this is necesary, but it is :(
         intersections
     }
 
@@ -153,7 +154,7 @@ impl SpatialPartition {
                     let contrains_to = quadtree.boundary.contains(arc.to());
                     if contrains_from && contrains_to {
                         quadtree.add_arc(arc);
-                        // break;
+                        break;
                         // } else if contrains_from {
                         //     quadtree.add_arc(arc);
                         //     //  break;
@@ -192,7 +193,11 @@ impl SpatialPartition {
         match &self.node_type {
             NodeType::Internal(quadtrees) => quadtrees
                 .iter()
-                // .filter(|quadtree| quadtree.boundary.intersects(ray))
+                .filter(|quadtree| {
+                    quadtree.boundary.contains(ray.from())
+                        || quadtree.boundary.contains(ray.to())
+                        || quadtree.boundary.intersects(ray)
+                })
                 .map(|quadtree| quadtree.intersections(ray))
                 .flatten()
                 .collect(),
