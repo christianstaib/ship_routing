@@ -7,7 +7,7 @@ use std::{
 
 use geojson::{FeatureCollection, Value};
 
-use super::{polygon::SolidShape, Arc, Point, Polygon, RawOsmData};
+use crate::{Arc, Point, Polygon, RawOsmData, SolidShape};
 
 #[derive(Clone)]
 pub struct Planet {

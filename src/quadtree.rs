@@ -1,5 +1,4 @@
-use crate::planet_elements::SolidShape;
-use crate::{Arc, Planet, Point, Polygon};
+use crate::{Arc, Planet, Point, Polygon, SolidShape};
 
 #[derive(Clone, Debug)]
 pub struct SpatialPartition {
@@ -25,7 +24,7 @@ pub struct CollisionDetector {
     planet: Planet,
 }
 
-const MAX_SIZE: usize = 10_000;
+const MAX_SIZE: usize = 25_000;
 
 impl CollisionDetector {
     pub fn new(polygons: &Vec<Polygon>) -> CollisionDetector {
@@ -85,15 +84,15 @@ impl SpatialPartition {
         }
     }
 
-    pub fn get_quadtrees(&self) -> Vec<SpatialPartition> {
+    pub fn get_leafes(&self) -> Vec<SpatialPartition> {
         match &self.node_type {
-            NodeType::Internal(q) => q.iter().flat_map(|q| q.get_quadtrees()).collect(),
+            NodeType::Internal(q) => q.iter().flat_map(|q| q.get_leafes()).collect(),
             NodeType::Leaf(_) => vec![self.clone()],
         }
     }
 
     fn split(&mut self) {
-        let mut arcs = Vec::new();
+        let mut arcs: Vec<Arc> = Vec::new();
         if let NodeType::Leaf(old_arcs) = &self.node_type {
             arcs.extend(old_arcs);
         }
@@ -104,24 +103,27 @@ impl SpatialPartition {
                     let mut q = SpatialPartition::new_leaf(rectangle);
                     set_midpoint(&mut q.boundary);
 
-                    for arc in &arcs {
-                        if q.boundary.intescts_or_inside(arc) {
-                            q.add_arc(arc);
-                        }
-                    }
                     q
                 })
                 .collect(),
         );
+
+        arcs.iter().for_each(|arc| self.add_arc(arc));
     }
 
     fn add_arc(&mut self, arc: &Arc) {
         match &mut self.node_type {
             NodeType::Internal(quadtrees) => {
-                quadtrees
-                    .iter_mut()
-                    .filter(|quadtree| quadtree.boundary.intescts_or_inside(arc))
-                    .for_each(|quadtree| quadtree.add_arc(arc));
+                for quadtree in quadtrees.iter_mut() {
+                    let contrains_from = quadtree.boundary.contains(arc.from());
+                    let contrains_to = quadtree.boundary.contains(arc.to());
+                    if contrains_from && contrains_to {
+                        quadtree.add_arc(arc);
+                        break;
+                    } else if quadtree.boundary.intersects(arc) {
+                        quadtree.add_arc(arc);
+                    }
+                }
             }
             NodeType::Leaf(arcs) => {
                 arcs.push(arc.clone());

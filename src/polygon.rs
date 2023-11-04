@@ -47,7 +47,7 @@ impl SolidShape for Polygon {
     }
 
     fn intersects(&self, arc: &Arc) -> bool {
-        self.intersects(arc)
+        !self.intersections(arc).is_empty()
     }
 }
 
@@ -97,21 +97,14 @@ impl Polygon {
         Arc::new(&intersections[0], &intersections[1]).middle()
     }
 
-    pub fn intescts_or_inside(&self, arc: &Arc) -> bool {
-        self.contains(arc.from()) || self.contains(&arc.to()) || !self.intersections(arc).is_empty()
-    }
-
     pub fn intersections(&self, line: &Arc) -> Vec<Point> {
-        let intersection: Vec<Point> = self
-            .outline
+        self.outline
             .windows(2)
             .filter_map(|outline| {
                 let outline = Arc::new(&outline[0], &outline[1]);
                 line.intersection(&outline)
             })
-            .collect();
-        //intersection.dedup();
-        intersection
+            .collect()
     }
 
     pub fn to_feature(&self) -> Feature {

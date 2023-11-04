@@ -3,7 +3,7 @@ use std::{error::Error, f64::consts::PI};
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 
-use super::Point;
+use crate::Point;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Arc {
@@ -50,6 +50,10 @@ impl Arc {
             &Point::from_vec(vec[0].clone())?,
             &Point::from_vec(vec[1].clone())?,
         ))
+    }
+
+    pub fn is_on_righthand_side(&self, point: &Point) -> bool {
+        self.normal().dot(point.vec()) <= 0.0
     }
 
     pub fn middle(&self) -> Point {

@@ -1,6 +1,6 @@
 use rand::{rngs::ThreadRng, Rng};
 
-use crate::planet_elements::Point;
+use crate::Point;
 
 pub const EPS: f64 = 0.001;
 

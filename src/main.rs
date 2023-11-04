@@ -7,33 +7,15 @@ fn main() {
     test_clipping();
 }
 
-fn generate_rectangle(sw: &Point, ne: &Point) -> Polygon {
-    assert!(sw.lat() < ne.lat());
-    assert!(sw.lon() < ne.lon());
-
-    let mut outline = vec![
-        Point::from_geodetic(sw.lat(), sw.lon()),
-        Point::from_geodetic(sw.lat(), ne.lon()),
-        Point::from_geodetic(ne.lat(), ne.lon()),
-        Point::from_geodetic(ne.lat(), sw.lon()),
-        Point::from_geodetic(sw.lat(), sw.lon()),
-    ];
-    outline.dedup();
-    assert!(outline.len() >= 4);
-    Polygon::new(outline)
-}
-
 fn test_clipping() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
+    // const PLANET_PATH: &str = "tests/data/osm/planet-coastlines.osm.pbf";
     const OUT_PLANET_PATH: &str = "tests/data/test_geojson/grid.geojson";
 
-    let mut planet = Planet::from_file(PLANET_PATH).unwrap();
+    let planet = Planet::from_file(PLANET_PATH).unwrap();
+    // let planet = Planet::from_osm(PLANET_PATH);
+    // planet.to_file(OUT_PLANET_PATH);
     let mut out_planet = Planet::new();
-    planet
-        .polygons
-        .sort_by_key(|polygon| -1 * polygon.outline.len() as isize);
-    // planet.polygons = planet.polygons.iter().take(3).cloned().collect();
-    // out_planet.polygons = planet.polygons.clone();
 
     let np = Point::from_geodetic(90.0, 0.0);
     let sp = Point::from_geodetic(-90.0, 0.0);
@@ -89,6 +71,7 @@ fn test_clipping() {
 
     let mut quadtree = CollisionDetector::new(&base_pixels);
 
+    println!("adding polygons to partition");
     planet
         .polygons
         .iter()
@@ -102,7 +85,7 @@ fn test_clipping() {
     println!("generating points");
 
     let start = Instant::now();
-    let n = 1_000_000;
+    let n = 10_000;
     for _ in (0..n).progress() {
         let point = Point::random();
         if quadtree.is_on_polygon(&point) {
