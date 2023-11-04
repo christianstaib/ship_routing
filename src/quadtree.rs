@@ -69,7 +69,9 @@ impl CollisionDetector {
     }
 
     pub fn intersections(&self, ray: &Arc) -> Vec<Point> {
-        self.spatial_partition.intersections(ray)
+        let mut intersections = self.spatial_partition.intersections(ray);
+        intersections.dedup(); // if intersections of poylgon and arc on border of
+        intersections
     }
 
     pub fn update_midpoints(&mut self) {
@@ -171,14 +173,6 @@ impl SpatialPartition {
                 }
             }
         }
-    }
-
-    pub fn add_polygon(&mut self, polygon: &ConvecQuadrilateral) {
-        polygon
-            .outline
-            .windows(2)
-            .map(|arc| Arc::new(&arc[0], &arc[1]))
-            .for_each(|arc| self.add_arc(&arc));
     }
 
     pub fn update_midpoint(&mut self, planet: &Planet) {

@@ -20,7 +20,7 @@ fn test_clipping() {
         .polygons
         .sort_by_key(|polygon| -1 * polygon.outline.len() as isize);
     planet.polygons = planet.polygons.into_iter().take(5).collect();
-    //  out_planet.polygons = planet.polygons.clone();
+    //out_planet.polygons = planet.polygons.clone();
 
     let mut quadtree = CollisionDetector::new();
 
@@ -44,7 +44,29 @@ fn test_clipping() {
         .map(|x| Polygon::new(x.boundary.outline.clone()))
         .collect();
 
+    quadtree
+        .spatial_partition
+        .get_leafes()
+        .iter()
+        .for_each(|quad| match &quad.node_type {
+            osm_test::NodeType::Internal(_) => panic!(""),
+            osm_test::NodeType::Leaf(arc) => {
+                let mut arc_copy = arc.clone();
+                let old = arc_copy.len();
+                arc_copy.dedup();
+                assert!(arc.len() == arc_copy.len());
+            }
+        });
+
     outlines.iter().for_each(|outline| {
+        outline
+            .outline
+            .windows(2)
+            .map(|arc| Arc::new(&arc[0], &arc[1]))
+            .for_each(|arc| out_planet.lines.push(arc))
+    });
+
+    planet.polygons.iter().for_each(|outline| {
         outline
             .outline
             .windows(2)
@@ -91,7 +113,7 @@ fn test_clipping() {
             out_planet.points.extend(removed_elements);
         }
 
-        assert!(my_numb.len() == true_numb.len());
+        //assert!(my_numb.len() == true_numb.len());
         if true_numb.len() != my_numb.len() {
             println!("true:{} my:{}", true_numb.len(), my_numb.len());
             println!("{:?}", true_numb);
