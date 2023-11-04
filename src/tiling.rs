@@ -3,7 +3,6 @@ use crate::{Arc, Point, SolidShape};
 #[derive(Debug, Clone)]
 pub struct ConvecQuadrilateral {
     pub outline: Vec<Point>,
-    pub inside_point: Point,
 }
 
 impl SolidShape for ConvecQuadrilateral {
@@ -79,13 +78,15 @@ impl ConvecQuadrilateral {
 
 impl ConvecQuadrilateral {
     pub fn new(outline: &Vec<Point>) -> ConvecQuadrilateral {
-        let d0 = Arc::new(&outline[0], &outline[2]);
-        let d1 = Arc::new(&outline[1], &outline[3]);
-        let inside_point = d0.intersection(&d1).unwrap();
         ConvecQuadrilateral {
             outline: outline.clone(),
-            inside_point,
         }
+    }
+
+    pub fn get_midpoint(&self) -> Point {
+        let d0 = Arc::new(&self.outline[0], &self.outline[2]);
+        let d1 = Arc::new(&self.outline[1], &self.outline[3]);
+        d0.intersection(&d1).unwrap()
     }
 
     pub fn intersections(&self, line: &Arc) -> Vec<Point> {

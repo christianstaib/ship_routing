@@ -1,9 +1,10 @@
-use crate::{Arc, ConvecQuadrilateral, Planet, Point, Polygon, SolidShape};
+use crate::{Arc, ConvecQuadrilateral, Planet, Point, Polygon, SolidShape, Tiling};
 
 #[derive(Clone, Debug)]
 pub struct SpatialPartition {
     pub boundary: ConvecQuadrilateral,
     pub node_type: NodeType,
+    pub midpoint: Point,
     pub midpoint_flag: PointStatus,
 }
 
@@ -19,18 +20,32 @@ pub enum NodeType {
     Leaf(Vec<Arc>),                  // a bucket of points
 }
 
+impl PointStatus {
+    pub fn other(&self) -> PointStatus {
+        match self {
+            PointStatus::Inside => PointStatus::Outside,
+            PointStatus::Outside => PointStatus::Inside,
+        }
+    }
+}
+
 pub struct CollisionDetector {
     spatial_partition: SpatialPartition,
     planet: Planet,
+    reference_point: Point,
+    reference_point_status: PointStatus,
 }
 
-const MAX_SIZE: usize = 25_000;
+const MAX_SIZE: usize = 10_000;
 
 impl CollisionDetector {
-    pub fn new(polygons: &Vec<ConvecQuadrilateral>) -> CollisionDetector {
+    pub fn new() -> CollisionDetector {
+        let polygons = Tiling::base_tiling();
         CollisionDetector {
-            spatial_partition: SpatialPartition::new_root(polygons),
+            spatial_partition: SpatialPartition::new_root(&polygons),
             planet: Planet::new(),
+            reference_point: Point::random(),
+            reference_point_status: PointStatus::Outside,
         }
     }
 
@@ -43,10 +58,27 @@ impl CollisionDetector {
                 self.spatial_partition.add_arc(&arc);
             });
 
+        if polygon.contains(&self.reference_point) {
+            match self.reference_point_status {
+                PointStatus::Inside => self.reference_point_status = PointStatus::Outside,
+                PointStatus::Outside => self.reference_point_status = PointStatus::Outside,
+            }
+        }
+
         self.planet.polygons.push(polygon);
     }
 
+    pub fn intersections(&self, ray: &Arc) -> Vec<Point> {
+        self.spatial_partition.intersections(ray)
+    }
+
     pub fn update_midpoints(&mut self) {
+        // if self.planet.is_on_polygon(&self.spatial_partition.midpoint) {
+        //     self.spatial_partition.midpoint_flag = PointStatus::Inside;
+        // } else {
+        //     self.spatial_partition.midpoint_flag = PointStatus::Outside;
+        // }
+        // self.spatial_partition.propagate_midpoint(&self.planet);
         self.spatial_partition.update_midpoint(&self.planet);
     }
 
@@ -57,14 +89,15 @@ impl CollisionDetector {
 
 impl SpatialPartition {
     pub fn new_root(polygons: &Vec<ConvecQuadrilateral>) -> SpatialPartition {
-        let polgon = ConvecQuadrilateral::new(&vec![
+        let boundary = ConvecQuadrilateral::new(&vec![
             Point::from_geodetic(0.0, 0.0),
             Point::from_geodetic(1.0, 1.0),
             Point::from_geodetic(1.0, -1.0),
             Point::from_geodetic(0.0, 0.0),
         ]);
+        let midpoint = boundary.get_midpoint();
         SpatialPartition {
-            boundary: polgon,
+            boundary,
             node_type: NodeType::Internal(
                 polygons
                     .iter()
@@ -72,14 +105,17 @@ impl SpatialPartition {
                     .map(|p| SpatialPartition::new_leaf(p))
                     .collect(),
             ),
+            midpoint,
             midpoint_flag: PointStatus::Outside,
         }
     }
 
-    pub fn new_leaf(polygon: ConvecQuadrilateral) -> SpatialPartition {
+    pub fn new_leaf(boundary: ConvecQuadrilateral) -> SpatialPartition {
+        let midpoint = boundary.get_midpoint();
         SpatialPartition {
-            boundary: polygon,
+            boundary,
             node_type: NodeType::Leaf(Vec::new()),
+            midpoint,
             midpoint_flag: PointStatus::Outside,
         }
     }
@@ -115,7 +151,13 @@ impl SpatialPartition {
                     let contrains_to = quadtree.boundary.contains(arc.to());
                     if contrains_from && contrains_to {
                         quadtree.add_arc(arc);
-                        break;
+                        //  break;
+                    } else if contrains_from {
+                        quadtree.add_arc(arc);
+                        //  break;
+                    } else if contrains_to {
+                        quadtree.add_arc(arc);
+                        //  break;
                     } else if quadtree.boundary.intersects(arc) {
                         quadtree.add_arc(arc);
                     }
@@ -140,7 +182,7 @@ impl SpatialPartition {
     }
 
     pub fn update_midpoint(&mut self, planet: &Planet) {
-        self.midpoint_flag = match planet.is_on_polygon(&self.boundary.inside_point) {
+        self.midpoint_flag = match planet.is_on_polygon(&self.midpoint) {
             true => PointStatus::Inside,
             false => PointStatus::Outside,
         };
@@ -149,6 +191,22 @@ impl SpatialPartition {
             quadtrees
                 .iter_mut()
                 .for_each(|quadtree| quadtree.update_midpoint(planet));
+        }
+    }
+
+    pub fn intersections(&self, ray: &Arc) -> Vec<Point> {
+        match &self.node_type {
+            NodeType::Internal(quadtrees) => quadtrees
+                .iter()
+                .filter(|quadtree| quadtree.boundary.intersects(ray))
+                .map(|quadtree| quadtree.intersections(ray))
+                .flatten()
+                .collect(),
+            NodeType::Leaf(arcs) => arcs
+                .iter()
+                .filter_map(|arc| ray.intersection(arc))
+                .filter(|p| self.boundary.contains(p))
+                .collect(),
         }
     }
 
@@ -167,7 +225,7 @@ impl SpatialPartition {
                     )
             }
             NodeType::Leaf(arcs) => {
-                let ray = Arc::new(point, &self.boundary.inside_point);
+                let ray = Arc::new(point, &self.midpoint);
                 let intersections = arcs.iter().filter_map(|arc| ray.intersection(arc)).count();
                 (intersections % 2 == 0) == (self.midpoint_flag == PointStatus::Inside)
             }
