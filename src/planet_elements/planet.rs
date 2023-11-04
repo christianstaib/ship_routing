@@ -7,7 +7,7 @@ use std::{
 
 use geojson::{FeatureCollection, Value};
 
-use super::{Arc, Point, Polygon, RawOsmData};
+use super::{polygon::SolidShape, Arc, Point, Polygon, RawOsmData};
 
 #[derive(Clone)]
 pub struct Planet {
@@ -46,9 +46,7 @@ impl Planet {
     }
 
     pub fn is_on_polygon(&self, point: &Point) -> bool {
-        self.polygons
-            .iter()
-            .any(|polygon| polygon.contains_inside(point))
+        self.polygons.iter().any(|polygon| polygon.contains(point))
     }
 
     pub fn from_geojson(json: &str) -> Result<Planet, Box<dyn Error>> {

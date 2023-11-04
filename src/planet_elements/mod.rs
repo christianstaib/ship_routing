@@ -11,4 +11,5 @@ pub use path::Path;
 pub use planet::Planet;
 pub use point::Point;
 pub use polygon::Polygon;
+pub use polygon::SolidShape;
 pub use raw_osm_data::RawOsmData;

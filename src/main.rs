@@ -102,7 +102,7 @@ fn test_clipping() {
     println!("generating points");
 
     let start = Instant::now();
-    let n = 10_000;
+    let n = 1_000_000;
     for _ in (0..n).progress() {
         let point = Point::random();
         if quadtree.is_on_polygon(&point) {
