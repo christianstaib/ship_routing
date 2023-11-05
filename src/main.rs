@@ -1,37 +1,21 @@
 use std::time::Instant;
 
 use indicatif::ProgressIterator;
-use osm_test::{Arc, CollisionDetector, Planet, Point, Polygon, Tiling};
+use osm_test::{Planet, Point};
 
 fn main() {
-    //test_clipping();
-    osm_to_geojson();
-}
-
-fn osm_to_geojson() {
-    const PLANET_PATH: &str = "tests/data/osm/planet-coastlines.osm.pbf";
-    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/whole_planet.geojson";
-    let planet = Planet::from_osm(PLANET_PATH);
-    planet.to_file(OUT_PLANET_PATH);
+    test_clipping();
 }
 
 fn test_clipping() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
-    // const PLANET_PATH: &str = "tests/data/osm/planet-coastlines.osm.pbf";
     const OUT_PLANET_PATH: &str = "tests/data/test_geojson/grid.geojson";
 
-    let mut planet = Planet::from_file(PLANET_PATH).unwrap();
-    // let planet = Planet::from_osm(PLANET_PATH);
-    // planet.to_file(OUT_PLANET_PATH);
+    let planet = Planet::from_file(PLANET_PATH).unwrap();
     let mut out_planet = Planet::new();
-    planet
-        .polygons
-        .sort_by_key(|polygon| -1 * polygon.outline.len() as isize);
-    planet.polygons = planet.polygons.into_iter().collect();
-    out_planet.polygons = planet.polygons.clone();
 
     let start = Instant::now();
-    let n = 10;
+    let n = 100;
     for _ in (0..n).progress() {
         let point = Point::random();
         if planet.is_on_polygon(&point) {

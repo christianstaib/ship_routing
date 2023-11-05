@@ -1,5 +1,4 @@
 mod arc;
-mod path;
 mod planet;
 mod point;
 mod polygon;
