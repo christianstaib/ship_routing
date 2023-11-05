@@ -84,13 +84,18 @@ impl ConvecQuadrilateral {
     }
 
     pub fn get_midpoint(&self) -> Point {
-        let m0 = Arc::new(&self.outline[0], &self.outline[1]).middle_random();
-        let m1 = Arc::new(&self.outline[1], &self.outline[2]).middle_random();
-        let m2 = Arc::new(&self.outline[2], &self.outline[3]).middle_random();
-        let m3 = Arc::new(&self.outline[3], &self.outline[4]).middle_random();
-        let d0 = Arc::new(&m0, &m2);
-        let d1 = Arc::new(&m1, &m3);
-        d0.intersection(&d1).unwrap()
+        for _ in 0..5 {
+            let m0 = Arc::new(&self.outline[0], &self.outline[1]).middle_random();
+            let m1 = Arc::new(&self.outline[1], &self.outline[2]).middle_random();
+            let m2 = Arc::new(&self.outline[2], &self.outline[3]).middle_random();
+            let m3 = Arc::new(&self.outline[3], &self.outline[4]).middle_random();
+            let d0 = Arc::new(&m0, &m2);
+            let d1 = Arc::new(&m1, &m3);
+            if let Some(intersection) = d0.intersection(&d1) {
+                return intersection;
+            }
+        }
+        panic!("no midpoint found :(");
     }
 
     pub fn intersections(&self, line: &Arc) -> Vec<Point> {

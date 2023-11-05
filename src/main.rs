@@ -1,4 +1,4 @@
-use std::{env, sync::Mutex, time::Instant};
+use std::{env, time::Instant};
 
 use indicatif::ProgressIterator;
 use osm_test::{CollisionDetection, Planet, PlanetGrid, Point};
@@ -9,10 +9,12 @@ fn main() {
 }
 
 fn test_clipping() {
-    const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
-    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/planet_grid_on_polygon.geojson";
+    // const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
+    // let planet = Planet::from_file(PLANET_PATH).unwrap();
+    const PLANET_PATH: &str = "tests/data/osm/planet-coastlines.osm.pbf";
+    let planet = Planet::from_osm(PLANET_PATH);
 
-    let planet = Planet::from_file(PLANET_PATH).unwrap();
+    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/planet_grid_on_polygon.geojson";
     let mut out_planet = Planet::new();
 
     println!("generating grid");

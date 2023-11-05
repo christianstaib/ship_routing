@@ -1,6 +1,8 @@
 use std::sync::Mutex;
 
-use rayon::prelude::{IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator};
+use rayon::prelude::{
+    IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelBridge, ParallelIterator,
+};
 
 use crate::{
     Arc, CollisionDetection, ConvecQuadrilateral, Planet, Point, Polygon, SolidShape, Tiling,
