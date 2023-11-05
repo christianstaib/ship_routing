@@ -23,13 +23,13 @@ impl Arc {
     // http://www.movable-type.co.uk/scripts/latlong-vectors.html
     // http://instantglobe.com/CRANES/GeoCoordTool.html
     pub fn initial_bearing(&self) -> f64 {
-        let north_pole = Point::from_geodetic(90.0, 0.0);
+        let north_pole = Point::from_coordinate(90.0, 0.0);
 
-        let c1 = self.from.vec().cross(&self.to.vec());
-        let c2 = self.from.vec().cross(&north_pole.vec());
+        let c1 = self.from.n_vector().cross(&self.to.n_vector());
+        let c2 = self.from.n_vector().cross(&north_pole.n_vector());
 
         let mut sign = 1.0;
-        if c1.cross(&c2).dot(&self.from.vec()) < 0.0 {
+        if c1.cross(&c2).dot(&self.from.n_vector()) < 0.0 {
             sign = -1.0;
         }
 
@@ -48,23 +48,23 @@ impl Arc {
 
     pub fn from_vec(vec: Vec<Vec<f64>>) -> Result<Arc, Box<dyn Error>> {
         Ok(Arc::new(
-            &Point::from_vec(vec[0].clone())?,
-            &Point::from_vec(vec[1].clone())?,
+            &Point::from_geojson_vec(vec[0].clone()),
+            &Point::from_geojson_vec(vec[1].clone()),
         ))
     }
 
     pub fn is_on_righthand_side(&self, point: &Point) -> bool {
-        self.normal().dot(point.vec()) > 0.0
+        self.normal().dot(point.n_vector()) > 0.0
     }
 
     pub fn middle_random(&self) -> Point {
         let mut rng = rand::thread_rng();
         let f = rng.gen_range(0.0..1.0);
-        Point::from_spherical(&((self.from.vec() * (1.0 - f) + self.to.vec() * f) / 2.0))
+        Point::from_n_vector(&((self.from.n_vector() * (1.0 - f) + self.to.n_vector() * f) / 2.0))
     }
 
     pub fn middle(&self) -> Point {
-        Point::from_spherical(&((self.from.vec() + self.to.vec()) / 2.0))
+        Point::from_n_vector(&((self.from.n_vector() + self.to.n_vector()) / 2.0))
     }
 
     pub fn from(&self) -> &Point {
@@ -83,20 +83,24 @@ impl Arc {
     /// path, you need to ensure that for all arcs in the path you call arc.intersection(ray).
     pub fn intersection(&self, other: &Arc) -> Option<Point> {
         // check if both end or start on same point
-        if self.from.equals(&other.from) || self.from.equals(&other.to) {
+        if self.from.is_approximately_equal(&other.from)
+            || self.from.is_approximately_equal(&other.to)
+        {
             return Some(self.from);
-        } else if self.to.equals(&other.from) || self.to.equals(&other.to) {
+        } else if self.to.is_approximately_equal(&other.from)
+            || self.to.is_approximately_equal(&other.to)
+        {
             return Some(self.to);
         }
 
         // check if intersection of both great circles lies on both arcs
         let candidate = self.normal().cross(&other.normal()).normalize();
         if !candidate.x.is_nan() && !candidate.y.is_nan() && !candidate.z.is_nan() {
-            let candidate = Point::from_spherical(&candidate);
+            let candidate = Point::from_n_vector(&candidate);
             if self.validate_intersection_candidate(&candidate)
                 && other.validate_intersection_candidate(&candidate)
             {
-                if !candidate.equals(self.from()) {
+                if !candidate.is_approximately_equal(self.from()) {
                     return Some(candidate);
                 }
             }
@@ -104,7 +108,7 @@ impl Arc {
             if self.validate_intersection_candidate(&candidate)
                 && other.validate_intersection_candidate(&candidate)
             {
-                if !candidate.equals(self.from()) {
+                if !candidate.is_approximately_equal(self.from()) {
                     return Some(candidate);
                 }
             }
@@ -118,15 +122,15 @@ impl Arc {
     }
 
     pub fn normal(&self) -> Vector3<f64> {
-        self.from.vec().cross(&self.to.vec()).normalize()
+        self.from.n_vector().cross(&self.to.n_vector()).normalize()
     }
 
     fn from_normal(&self) -> Vector3<f64> {
-        self.normal().cross(&self.from.vec()).normalize()
+        self.normal().cross(&self.from.n_vector()).normalize()
     }
 
     fn to_normal(&self) -> Vector3<f64> {
-        self.normal().cross(&self.to.vec()).normalize()
+        self.normal().cross(&self.to.n_vector()).normalize()
     }
 
     pub fn collides(&self, point: &Point) -> bool {
@@ -144,22 +148,22 @@ impl Arc {
     }
 
     fn validate_intersection_candidate(&self, point: &Point) -> bool {
-        let a0 = point.vec().dot(&self.from_normal());
-        let a1 = point.vec().dot(&self.to_normal());
+        let a0 = point.n_vector().dot(&self.from_normal());
+        let a1 = point.n_vector().dot(&self.to_normal());
 
         (a0 >= 0.0 && a1 <= 0.0)
-            || (a0 >= 0.0 && point.equals(&self.from))
-            || (a1 <= 0.0 && point.equals(&self.to))
+            || (a0 >= 0.0 && point.is_approximately_equal(&self.from))
+            || (a1 <= 0.0 && point.is_approximately_equal(&self.to))
     }
 
     pub fn central_angle(&self) -> f64 {
-        let a = self.from.vec();
-        let b = self.to.vec();
+        let a = self.from.n_vector();
+        let b = self.to.n_vector();
         a.angle(&b)
     }
 
     pub fn to_vec(&self) -> Vec<Vec<f64>> {
-        vec![self.from.to_vec(), self.to.to_vec()]
+        vec![self.from.to_geojson_vec(), self.to.to_geojson_vec()]
     }
 
     pub fn _make_good_line(&self) -> Vec<Arc> {
@@ -174,14 +178,14 @@ impl Arc {
                 .flatten()
                 .collect();
         }
-        arcs.retain(|arc| (arc.from().lon() - arc.to().lon()).abs() < 10.0);
+        arcs.retain(|arc| (arc.from().longitude() - arc.to().longitude()).abs() < 10.0);
         arcs
     }
 
     pub fn to_feature(&self) -> Feature {
         let point = Geometry::new(Value::LineString(vec![
-            self.from.to_vec(),
-            self.to.to_vec(),
+            self.from.to_geojson_vec(),
+            self.to.to_geojson_vec(),
         ]));
         Feature {
             bbox: None,
@@ -201,20 +205,20 @@ mod tests {
 
     #[test]
     fn test_central_angle() {
-        let from = Point::from_geodetic(90.0, 0.0);
-        let to = Point::from_geodetic(0.0, 0.0);
+        let from = Point::from_coordinate(90.0, 0.0);
+        let to = Point::from_coordinate(0.0, 0.0);
         let arc = Arc::new(&from, &to);
         assert!((arc.central_angle() - (PI / 2.0)).abs() < 1e-10);
     }
 
     #[test]
     fn test_intersection() {
-        let outline_from = Point::from_geodetic(10.9602021, 119.7085977);
-        let outline_to = Point::from_geodetic(10.9380527, 119.7102928);
+        let outline_from = Point::from_coordinate(10.9602021, 119.7085977);
+        let outline_to = Point::from_coordinate(10.9380527, 119.7102928);
         let outline = Arc::new(&outline_from, &outline_to);
 
-        let ray_from = Point::from_geodetic(10.939165355971703, 119.71220924280686);
-        let ray_to = Point::from_geodetic(11.42324706114331, 119.42008985034511);
+        let ray_from = Point::from_coordinate(10.939165355971703, 119.71220924280686);
+        let ray_to = Point::from_coordinate(11.42324706114331, 119.42008985034511);
         let ray = Arc::new(&ray_from, &ray_to);
 
         let intersect = ray.intersects(&outline);
@@ -224,14 +228,14 @@ mod tests {
     #[test]
     fn test_edge_intersection() {
         let outline = vec![
-            Point::from_geodetic(-1.0, 0.0),
-            Point::from_geodetic(0.0, 0.0),
-            Point::from_geodetic(1.0, 0.0),
+            Point::from_coordinate(-1.0, 0.0),
+            Point::from_coordinate(0.0, 0.0),
+            Point::from_coordinate(1.0, 0.0),
         ];
 
         let ray = Arc::new(
-            &Point::from_geodetic(0.0, 1.0),
-            &Point::from_geodetic(0.0, -1.0),
+            &Point::from_coordinate(0.0, 1.0),
+            &Point::from_coordinate(0.0, -1.0),
         );
 
         let arc0 = Arc::new(&outline[0], &outline[1]);

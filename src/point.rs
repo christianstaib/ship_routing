@@ -1,4 +1,4 @@
-use std::{error::Error, f64::consts::PI, fmt};
+use std::{f64::consts::PI, fmt};
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
@@ -8,50 +8,63 @@ use crate::Arc;
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Point {
-    vec: Vector3<f64>,
+    n_vector: Vector3<f64>,
 }
 
 impl fmt::Display for Point {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "(lat:{}, lon::{})", self.lat(), self.lon())
+        write!(f, "(lat:{}, lon::{})", self.latitude(), self.longitude())
     }
 }
 
 impl Point {
-    pub fn from_geodetic(lat: f64, lon: f64) -> Point {
-        assert!(-90.0 <= lat && lat <= 90.0, "illegal lat: {}", lat);
-        assert!(-180.0 <= lon && lon <= 180.0, "illegal lon: {}", lon);
+    /// Creates a `Point` from given latitude and longitude values, asserting that they are within valid ranges
+    /// (-90.0 <= latitude <= 90, -180.0 <= longitude <= 180.0).
+    pub fn from_coordinate(latitude: f64, longitude: f64) -> Point {
+        assert!(
+            -90.0 <= latitude && latitude <= 90.0,
+            "illegal lat: {}",
+            latitude
+        );
+        assert!(
+            -180.0 <= longitude && longitude <= 180.0,
+            "illegal lon: {}",
+            longitude
+        );
 
-        let lat_rad = lat.to_radians();
-        let lon_rad = lon.to_radians();
-        let vec = Vector3::new(
+        let lat_rad = latitude.to_radians();
+        let lon_rad = longitude.to_radians();
+        let n_vector = Vector3::new(
             lat_rad.cos() * lon_rad.cos(),
             lat_rad.cos() * lon_rad.sin(),
             lat_rad.sin(),
         );
 
-        Point { vec }
+        Point { n_vector }
     }
 
-    pub fn from_spherical(vec: &Vector3<f64>) -> Point {
-        let point = Point { vec: vec.clone() };
+    /// Constructs a point from a n-vector.
+    pub fn from_n_vector(n_vector: &Vector3<f64>) -> Point {
+        let point = Point {
+            n_vector: n_vector.clone(),
+        };
 
-        let lat = point.lat();
-        let lon = point.lon();
-        assert!(
-            -90.0 <= lat && lat <= 90.0,
-            "illegal lat: {} with vec {}",
-            lat,
-            vec
-        );
-        assert!(
-            -180.0 <= lon && lon <= 180.0,
-            "illegal lon: {} with vec {}",
-            lon,
-            vec
-        );
+        let lat = point.latitude();
+        let lon = point.longitude();
+        assert!(-90.0 <= lat && lat <= 90.0, "illegal vec: {}", n_vector);
+        assert!(-180.0 <= lon && lon <= 180.0, "illegal vec: {}", n_vector);
 
         point
+    }
+
+    /// Returns a point representing the geographic north pole.
+    pub fn north_pole() -> Point {
+        Point::from_coordinate(90.0, 0.0)
+    }
+
+    /// Returns a point representing the geographic south pole.
+    pub fn south_pole() -> Point {
+        Point::from_coordinate(-90.0, 0.0)
     }
 
     pub fn random() -> Point {
@@ -60,56 +73,70 @@ impl Point {
         let lat_rad: f64 = y.asin();
         let lat: f64 = lat_rad.to_degrees();
         let lon: f64 = rng.gen_range(-180.0..180.0);
-        Point::from_geodetic(lat, lon)
+        Point::from_coordinate(lat, lon)
     }
 
-    // http://www.movable-type.co.uk/scripts/latlong-vectors.html
-    pub fn destination_point(start: &Point, bearing: f64, distance: f64) -> Point {
-        let n = Point::from_geodetic(90.0, 0.0);
-        let de = n.vec().cross(start.vec());
-        let dn = start.vec().cross(&de);
-        let d = dn * bearing.cos() + de * bearing.sin();
-        let b = start.vec() * distance.cos() + d * distance.sin();
-        Point::from_spherical(&b)
+    /// Calculates the destination point given a start point, bearing, and distance on a sphere.
+    /// The destination is computed using vector math on a unit sphere where:
+    /// - `start`: the n-vector representing the start point
+    /// - `bearing_rad`: the bearing (from north) in radians
+    /// - `distance_rad`: the angular distance travelled in radians
+    pub fn destination_point(start: &Point, bearing_rad: f64, distance_rad: f64) -> Point {
+        let north_pole = Point::north_pole();
+        let east_direction = north_pole.n_vector().cross(start.n_vector());
+        let north_direction = start.n_vector().cross(&east_direction);
+        let direction = north_direction * bearing_rad.cos() + east_direction * bearing_rad.sin();
+        let destination = start.n_vector() * distance_rad.cos() + direction * distance_rad.sin();
+        Point::from_n_vector(&destination)
     }
 
-    pub fn lat(&self) -> f64 {
-        self.vec
+    /// Returns the latitude of the point in degrees. It is calculated each time it is called.
+    pub fn latitude(&self) -> f64 {
+        self.n_vector
             .z
-            .atan2((self.vec.x.powi(2) + self.vec.y.powi(2)).sqrt())
+            .atan2((self.n_vector.x.powi(2) + self.n_vector.y.powi(2)).sqrt())
             .to_degrees()
     }
 
-    pub fn lon(&self) -> f64 {
-        self.vec
+    /// Returns the longitude of the point in degrees. It is calculated each time it is called.
+    pub fn longitude(&self) -> f64 {
+        self.n_vector
             .y
             .to_radians()
-            .atan2(self.vec.x.to_radians())
+            .atan2(self.n_vector.x.to_radians())
             .to_degrees()
     }
 
-    pub fn vec(&self) -> &Vector3<f64> {
-        &self.vec
+    /// Returns the n-vector of the point.
+    pub fn n_vector(&self) -> &Vector3<f64> {
+        &self.n_vector
     }
 
-    pub fn equals(&self, other: &Point) -> bool {
-        Arc::new(self, other).central_angle() < meters_to_radians(0.1)
+    /// Determines if two points are approximately equal within 0.1 meters tolerance.
+    /// Returns `true` if the points are within this tolerance, otherwise `false`.
+    pub fn is_approximately_equal(&self, other: &Point) -> bool {
+        Arc::new(self, other).central_angle() <= meters_to_radians(0.1)
     }
 
+    /// Returns the the antipodal point to self.
     pub fn antipode(&self) -> Point {
-        Point::from_spherical(&-self.vec)
+        Point::from_n_vector(&-self.n_vector)
     }
 
-    pub fn to_vec(&self) -> Vec<f64> {
-        vec![self.lon(), self.lat()]
+    /// Converts the point to a GeoJSON-compatible [longitude, latitude] vector.
+    /// The order is longitude first to comply with the GeoJSON specification.
+    pub fn to_geojson_vec(&self) -> Vec<f64> {
+        vec![self.longitude(), self.latitude()]
     }
 
-    pub fn from_vec(vec: Vec<f64>) -> Result<Point, Box<dyn Error>> {
-        Ok(Point::from_geodetic(vec[1], vec[0]))
+    /// Creates a point from a GeoJSON-compatible [longitude, latitude] vector.
+    /// Note the GeoJSON order, which is longitude first.
+    pub fn from_geojson_vec(vec: Vec<f64>) -> Point {
+        Point::from_coordinate(vec[1], vec[0])
     }
 
     pub fn to_feature(&self) -> Feature {
-        let point: Vec<f64> = vec![self.lon(), self.lat()];
+        let point: Vec<f64> = self.to_geojson_vec();
         let point = Geometry::new(Value::Point(point));
         Feature {
             bbox: None,
@@ -134,7 +161,7 @@ mod tests {
     fn test_point_convertion() {
         for _ in 0..100 {
             let point = Point::random();
-            assert!(point.equals(&Point::from_spherical(point.vec())));
+            assert!(point.is_approximately_equal(&Point::from_n_vector(point.n_vector())));
         }
     }
 }

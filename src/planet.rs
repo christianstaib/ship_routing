@@ -66,7 +66,7 @@ impl Planet {
             .into_iter()
             .filter_map(|feature| feature.geometry)
             .for_each(|geometry| match geometry.value {
-                Value::Point(point) => planet.points.push(Point::from_vec(point).unwrap()),
+                Value::Point(point) => planet.points.push(Point::from_geojson_vec(point)),
                 Value::Polygon(polygon) => planet
                     .polygons
                     .push(Polygon::from_vec(polygon[0].clone()).unwrap()),

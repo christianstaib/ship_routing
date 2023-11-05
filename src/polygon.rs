@@ -62,7 +62,7 @@ impl Polygon {
     pub fn from_vec(vec: Vec<Vec<f64>>) -> Result<Polygon, Box<dyn Error>> {
         let outline = vec
             .into_iter()
-            .map(|point| Point::from_vec(point).unwrap())
+            .map(|point| Point::from_geojson_vec(point))
             .collect();
         Ok(Polygon::new(outline))
     }
@@ -82,7 +82,7 @@ impl Polygon {
 
         // make sure middle is in list
         if let Some(first) = intersections.first() {
-            if !middle.equals(first) {
+            if !middle.is_approximately_equal(first) {
                 intersections.insert(0, middle);
             }
         } else {
@@ -108,7 +108,7 @@ impl Polygon {
         let polygon = self
             .outline
             .iter()
-            .map(|&coordinate| vec![coordinate.lon(), coordinate.lat()])
+            .map(|&coordinate| vec![coordinate.longitude(), coordinate.latitude()])
             .collect();
 
         let polygon = Geometry::new(Value::Polygon(vec![polygon]));

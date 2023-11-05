@@ -36,7 +36,7 @@ impl RawOsmData {
         reader
             .for_each(|element| match element {
                 Element::DenseNode(node) => {
-                    nodes.insert(node.id(), Point::from_geodetic(node.lat(), node.lon()));
+                    nodes.insert(node.id(), Point::from_coordinate(node.lat(), node.lon()));
                 }
                 Element::Way(way) => {
                     if way

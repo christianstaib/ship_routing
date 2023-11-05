@@ -120,12 +120,12 @@ pub struct Tiling {}
 
 impl Tiling {
     pub fn base_tiling() -> Vec<ConvecQuadrilateral> {
-        let np = Point::from_geodetic(90.0, 0.0);
-        let sp = Point::from_geodetic(-90.0, 0.0);
+        let np = Point::from_coordinate(90.0, 0.0);
+        let sp = Point::from_coordinate(-90.0, 0.0);
         let mid_ring: Vec<f64> = vec![180.0, -90.0, 0.0, 90.0, 180.0];
         let mid_ring: Vec<Point> = mid_ring
             .iter()
-            .map(|&lon| Point::from_geodetic(0.0, lon))
+            .map(|&lon| Point::from_coordinate(0.0, lon))
             .collect();
         let upper_ring: Vec<Point> = mid_ring
             .iter()
@@ -138,7 +138,7 @@ impl Tiling {
         let mid_ring: Vec<f64> = vec![-135.0, -45.0, 45.0, 135.0, -135.0];
         let mid_ring: Vec<Point> = mid_ring
             .iter()
-            .map(|&lon| Point::from_geodetic(0.0, lon))
+            .map(|&lon| Point::from_coordinate(0.0, lon))
             .collect();
 
         let mut base_pixels = Vec::new();

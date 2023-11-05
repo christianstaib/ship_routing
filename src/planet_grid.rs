@@ -85,7 +85,7 @@ impl PlanetGrid {
 
     pub fn intersections(&self, ray: &Arc) -> Vec<Point> {
         let mut intersections = self.spatial_partition.intersections(ray);
-        intersections.sort_by(|x, y| x.lon().partial_cmp(&y.lon()).unwrap());
+        intersections.sort_by(|x, y| x.longitude().partial_cmp(&y.longitude()).unwrap());
         intersections.dedup(); // i dont know exactly why this is necesary, but it is :(
         intersections
     }
@@ -98,11 +98,11 @@ impl PlanetGrid {
 impl SpatialPartition {
     pub fn new_root(polygons: &Vec<ConvecQuadrilateral>, max_size: usize) -> SpatialPartition {
         let boundary = ConvecQuadrilateral::new(&vec![
-            Point::from_geodetic(0.0, 0.0),
-            Point::from_geodetic(1.0, 1.0),
-            Point::from_geodetic(1.0, -1.0),
-            Point::from_geodetic(1.0, -1.0),
-            Point::from_geodetic(0.0, 0.0),
+            Point::from_coordinate(0.0, 0.0),
+            Point::from_coordinate(1.0, 1.0),
+            Point::from_coordinate(1.0, -1.0),
+            Point::from_coordinate(1.0, -1.0),
+            Point::from_coordinate(0.0, 0.0),
         ]);
         let midpoint = boundary.get_midpoint();
         SpatialPartition {
@@ -271,7 +271,7 @@ impl SpatialPartition {
                 //.filter(|p| self.boundary.contains(p))
                 .collect(),
         };
-        intersections.sort_by(|x, y| x.lon().partial_cmp(&y.lon()).unwrap());
+        intersections.sort_by(|x, y| x.longitude().partial_cmp(&y.longitude()).unwrap());
         intersections.dedup(); // i dont know exactly why this is necesary, but it is :(
         intersections
     }
