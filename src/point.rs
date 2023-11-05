@@ -13,7 +13,7 @@ pub struct Point {
 
 impl fmt::Display for Point {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "(lat:{}, lonlon::{})", self.lat(), self.lon())
+        write!(f, "(lat:{}, lon::{})", self.lat(), self.lon())
     }
 }
 
