@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
 use rayon::prelude::{
-    IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelBridge, ParallelIterator,
+    IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
 
 use crate::{
@@ -68,7 +68,7 @@ impl CollisionDetection for PlanetGrid {
         self.spatial_partition.is_on_polygon(point)
     }
 
-    fn intersects_polygon(&self, arc: &Arc) -> bool {
+    fn intersects_polygon(&self, _arc: &Arc) -> bool {
         todo!()
     }
 }

@@ -1,4 +1,4 @@
-use std::{error::Error, f64::consts::PI};
+use std::{f64::consts::PI};
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
