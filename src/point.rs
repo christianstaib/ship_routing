@@ -38,8 +38,18 @@ impl Point {
 
         let lat = point.lat();
         let lon = point.lon();
-        assert!(-90.0 <= lat && lat <= 90.0, "illegal lat: {}", lat);
-        assert!(-180.0 <= lon && lon <= 180.0, "illegal lon: {}", lon);
+        assert!(
+            -90.0 <= lat && lat <= 90.0,
+            "illegal lat: {} with vec {}",
+            lat,
+            vec
+        );
+        assert!(
+            -180.0 <= lon && lon <= 180.0,
+            "illegal lon: {} with vec {}",
+            lon,
+            vec
+        );
 
         point
     }
