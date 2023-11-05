@@ -1,4 +1,4 @@
-use std::{env, time::Instant};
+use std::{env, sync::Mutex, time::Instant};
 
 use indicatif::ProgressIterator;
 use osm_test::{CollisionDetection, Planet, PlanetGrid, Point};
@@ -23,24 +23,31 @@ fn test_clipping() {
         .progress()
         .for_each(|polygon| planet_grid.add_polygon(polygon));
 
-    println!("updating midpoints");
-    planet_grid
-        .spatial_partition
-        .update_midpoint_with_planet(&planet);
+    // out_planet
+    //     .arcs
+    //     .extend(planet_grid.spatial_partition.get_leaf_polygons());
 
-    println!("checking if ray method works");
-    planet_grid.spatial_partition.propagte_status(&planet);
+    println!("updating midpoints");
+    planet_grid.spatial_partition.propagte_status();
+    //    .update_midpoint_with_planet(&planet);
+
+    // let out_planet = std::sync::Arc::new(Mutex::new(out_planet));
+    // println!("checking if ray method works");
+    // planet_grid
+    //     .spatial_partition
+    //     .propagte_status_test(&planet, out_planet.clone());
+    // planet_grid.update_midpoints();
+    //     out_planet.lock().unwrap().to_file(OUT_PLANET_PATH);
 
     println!("generating points");
     let start = Instant::now();
-    let n = 500_000;
+    let n = 250_000;
     for _ in (0..n).progress() {
         let point = Point::random();
-        if planet_grid.is_on_polygon(&point) {
+        if !planet_grid.is_on_polygon(&point) {
             out_planet.points.push(point);
         }
     }
     println!("generating points took {:?} per point", start.elapsed() / n);
-
     out_planet.to_file(OUT_PLANET_PATH);
 }

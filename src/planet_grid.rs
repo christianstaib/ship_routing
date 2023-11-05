@@ -1,4 +1,6 @@
-use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
+use std::sync::Mutex;
+
+use rayon::prelude::{IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{
     Arc, CollisionDetection, ConvecQuadrilateral, Planet, Point, Polygon, SolidShape, Tiling,
@@ -36,8 +38,8 @@ impl PointStatus {
 
 pub struct PlanetGrid {
     pub spatial_partition: SpatialPartition,
-    // reference_point: Point,
-    // reference_point_status: PointStatus,
+    reference_point: Point,
+    reference_point_status: PointStatus,
 }
 
 impl CollisionDetection for PlanetGrid {
@@ -50,12 +52,12 @@ impl CollisionDetection for PlanetGrid {
                 self.spatial_partition.add_arc(&arc);
             });
 
-        // if polygon.contains(&self.reference_point) {
-        //     match self.reference_point_status {
-        //         PointStatus::Inside => self.reference_point_status = PointStatus::Outside,
-        //         PointStatus::Outside => self.reference_point_status = PointStatus::Outside,
-        //     }
-        // }
+        if polygon.contains(&self.reference_point) {
+            match self.reference_point_status {
+                PointStatus::Inside => self.reference_point_status = PointStatus::Outside,
+                PointStatus::Outside => self.reference_point_status = PointStatus::Outside,
+            }
+        }
 
         // TODO update midpoints
     }
@@ -74,8 +76,8 @@ impl PlanetGrid {
         let polygons = Tiling::base_tiling();
         PlanetGrid {
             spatial_partition: SpatialPartition::new_root(&polygons, max_size),
-            // reference_point: Point::random(),
-            // reference_point_status: PointStatus::Outside,
+            reference_point: Point::random(),
+            reference_point_status: PointStatus::Outside,
         }
     }
 
@@ -87,7 +89,7 @@ impl PlanetGrid {
     }
 
     pub fn update_midpoints(&mut self) {
-        todo!()
+        self.spatial_partition.propagte_status();
     }
 }
 
@@ -96,6 +98,7 @@ impl SpatialPartition {
         let boundary = ConvecQuadrilateral::new(&vec![
             Point::from_geodetic(0.0, 0.0),
             Point::from_geodetic(1.0, 1.0),
+            Point::from_geodetic(1.0, -1.0),
             Point::from_geodetic(1.0, -1.0),
             Point::from_geodetic(0.0, 0.0),
         ]);
@@ -179,27 +182,73 @@ impl SpatialPartition {
         }
     }
 
-    pub fn propagte_status(&self, planet: &Planet) {
+    pub fn propagte_status(&mut self) {
+        let mut intersections = Vec::new();
+        if let NodeType::Internal(quadtrees) = &self.node_type {
+            for quadtree in quadtrees {
+                let ray = Arc::new(&self.midpoint, &quadtree.midpoint);
+                intersections.push(self.intersections(&ray).len());
+            }
+        }
+
+        if let NodeType::Internal(quadtrees) = &mut self.node_type {
+            for (quadtree, intersections) in quadtrees.iter_mut().zip(intersections) {
+                if intersections % 2 == 0 {
+                    quadtree.midpoint_flag = self.midpoint_flag;
+                } else {
+                    quadtree.midpoint_flag = self.midpoint_flag.other();
+                }
+            }
+            quadtrees
+                .iter_mut()
+                .for_each(|quadtree| quadtree.propagte_status());
+        }
+    }
+
+    pub fn get_leaf_polygons(&self) -> Vec<Arc> {
+        match &self.node_type {
+            NodeType::Internal(q) => q.iter().flat_map(|q| q.get_leaf_polygons()).collect(),
+            NodeType::Leaf(_) => self
+                .boundary
+                .outline
+                .windows(2)
+                .map(|arc| Arc::new(&arc[0], &arc[1])._make_good_line())
+                .flatten()
+                .collect(),
+        }
+    }
+
+    pub fn propagte_status_test(&self, planet: &Planet, out_planet: std::sync::Arc<Mutex<Planet>>) {
         if let NodeType::Internal(quadtrees) = &self.node_type {
             for quadtree in quadtrees {
                 let ray = Arc::new(&self.midpoint, &quadtree.midpoint);
                 let intersections = self.intersections(&ray);
-                assert_eq!(planet.intersections(&ray).len(), intersections.len());
+                //assert_eq!(planet.intersections(&ray).len(), intersections.len());
                 if intersections.len() % 2 == 0 {
-                    //assert_eq!(self.midpoint_flag, quadtree.midpoint_flag);
                     if self.midpoint_flag != quadtree.midpoint_flag {
                         println!("error in propgation");
-                        break;
+                        out_planet
+                            .lock()
+                            .unwrap()
+                            .arcs
+                            .extend(ray._make_good_line());
+                        out_planet.lock().unwrap().points.extend(intersections);
                     }
                 } else {
-                    //assert_eq!(self.midpoint_flag, quadtree.midpoint_flag.other());
                     if self.midpoint_flag != quadtree.midpoint_flag.other() {
                         println!("error in propgation");
-                        break;
+                        out_planet
+                            .lock()
+                            .unwrap()
+                            .arcs
+                            .extend(ray._make_good_line());
+                        out_planet.lock().unwrap().points.extend(intersections);
                     }
                 }
-                quadtree.propagte_status(planet);
             }
+            quadtrees
+                .par_iter()
+                .for_each(|quadtree| quadtree.propagte_status_test(planet, out_planet.clone()));
         }
     }
 
@@ -207,11 +256,11 @@ impl SpatialPartition {
         let mut intersections: Vec<Point> = match &self.node_type {
             NodeType::Internal(quadtrees) => quadtrees
                 .iter()
-                // .filter(|quadtree| {
-                //     quadtree.boundary.contains(ray.from())
-                //         || quadtree.boundary.contains(ray.to())
-                //         || quadtree.boundary.intersects(ray)
-                // })
+                .filter(|quadtree| {
+                    quadtree.boundary.contains(ray.from())
+                        || quadtree.boundary.contains(ray.to())
+                        || quadtree.boundary.intersects(ray)
+                })
                 .map(|quadtree| quadtree.intersections(ray))
                 .flatten()
                 .collect(),

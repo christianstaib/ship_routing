@@ -1,7 +1,8 @@
-use std::{error::Error, f64::consts::PI};
+use std::{error::Error, f64::consts::PI, thread::Thread};
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
+use rand::Rng;
 
 use crate::Point;
 
@@ -56,6 +57,12 @@ impl Arc {
         self.normal().dot(point.vec()) > 0.0
     }
 
+    pub fn middle_random(&self) -> Point {
+        let mut rng = rand::thread_rng();
+        let f = rng.gen_range(0.0..1.0);
+        Point::from_spherical(&((self.from.vec() * (1.0 - f) + self.to.vec() * f) / 2.0))
+    }
+
     pub fn middle(&self) -> Point {
         Point::from_spherical(&((self.from.vec() + self.to.vec()) / 2.0))
     }
@@ -68,6 +75,12 @@ impl Arc {
         &self.to
     }
 
+    /// Checks if other intersects self.
+    ///
+    /// Caveate: If the intersection point is near self.from it will not be returned. If it is near
+    /// self.to it will be returned. This ensures that for a continoues path of arcs only one
+    /// intersection is returned. So this functions is not symetrical. If you want to check for
+    /// path, you need to ensure that for all arcs in the path you call arc.intersection(ray).
     pub fn intersection(&self, other: &Arc) -> Option<Point> {
         // check if both end or start on same point
         if self.from.equals(&other.from) || self.from.equals(&other.to) {
@@ -78,17 +91,23 @@ impl Arc {
 
         // check if intersection of both great circles lies on both arcs
         let candidate = self.normal().cross(&other.normal()).normalize();
-        let candidate = Point::from_spherical(&candidate);
-        if self.validate_intersection_candidate(&candidate)
-            && other.validate_intersection_candidate(&candidate)
-        {
-            return Some(candidate);
-        }
-        let candidate = candidate.antipode();
-        if self.validate_intersection_candidate(&candidate)
-            && other.validate_intersection_candidate(&candidate)
-        {
-            return Some(candidate);
+        if !candidate.x.is_nan() && !candidate.y.is_nan() && !candidate.z.is_nan() {
+            let candidate = Point::from_spherical(&candidate);
+            if self.validate_intersection_candidate(&candidate)
+                && other.validate_intersection_candidate(&candidate)
+            {
+                if !candidate.equals(self.from()) {
+                    return Some(candidate);
+                }
+            }
+            let candidate = candidate.antipode();
+            if self.validate_intersection_candidate(&candidate)
+                && other.validate_intersection_candidate(&candidate)
+            {
+                if !candidate.equals(self.from()) {
+                    return Some(candidate);
+                }
+            }
         }
 
         None
@@ -129,9 +148,9 @@ impl Arc {
         vec![self.from.to_vec(), self.to.to_vec()]
     }
 
-    fn _make_good_line(&self) -> Vec<Arc> {
+    pub fn _make_good_line(&self) -> Vec<Arc> {
         let mut arcs = vec![self.clone()];
-        while arcs[0].central_angle() > 0.005 {
+        while arcs[0].central_angle() > 0.05 {
             arcs = arcs
                 .iter()
                 .map(|arc| {
@@ -186,5 +205,25 @@ mod tests {
 
         let intersect = ray.intersects(&outline);
         assert!(intersect)
+    }
+
+    #[test]
+    fn test_edge_intersection() {
+        let outline = vec![
+            Point::from_geodetic(-1.0, 0.0),
+            Point::from_geodetic(0.0, 0.0),
+            Point::from_geodetic(1.0, 0.0),
+        ];
+
+        let ray = Arc::new(
+            &Point::from_geodetic(0.0, 1.0),
+            &Point::from_geodetic(0.0, -1.0),
+        );
+
+        let arc0 = Arc::new(&outline[0], &outline[1]);
+        let arc1 = Arc::new(&outline[1], &outline[2]);
+
+        assert!(arc0.intersects(&ray));
+        assert!(!arc1.intersects(&ray));
     }
 }

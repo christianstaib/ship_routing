@@ -3,7 +3,7 @@ use osm_test::{CollisionDetection, Planet, PlanetGrid};
 use rayon::prelude::*;
 
 #[test]
-fn test_point_on_land() {
+fn planet_grid_point_on_land() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
     const ON_LAND_PATH: &str = "tests/data/geojson/points_on_land.geojson";
 
@@ -11,7 +11,7 @@ fn test_point_on_land() {
     let on_land = Planet::from_file(ON_LAND_PATH).unwrap();
 
     println!("generating grid");
-    let mut planet_grid = PlanetGrid::new(500);
+    let mut planet_grid = PlanetGrid::new(250);
     planet
         .polygons
         .iter()
@@ -33,7 +33,7 @@ fn test_point_on_land() {
 }
 
 #[test]
-fn test_point_on_water() {
+fn planet_grid_point_on_water() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
     const ON_WATER_PATH: &str = "tests/data/geojson/points_on_water.geojson";
 
@@ -41,7 +41,7 @@ fn test_point_on_water() {
     let on_water = Planet::from_file(ON_WATER_PATH).unwrap();
 
     println!("generating grid");
-    let mut planet_grid = PlanetGrid::new(500);
+    let mut planet_grid = PlanetGrid::new(50);
     planet
         .polygons
         .iter()
