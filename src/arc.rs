@@ -1,10 +1,10 @@
-use std::{error::Error, f64::consts::PI, thread::Thread};
+use std::{error::Error, f64::consts::PI};
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 use rand::Rng;
 
-use crate::Point;
+use crate::{meters_to_radians, Point};
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Arc {
@@ -127,6 +127,20 @@ impl Arc {
 
     fn to_normal(&self) -> Vector3<f64> {
         self.normal().cross(&self.to.vec()).normalize()
+    }
+
+    pub fn collides(&self, point: &Point) -> bool {
+        let summed_angle = Arc::new(&self.from(), point).central_angle()
+            + Arc::new(point, &self.to()).central_angle();
+        (summed_angle - self.central_angle()).abs() < meters_to_radians(1.0)
+    }
+
+    pub fn collides_arc(&self, arc: &Arc) -> bool {
+        self.intersects(&arc)
+            || self.collides(arc.from())
+            || self.collides(arc.to())
+            || arc.collides(self.from())
+            || arc.collides(self.to())
     }
 
     fn validate_intersection_candidate(&self, point: &Point) -> bool {

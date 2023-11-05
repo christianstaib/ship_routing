@@ -83,6 +83,13 @@ impl ConvecQuadrilateral {
         }
     }
 
+    pub fn collides(&self, arc: &Arc) -> bool {
+        self.outline.windows(2).any(|outline| {
+            let outline = Arc::new(&outline[0], &outline[1]);
+            arc.collides_arc(&outline)
+        })
+    }
+
     pub fn get_midpoint(&self) -> Point {
         for _ in 0..5 {
             let m0 = Arc::new(&self.outline[0], &self.outline[1]).middle_random();

@@ -9,21 +9,23 @@ fn main() {
 }
 
 fn test_clipping() {
-    // const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
-    // let planet = Planet::from_file(PLANET_PATH).unwrap();
-    const PLANET_PATH: &str = "tests/data/osm/planet-coastlines.osm.pbf";
-    let planet = Planet::from_osm(PLANET_PATH);
+    const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
+    let planet = Planet::from_file(PLANET_PATH).unwrap();
+    // const PLANET_PATH: &str = "tests/data/osm/planet-coastlines.osm.pbf";
+    // let planet = Planet::from_osm(PLANET_PATH);
 
     const OUT_PLANET_PATH: &str = "tests/data/test_geojson/planet_grid_on_polygon.geojson";
     let mut out_planet = Planet::new();
 
     println!("generating grid");
+    let start = Instant::now();
     let mut planet_grid = PlanetGrid::new(500);
     planet
         .polygons
         .iter()
         .progress()
         .for_each(|polygon| planet_grid.add_polygon(polygon));
+    println!("took {:?}", start.elapsed());
 
     // out_planet
     //     .arcs

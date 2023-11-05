@@ -150,16 +150,15 @@ impl SpatialPartition {
     fn add_arc(&mut self, arc: &Arc) {
         match &mut self.node_type {
             NodeType::Internal(quadtrees) => {
-                for quadtree in quadtrees.iter_mut() {
+                quadtrees.par_iter_mut().for_each(|quadtree| {
                     let contrains_from = quadtree.boundary.contains(arc.from());
                     let contrains_to = quadtree.boundary.contains(arc.to());
                     if contrains_from && contrains_to {
                         quadtree.add_arc(arc);
-                        break;
-                    } else if quadtree.boundary.intersects(arc) {
+                    } else if quadtree.boundary.collides(arc) {
                         quadtree.add_arc(arc);
                     }
-                }
+                });
             }
             NodeType::Leaf(arcs) => {
                 arcs.push(arc.clone());
@@ -261,7 +260,7 @@ impl SpatialPartition {
                 .filter(|quadtree| {
                     quadtree.boundary.contains(ray.from())
                         || quadtree.boundary.contains(ray.to())
-                        || quadtree.boundary.intersects(ray)
+                        || quadtree.boundary.collides(ray)
                 })
                 .map(|quadtree| quadtree.intersections(ray))
                 .flatten()

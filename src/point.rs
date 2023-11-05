@@ -121,7 +121,7 @@ impl Point {
     }
 }
 
-fn meters_to_radians(meters: f64) -> f64 {
+pub fn meters_to_radians(meters: f64) -> f64 {
     const EARTH_RADIUS_METERS: usize = 6_378_160;
     2.0 * PI / EARTH_RADIUS_METERS as f64 * meters
 }
