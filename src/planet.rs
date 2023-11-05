@@ -51,7 +51,7 @@ impl Planet {
             .filter(|polygon| polygon.contains(point))
             .count()
             % 2
-            == 0
+            == 1
     }
 
     pub fn from_geojson(json: &str) -> Result<Planet, Box<dyn Error>> {
