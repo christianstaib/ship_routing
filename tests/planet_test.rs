@@ -12,7 +12,7 @@ fn test_point_on_land() {
     on_land.points.par_iter().for_each(|point| {
         assert!(
             planet.is_on_polygon(point),
-            "point {:?} should be on land but isn't",
+            "point {} should be on land but isn't",
             point
         )
     });
@@ -29,7 +29,7 @@ fn test_point_on_water() {
     on_water.points.par_iter().for_each(|point| {
         assert!(
             !planet.is_on_polygon(point),
-            "point {:?} should be on water but isn't",
+            "point {} should be on water but isn't",
             point
         )
     });

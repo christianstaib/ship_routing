@@ -1,6 +1,6 @@
 use crate::{Arc, Point, SolidShape};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ConvecQuadrilateral {
     pub outline: Vec<Point>,
 }

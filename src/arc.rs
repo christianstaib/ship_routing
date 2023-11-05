@@ -1,11 +1,11 @@
-use std::{error::Error, f64::consts::PI};
+use std::{error::Error, f64::consts::PI, usize};
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 
 use crate::Point;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct Arc {
     from: Point,
     to: Point,

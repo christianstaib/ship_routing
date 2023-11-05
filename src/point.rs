@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, f64::consts::PI, fmt};
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
@@ -6,9 +6,15 @@ use rand::Rng;
 
 use crate::Arc;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct Point {
     vec: Vector3<f64>,
+}
+
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(lat:{}, lonlon::{})", self.lat(), self.lon())
+    }
 }
 
 impl Point {
@@ -76,9 +82,8 @@ impl Point {
         &self.vec
     }
 
-    // 1 degree = 111 111m => 1m = 1.5707979e-7 degree => TODO
     pub fn equals(&self, other: &Point) -> bool {
-        Arc::new(self, other).central_angle() < 1.5707979e-7
+        Arc::new(self, other).central_angle() < meters_to_radians(0.1)
     }
 
     pub fn antipode(&self) -> Point {
@@ -104,6 +109,11 @@ impl Point {
             foreign_members: None,
         }
     }
+}
+
+fn meters_to_radians(meters: f64) -> f64 {
+    const EARTH_RADIUS_METERS: usize = 6_378_160;
+    2.0 * PI / EARTH_RADIUS_METERS as f64 * meters
 }
 
 #[cfg(test)]

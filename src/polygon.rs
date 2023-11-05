@@ -4,7 +4,7 @@ use geojson::{Feature, Geometry, Value};
 
 use super::{Arc, Point};
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Polygon {
     pub outline: Vec<Point>,
     pub inside_point: Point,

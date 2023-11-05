@@ -46,7 +46,12 @@ impl Planet {
     }
 
     pub fn is_on_polygon(&self, point: &Point) -> bool {
-        self.polygons.iter().any(|polygon| polygon.contains(point))
+        self.polygons
+            .iter()
+            .filter(|polygon| polygon.contains(point))
+            .count()
+            % 2
+            == 0
     }
 
     pub fn from_geojson(json: &str) -> Result<Planet, Box<dyn Error>> {
