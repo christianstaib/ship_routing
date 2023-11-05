@@ -8,8 +8,6 @@ use crate::Arc;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Point {
-    lat: f64,
-    lon: f64,
     vec: Vector3<f64>,
 }
 
@@ -17,27 +15,27 @@ impl Point {
     pub fn from_geodetic(lat: f64, lon: f64) -> Point {
         assert!(-90.0 <= lat && lat <= 90.0, "illegal lat: {}", lat);
         assert!(-180.0 <= lon && lon <= 180.0, "illegal lon: {}", lon);
+
         let lat_rad = lat.to_radians();
         let lon_rad = lon.to_radians();
-
         let vec = Vector3::new(
             lat_rad.cos() * lon_rad.cos(),
             lat_rad.cos() * lon_rad.sin(),
             lat_rad.sin(),
         );
 
-        Point { lat, lon, vec }
+        Point { vec }
     }
 
     pub fn from_spherical(vec: &Vector3<f64>) -> Point {
-        let lat = vec
-            .z
-            .atan2((vec.x.powi(2) + vec.y.powi(2)).sqrt())
-            .to_degrees(); //vec.z.asin().to_degrees();
-        let lon = vec.y.to_radians().atan2(vec.x.to_radians()).to_degrees();
-        let vec = vec.clone();
+        let point = Point { vec: vec.clone() };
 
-        Point { lat, lon, vec }
+        let lat = point.lat();
+        let lon = point.lon();
+        assert!(-90.0 <= lat && lat <= 90.0, "illegal lat: {}", lat);
+        assert!(-180.0 <= lon && lon <= 180.0, "illegal lon: {}", lon);
+
+        point
     }
 
     pub fn random() -> Point {
@@ -60,11 +58,18 @@ impl Point {
     }
 
     pub fn lat(&self) -> f64 {
-        self.lat
+        self.vec
+            .z
+            .atan2((self.vec.x.powi(2) + self.vec.y.powi(2)).sqrt())
+            .to_degrees()
     }
 
     pub fn lon(&self) -> f64 {
-        self.lon
+        self.vec
+            .y
+            .to_radians()
+            .atan2(self.vec.x.to_radians())
+            .to_degrees()
     }
 
     pub fn vec(&self) -> &Vector3<f64> {
@@ -81,7 +86,7 @@ impl Point {
     }
 
     pub fn to_vec(&self) -> Vec<f64> {
-        vec![self.lon, self.lat]
+        vec![self.lon(), self.lat()]
     }
 
     pub fn from_vec(vec: Vec<f64>) -> Result<Point, Box<dyn Error>> {
@@ -89,7 +94,7 @@ impl Point {
     }
 
     pub fn to_feature(&self) -> Feature {
-        let point: Vec<f64> = vec![self.lon, self.lat];
+        let point: Vec<f64> = vec![self.lon(), self.lat()];
         let point = Geometry::new(Value::Point(point));
         Feature {
             bbox: None,
