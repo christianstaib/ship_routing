@@ -4,19 +4,12 @@ use geojson::{Feature, Geometry, Value};
 
 use super::{Arc, Point};
 
-#[derive(Clone)]
-pub struct Polygon {
-    pub outline: Vec<Point>,
-    pub inside_point: Point,
-}
-
 pub trait SolidShape {
     fn contains(&self, point: &Point) -> bool;
     fn intersects(&self, arc: &Arc) -> bool;
 }
 
 pub struct EverythingPolygon;
-
 impl SolidShape for EverythingPolygon {
     fn contains(&self, _point: &Point) -> bool {
         true
@@ -28,7 +21,6 @@ impl SolidShape for EverythingPolygon {
 }
 
 pub struct NothingPolygon;
-
 impl SolidShape for NothingPolygon {
     fn contains(&self, _point: &Point) -> bool {
         false
@@ -39,6 +31,11 @@ impl SolidShape for NothingPolygon {
     }
 }
 
+#[derive(Clone)]
+pub struct Polygon {
+    pub outline: Vec<Point>,
+    pub inside_point: Point,
+}
 impl SolidShape for Polygon {
     fn contains(&self, point: &Point) -> bool {
         let ray = Arc::new(point, &self.inside_point);

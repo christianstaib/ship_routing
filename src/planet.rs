@@ -77,6 +77,14 @@ impl Planet {
         Ok(planet)
     }
 
+    pub fn intersections(&self, arc: &Arc) -> Vec<Point> {
+        self.polygons
+            .iter()
+            .map(|polygon| polygon.intersections(arc))
+            .flatten()
+            .collect()
+    }
+
     pub fn to_geojson(&self) -> String {
         let mut features = Vec::new();
         features.extend(self.points.iter().map(|point| point.to_feature()));
