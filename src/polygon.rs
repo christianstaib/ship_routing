@@ -1,4 +1,4 @@
-use std::{error::Error, f64::consts::PI, vec};
+use std::{f64::consts::PI, vec};
 
 use geojson::{Feature, Geometry, Value};
 
@@ -59,19 +59,18 @@ impl Polygon {
         polygon
     }
 
-    pub fn from_vec(vec: Vec<Vec<f64>>) -> Result<Polygon, Box<dyn Error>> {
-        let outline = vec
-            .into_iter()
-            .map(|point| Point::from_geojson_vec(point))
-            .collect();
-        Ok(Polygon::new(outline))
+    pub fn arcs(&self) -> Vec<Arc> {
+        self.outline
+            .windows(2)
+            .map(|outline| Arc::new(&outline[0], &outline[1]))
+            .collect()
     }
 
     pub fn get_inside_point(&self) -> Point {
-        let ab = Arc::new(&self.outline[0], &self.outline[1]);
-        let middle = ab.middle();
+        let outline = Arc::new(&self.outline[0], &self.outline[1]);
+        let middle = outline.middle();
         let destination =
-            Point::destination_point(&middle, ab.initial_bearing() + (PI / 2.0), -0.01);
+            Point::destination_point(&middle, outline.initial_bearing() + (PI / 2.0), -0.01);
         let md = Arc::new(&middle, &destination);
         let mut intersections = self.intersections(&md);
         intersections.sort_by(|&a, &b| {
@@ -104,13 +103,23 @@ impl Polygon {
             .collect()
     }
 
-    pub fn to_feature(&self) -> Feature {
-        let polygon = self
-            .outline
-            .iter()
-            .map(|&coordinate| vec![coordinate.longitude(), coordinate.latitude()])
+    pub fn from_geojson_vec(vec: Vec<Vec<f64>>) -> Polygon {
+        let outline = vec
+            .into_iter()
+            .map(|point| Point::from_geojson_vec(point))
             .collect();
+        Polygon::new(outline)
+    }
 
+    pub fn to_geojson_vec(&self) -> Vec<Vec<f64>> {
+        self.outline
+            .iter()
+            .map(|&coordinate| coordinate.to_geojson_vec())
+            .collect()
+    }
+
+    pub fn to_feature(&self) -> Feature {
+        let polygon = self.to_geojson_vec();
         let polygon = Geometry::new(Value::Polygon(vec![polygon]));
         Feature {
             bbox: None,

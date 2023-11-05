@@ -92,10 +92,10 @@ impl ConvecQuadrilateral {
 
     pub fn get_midpoint(&self) -> Point {
         for _ in 0..5 {
-            let m0 = Arc::new(&self.outline[0], &self.outline[1]).middle_random();
-            let m1 = Arc::new(&self.outline[1], &self.outline[2]).middle_random();
-            let m2 = Arc::new(&self.outline[2], &self.outline[3]).middle_random();
-            let m3 = Arc::new(&self.outline[3], &self.outline[4]).middle_random();
+            let m0 = Arc::new(&self.outline[0], &self.outline[1]).random_intermediate_point();
+            let m1 = Arc::new(&self.outline[1], &self.outline[2]).random_intermediate_point();
+            let m2 = Arc::new(&self.outline[2], &self.outline[3]).random_intermediate_point();
+            let m3 = Arc::new(&self.outline[3], &self.outline[4]).random_intermediate_point();
             let d0 = Arc::new(&m0, &m2);
             let d1 = Arc::new(&m1, &m3);
             if let Some(intersection) = d0.intersection(&d1) {

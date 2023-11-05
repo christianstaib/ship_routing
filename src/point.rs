@@ -6,6 +6,8 @@ use rand::Rng;
 
 use crate::Arc;
 
+/// Represents a point on the Earth's surface using an n-vector, which is a normalised vector
+/// perpendicular to the Earth's surface.
 #[derive(Clone, Copy, PartialEq)]
 pub struct Point {
     n_vector: Vector3<f64>,
@@ -158,10 +160,17 @@ mod tests {
     use crate::Point;
 
     #[test]
-    fn test_point_convertion() {
+    fn conversion_between_n_vector_and_coordinates() {
         for _ in 0..100 {
             let point = Point::random();
             assert!(point.is_approximately_equal(&Point::from_n_vector(point.n_vector())));
+        }
+        for _ in 0..100 {
+            let point = Point::random();
+            assert!(point.is_approximately_equal(&Point::from_coordinate(
+                point.latitude(),
+                point.longitude()
+            )));
         }
     }
 }
