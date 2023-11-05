@@ -7,13 +7,35 @@ use std::{
 
 use geojson::{FeatureCollection, Value};
 
-use crate::{Arc, Point, Polygon, RawOsmData, SolidShape};
+use crate::{Arc, CollisionDetection, Point, Polygon, RawOsmData, SolidShape};
 
 #[derive(Clone)]
 pub struct Planet {
     pub polygons: Vec<Polygon>,
     pub points: Vec<Point>,
-    pub lines: Vec<Arc>,
+    pub arcs: Vec<Arc>,
+}
+
+impl CollisionDetection for Planet {
+    fn add_polygon(&mut self, polygon: &Polygon) {
+        self.polygons.push(polygon.clone());
+    }
+
+    fn is_on_polygon(&self, point: &Point) -> bool {
+        self.polygons
+            .iter()
+            .filter(|polygon| polygon.contains(point))
+            .next()
+            .is_some()
+    }
+
+    fn intersects_polygon(&self, arc: &Arc) -> bool {
+        self.polygons
+            .iter()
+            .filter(|polygon| polygon.intersects(arc))
+            .next()
+            .is_some()
+    }
 }
 
 impl Planet {
@@ -21,7 +43,7 @@ impl Planet {
         Self {
             polygons: Vec::new(),
             points: Vec::new(),
-            lines: Vec::new(),
+            arcs: Vec::new(),
         }
     }
 
@@ -37,23 +59,6 @@ impl Planet {
         raw_osm_data.to_planet()
     }
 
-    pub fn intersections(&self, line: &Arc) -> Vec<Point> {
-        self.polygons
-            .iter()
-            .map(|polygon| polygon.intersections(line))
-            .flatten()
-            .collect()
-    }
-
-    pub fn is_on_polygon(&self, point: &Point) -> bool {
-        self.polygons
-            .iter()
-            .filter(|polygon| polygon.contains(point))
-            .count()
-            % 2
-            == 1
-    }
-
     pub fn from_geojson(json: &str) -> Result<Planet, Box<dyn Error>> {
         let feature_collection = FeatureCollection::from_str(json)?;
         let mut planet = Planet::new();
@@ -65,7 +70,7 @@ impl Planet {
                 Value::Polygon(polygon) => planet
                     .polygons
                     .push(Polygon::from_vec(polygon[0].clone()).unwrap()),
-                Value::LineString(line) => planet.lines.push(Arc::from_vec(line).unwrap()),
+                Value::LineString(line) => planet.arcs.push(Arc::from_vec(line).unwrap()),
                 _ => (),
             });
 
@@ -76,7 +81,7 @@ impl Planet {
         let mut features = Vec::new();
         features.extend(self.points.iter().map(|point| point.to_feature()));
         features.extend(self.polygons.iter().map(|polygon| polygon.to_feature()));
-        features.extend(self.lines.iter().map(|line| line.to_feature()));
+        features.extend(self.arcs.iter().map(|line| line.to_feature()));
         FeatureCollection {
             bbox: None,
             features,

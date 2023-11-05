@@ -1,4 +1,6 @@
-use crate::{Arc, ConvecQuadrilateral, Planet, Point, Polygon, SolidShape, Tiling};
+use crate::{
+    Arc, CollisionDetection, ConvecQuadrilateral, Planet, Point, Polygon, SolidShape, Tiling,
+};
 
 #[derive(Clone)]
 pub struct SpatialPartition {
