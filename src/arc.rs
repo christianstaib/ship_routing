@@ -129,6 +129,22 @@ impl Arc {
         vec![self.from.to_vec(), self.to.to_vec()]
     }
 
+    fn _make_good_line(&self) -> Vec<Arc> {
+        let mut arcs = vec![self.clone()];
+        while arcs[0].central_angle() > 0.005 {
+            arcs = arcs
+                .iter()
+                .map(|arc| {
+                    let middle = arc.middle();
+                    vec![Arc::new(&arc.from(), &middle), Arc::new(&middle, &arc.to())]
+                })
+                .flatten()
+                .collect();
+        }
+        arcs.retain(|arc| (arc.from().lon() - arc.to().lon()).abs() < 10.0);
+        arcs
+    }
+
     pub fn to_feature(&self) -> Feature {
         let point = Geometry::new(Value::LineString(vec![
             self.from.to_vec(),
