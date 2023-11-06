@@ -275,20 +275,23 @@ impl SpatialPartition {
     }
 
     pub fn is_on_polygon(&self, point: &Point) -> bool {
-        let mut current = self;
-        loop {
-            match &current.node_type {
-                NodeType::Internal(quadtrees) => {
-                    current = quadtrees
-                        .iter()
-                        .find(|quadtree| quadtree.boundary.contains(point))
-                        .unwrap()
-                }
-                NodeType::Leaf(arcs) => {
-                    let ray = Arc::new(point, &self.midpoint);
-                    let intersections = arcs.iter().filter_map(|arc| ray.intersection(arc)).count();
-                    return (intersections % 2 == 0) == (self.midpoint_flag == PointStatus::Inside);
-                }
+        match &self.node_type {
+            NodeType::Internal(quadtrees) => {
+                quadtrees
+                    .iter()
+                    .find(|quadtree| quadtree.boundary.contains(point))
+                    .map_or_else(
+                        || {
+                            eprintln!("Error: Point is not within any quadtree boundary."); // Using eprintln! for errors
+                            false
+                        },
+                        |quadtree| quadtree.is_on_polygon(point),
+                    )
+            }
+            NodeType::Leaf(arcs) => {
+                let ray = Arc::new(point, &self.midpoint);
+                let intersections = arcs.iter().filter_map(|arc| ray.intersection(arc)).count();
+                (intersections % 2 == 0) == (self.midpoint_flag == PointStatus::Inside)
             }
         }
     }
