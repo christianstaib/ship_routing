@@ -1,4 +1,4 @@
-use std::{f64::consts::PI};
+use std::f64::consts::PI;
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
@@ -184,7 +184,7 @@ impl Arc {
     // dateline.
     pub fn _make_good_line(&self) -> Vec<Arc> {
         let mut arcs = vec![self.clone()];
-        while arcs[0].central_angle() > meters_to_radians(1000.0) {
+        while arcs[0].central_angle() > meters_to_radians(5000.0) {
             arcs = arcs
                 .iter()
                 .map(|arc| {

@@ -1,9 +1,10 @@
 use std::sync::Mutex;
 
-use rayon::prelude::{IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator};
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
-    Arc, CollisionDetection, ConvecQuadrilateral, Planet, Point, Polygon, SolidShape, Tiling,
+    meters_to_radians, Arc, CollisionDetection, ConvecQuadrilateral, Planet, Point, Polygon,
+    SolidShape, Tiling,
 };
 
 #[derive(Clone)]
@@ -89,7 +90,7 @@ impl PlanetGrid {
     }
 
     pub fn update_midpoints(&mut self) {
-        self.spatial_partition.propagte_status();
+        self.spatial_partition.propagate_status();
     }
 }
 
@@ -153,10 +154,13 @@ impl SpatialPartition {
             if let NodeType::Leaf(arcs) = &mut parent.node_type {
                 arcs.push(arc.clone());
                 if arcs.len() >= parent.max_size {
-                    parent.split();
+                    let outline =
+                        Arc::new(&parent.boundary.outline[0], &parent.boundary.outline[1]);
+                    if outline.central_angle() >= meters_to_radians(10.0) {
+                        parent.split();
+                    }
                 }
-            }
-            if let NodeType::Internal(childs) = &mut parent.node_type {
+            } else if let NodeType::Internal(childs) = &mut parent.node_type {
                 childs.sort_by(|x, y| {
                     Arc::new(&x.midpoint, arc.from())
                         .central_angle()
@@ -177,26 +181,29 @@ impl SpatialPartition {
         }
     }
 
-    pub fn propagte_status(&mut self) {
-        let mut intersections = Vec::new();
-        if let NodeType::Internal(quadtrees) = &self.node_type {
-            for quadtree in quadtrees {
-                let ray = Arc::new(&self.midpoint, &quadtree.midpoint);
-                intersections.push(self.intersections(&ray).len());
-            }
-        }
+    pub fn propagate_status(&mut self) {
+        let mut stack = Vec::new();
+        stack.push(self);
 
-        if let NodeType::Internal(quadtrees) = &mut self.node_type {
-            for (quadtree, intersections) in quadtrees.iter_mut().zip(intersections) {
-                if intersections % 2 == 0 {
-                    quadtree.midpoint_flag = self.midpoint_flag;
-                } else {
-                    quadtree.midpoint_flag = self.midpoint_flag.other();
+        while let Some(current) = stack.pop() {
+            let mut intersections = Vec::new();
+            if let NodeType::Internal(quadtrees) = &current.node_type {
+                for quadtree in quadtrees {
+                    let ray = Arc::new(&current.midpoint, &quadtree.midpoint);
+                    intersections.push(current.intersections(&ray).len());
                 }
             }
-            quadtrees
-                .iter_mut()
-                .for_each(|quadtree| quadtree.propagte_status());
+
+            if let NodeType::Internal(quadtrees) = &mut current.node_type {
+                for (quadtree, intersections) in quadtrees.iter_mut().zip(intersections) {
+                    if intersections % 2 == 0 {
+                        quadtree.midpoint_flag = current.midpoint_flag;
+                    } else {
+                        quadtree.midpoint_flag = current.midpoint_flag.other();
+                    }
+                    stack.push(quadtree);
+                }
+            }
         }
     }
 
@@ -271,23 +278,24 @@ impl SpatialPartition {
     }
 
     pub fn is_on_polygon(&self, point: &Point) -> bool {
-        match &self.node_type {
-            NodeType::Internal(quadtrees) => {
-                quadtrees
-                    .iter()
-                    .find(|quadtree| quadtree.boundary.contains(point))
-                    .map_or_else(
-                        || {
-                            eprintln!("Error: Point is not within any quadtree boundary."); // Using eprintln! for errors
-                            false
-                        },
-                        |quadtree| quadtree.is_on_polygon(point),
-                    )
-            }
-            NodeType::Leaf(arcs) => {
-                let ray = Arc::new(point, &self.midpoint);
-                let intersections = arcs.iter().filter_map(|arc| ray.intersection(arc)).count();
-                (intersections % 2 == 0) == (self.midpoint_flag == PointStatus::Inside)
+        let mut current = self;
+        loop {
+            match &current.node_type {
+                NodeType::Internal(childs) => {
+                    for child in childs {
+                        let contrains = child.boundary.contains(point);
+                        if contrains {
+                            current = &child;
+                            break;
+                        }
+                    }
+                }
+                NodeType::Leaf(arcs) => {
+                    let ray = Arc::new(point, &current.midpoint);
+                    let intersections = arcs.iter().filter_map(|arc| ray.intersection(arc)).count();
+                    return (intersections % 2 == 0)
+                        == (current.midpoint_flag == PointStatus::Inside);
+                }
             }
         }
     }
