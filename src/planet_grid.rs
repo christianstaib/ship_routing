@@ -151,31 +151,27 @@ impl SpatialPartition {
             // needs to be done before the match block, as the match block pushes a mutable
             // reference to internals.
             if let NodeType::Leaf(arcs) = &mut parent.node_type {
+                arcs.push(arc.clone());
                 if arcs.len() >= parent.max_size {
                     parent.split();
                 }
             }
-            match &mut parent.node_type {
-                NodeType::Internal(childs) => {
-                    childs.sort_by(|x, y| {
-                        Arc::new(&x.midpoint, arc.from())
-                            .central_angle()
-                            .total_cmp(&Arc::new(&y.midpoint, arc.from()).central_angle())
-                    });
-                    for child in childs.iter_mut() {
-                        let contrains_from = child.boundary.contains(arc.from());
-                        let contrains_to = child.boundary.contains(arc.to());
-                        if contrains_from && contrains_to {
-                            internals.push(child);
-                            break;
-                        } else if child.boundary.collides(arc) {
-                            // expensive check
-                            internals.push(child);
-                        }
+            if let NodeType::Internal(childs) = &mut parent.node_type {
+                childs.sort_by(|x, y| {
+                    Arc::new(&x.midpoint, arc.from())
+                        .central_angle()
+                        .total_cmp(&Arc::new(&y.midpoint, arc.from()).central_angle())
+                });
+                for child in childs.iter_mut() {
+                    let contrains_from = child.boundary.contains(arc.from());
+                    let contrains_to = child.boundary.contains(arc.to());
+                    if contrains_from && contrains_to {
+                        internals.push(child);
+                        break;
+                    } else if child.boundary.collides(arc) {
+                        // expensive check
+                        internals.push(child);
                     }
-                }
-                NodeType::Leaf(arcs) => {
-                    arcs.push(arc.clone());
                 }
             }
         }
