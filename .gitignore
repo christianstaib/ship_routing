@@ -4,3 +4,6 @@
 *.mbtiles
 *.mbtiles-journal
 *.ldjson
+*.data
+*.data.old
+*.svg

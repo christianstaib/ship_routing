@@ -1,6 +1,6 @@
 use std::{env, time::Instant};
 
-use indicatif::ProgressIterator;
+use indicatif::{ProgressBar, ProgressIterator};
 use osm_test::{CollisionDetection, Planet, PlanetGrid, Point};
 
 fn main() {
@@ -12,7 +12,7 @@ fn test_clipping() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
     let planet = Planet::from_geojson_file(PLANET_PATH).unwrap();
     // const PLANET_PATH: &str = "tests/data/osm/planet-coastlines.osm.pbf";
-    // let planet = Planet::from_osm(PLANET_PATH);
+    // let planet = Planet::from_osm_file(PLANET_PATH);
 
     const OUT_PLANET_PATH: &str = "tests/data/test_geojson/planet_grid_on_polygon.geojson";
     let mut out_planet = Planet::new();
@@ -33,25 +33,23 @@ fn test_clipping() {
 
     println!("updating midpoints");
     planet_grid.spatial_partition.propagte_status();
-    //    .update_midpoint_with_planet(&planet);
-
-    // let out_planet = std::sync::Arc::new(Mutex::new(out_planet));
-    // println!("checking if ray method works");
-    // planet_grid
-    //     .spatial_partition
-    //     .propagte_status_test(&planet, out_planet.clone());
-    // planet_grid.update_midpoints();
-    //     out_planet.lock().unwrap().to_file(OUT_PLANET_PATH);
 
     println!("generating points");
     let start = Instant::now();
-    let n = 250_000;
-    for _ in (0..n).progress() {
+    let n = 10_000;
+    let pb = ProgressBar::new(n as u64);
+    while out_planet.points.len() < n {
         let point = Point::random();
         if !planet_grid.is_on_polygon(&point) {
+            pb.inc(1);
             out_planet.points.push(point);
         }
     }
-    println!("generating points took {:?} per point", start.elapsed() / n);
+    pb.finish();
+    println!(
+        "generating points took {:?} ({:?} per point)",
+        start.elapsed(),
+        start.elapsed() / n as u32
+    );
     out_planet.to_geojson_file(OUT_PLANET_PATH);
 }

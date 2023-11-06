@@ -1,8 +1,6 @@
 use std::sync::Mutex;
 
-use rayon::prelude::{
-    IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
-};
+use rayon::prelude::{IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{
     Arc, CollisionDetection, ConvecQuadrilateral, Planet, Point, Polygon, SolidShape, Tiling,
@@ -124,7 +122,7 @@ impl SpatialPartition {
         let midpoint = boundary.get_midpoint();
         SpatialPartition {
             boundary,
-            node_type: NodeType::Leaf(Vec::new()),
+            node_type: NodeType::Leaf(Vec::with_capacity(max_size + 1)),
             max_size,
             midpoint,
             midpoint_flag: PointStatus::Outside,
@@ -150,15 +148,21 @@ impl SpatialPartition {
     fn add_arc(&mut self, arc: &Arc) {
         match &mut self.node_type {
             NodeType::Internal(quadtrees) => {
-                quadtrees.par_iter_mut().for_each(|quadtree| {
+                quadtrees.sort_by(|x, y| {
+                    Arc::new(&x.midpoint, arc.from())
+                        .central_angle()
+                        .total_cmp(&Arc::new(&y.midpoint, arc.from()).central_angle())
+                });
+                for quadtree in quadtrees {
                     let contrains_from = quadtree.boundary.contains(arc.from());
                     let contrains_to = quadtree.boundary.contains(arc.to());
                     if contrains_from && contrains_to {
                         quadtree.add_arc(arc);
+                        break;
                     } else if quadtree.boundary.collides(arc) {
                         quadtree.add_arc(arc);
                     }
-                });
+                }
             }
             NodeType::Leaf(arcs) => {
                 arcs.push(arc.clone());
