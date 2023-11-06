@@ -1,36 +1,51 @@
-use std::time::Instant;
+use std::{env, time::Instant};
 
-use indicatif::ProgressIterator;
-use osm_test::{point_generator::PointGenerator, Planet};
+use indicatif::{ProgressBar, ProgressIterator};
+use osm_test::{CollisionDetection, Planet, PlanetGrid, Point};
 
 fn main() {
-    const PLANET_PATH: &str = "data/test_geojson/planet.geojson";
-    // const PLANET_PATH: &str = "data/osm/planet-coastlines.osm.pbf";
-    const LAND_POINTS_PATH: &str = "data/geojson/points_on_land.geojson";
-    const WATER_POINTS_PATH: &str = "data/geojson/points_on_water.geojson";
+    env::set_var("RUST_BACKTRACE", "1");
+    test_clipping();
+}
 
-    // let planet = Planet::from_osm(PLANET_PATH);
-    let planet = Planet::from_file(PLANET_PATH).unwrap();
-    let mut land_points = Planet::new();
-    let mut water_points = Planet::new();
+fn test_clipping() {
+    const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
+    let planet = Planet::from_geojson_file(PLANET_PATH).unwrap();
+    // const PLANET_PATH: &str = "tests/data/osm/planet-coastlines.osm.pbf";
+    // let planet = Planet::from_osm_file(PLANET_PATH);
 
+    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/planet_grid_on_polygon.geojson";
+    let mut out_planet = Planet::new();
+
+    println!("generating grid");
     let start = Instant::now();
-    PointGenerator::new()
-        .into_iter()
-        .take(100_000)
-        .progress_count(100_000)
-        .for_each(|point| match planet.fast_is_on_land(&point) {
-            true => land_points.points.push(point),
-            false => water_points.points.push(point),
-        });
+    let mut planet_grid = PlanetGrid::new(100);
+    planet
+        .polygons
+        .iter()
+        .progress()
+        .for_each(|polygon| planet_grid.add_polygon(polygon));
+    println!("took {:?}", start.elapsed());
 
-    water_points.to_file(WATER_POINTS_PATH);
+    println!("updating midpoints");
+    planet_grid.update_midpoints();
+
+    println!("generating points");
+    let start = Instant::now();
+    let n = 4_000_000;
+    let pb = ProgressBar::new(n as u64);
+    while out_planet.points.len() < n {
+        let point = Point::random();
+        if !planet_grid.is_on_polygon(&point) {
+            pb.inc(1);
+            out_planet.points.push(point);
+        }
+    }
+    pb.finish();
     println!(
-        "took {:?} to generate {} points which is {:?} per point",
+        "generating points took {:?} ({:?} per point)",
         start.elapsed(),
-        100_000,
-        start.elapsed() / 100_000
+        start.elapsed() / n as u32
     );
-
-    land_points.to_file(LAND_POINTS_PATH);
+    out_planet.to_geojson_file(OUT_PLANET_PATH);
 }

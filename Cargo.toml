@@ -3,6 +3,12 @@ name = "osm-test"
 version = "0.1.0"
 edition = "2021"
 
+[profile.test]
+opt-level = 2
+
+[profile.release]
+debug = true
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -13,4 +19,3 @@ rayon = "1.8"
 geojson = "0.24"
 rand = "0.8"
 nalgebra = "0.32"
-geo = "0.26.0"

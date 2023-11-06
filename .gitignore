@@ -1,7 +1,9 @@
 /target
-/venv
+/tests/data/test_geojson/
 *.osm.pbf
-/data/geojson
 *.mbtiles
 *.mbtiles-journal
 *.ldjson
+*.data
+*.data.old
+*.svg
