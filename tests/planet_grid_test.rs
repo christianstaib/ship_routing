@@ -17,9 +17,7 @@ fn planet_grid_point_on_land() {
 
     // updating midpoints
     println!("updating midpoints");
-    planet_grid
-        .spatial_partition
-        .update_midpoint_with_planet(&planet);
+    planet_grid.spatial_partition.propagte_status();
 
     // test if points known to be on land are correctly categorized
     const ON_LAND_PATH: &str = "tests/data/geojson/points_on_land.geojson";
