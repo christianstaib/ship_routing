@@ -146,29 +146,36 @@ impl SpatialPartition {
     }
 
     fn add_arc(&mut self, arc: &Arc) {
-        match &mut self.node_type {
-            NodeType::Internal(quadtrees) => {
-                quadtrees.sort_by(|x, y| {
-                    Arc::new(&x.midpoint, arc.from())
-                        .central_angle()
-                        .total_cmp(&Arc::new(&y.midpoint, arc.from()).central_angle())
-                });
-                for quadtree in quadtrees {
-                    let contrains_from = quadtree.boundary.contains(arc.from());
-                    let contrains_to = quadtree.boundary.contains(arc.to());
-                    if contrains_from && contrains_to {
-                        quadtree.add_arc(arc);
-                        break;
-                    } else if quadtree.boundary.collides(arc) {
-                        quadtree.add_arc(arc);
-                    }
+        let mut internals = vec![self];
+        while let Some(parent) = internals.pop() {
+            // needs to be done before the match block, as the match block pushes a mutable
+            // reference to internals.
+            if let NodeType::Leaf(arcs) = &mut parent.node_type {
+                if arcs.len() >= parent.max_size {
+                    parent.split();
                 }
             }
-            NodeType::Leaf(arcs) => {
-                arcs.push(arc.clone());
-
-                if arcs.len() > self.max_size {
-                    self.split();
+            match &mut parent.node_type {
+                NodeType::Internal(childs) => {
+                    childs.sort_by(|x, y| {
+                        Arc::new(&x.midpoint, arc.from())
+                            .central_angle()
+                            .total_cmp(&Arc::new(&y.midpoint, arc.from()).central_angle())
+                    });
+                    for child in childs.iter_mut() {
+                        let contrains_from = child.boundary.contains(arc.from());
+                        let contrains_to = child.boundary.contains(arc.to());
+                        if contrains_from && contrains_to {
+                            internals.push(child);
+                            break;
+                        } else if child.boundary.collides(arc) {
+                            // expensive check
+                            internals.push(child);
+                        }
+                    }
+                }
+                NodeType::Leaf(arcs) => {
+                    arcs.push(arc.clone());
                 }
             }
         }
