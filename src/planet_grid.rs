@@ -174,19 +174,6 @@ impl SpatialPartition {
         }
     }
 
-    pub fn update_midpoint_with_planet(&mut self, planet: &Planet) {
-        self.midpoint_flag = match planet.is_on_polygon(&self.midpoint) {
-            true => PointStatus::Inside,
-            false => PointStatus::Outside,
-        };
-
-        if let NodeType::Internal(quadtrees) = &mut self.node_type {
-            quadtrees
-                .par_iter_mut()
-                .for_each(|quadtree| quadtree.update_midpoint_with_planet(planet));
-        }
-    }
-
     pub fn propagte_status(&mut self) {
         let mut intersections = Vec::new();
         if let NodeType::Internal(quadtrees) = &self.node_type {
