@@ -2,6 +2,8 @@ use std::{f64::consts::PI, vec};
 
 use geojson::{Feature, Geometry, Value};
 
+use crate::Collides;
+
 use super::{Arc, Point};
 
 pub trait SolidShape {
@@ -45,6 +47,12 @@ impl SolidShape for Polygon {
 
     fn intersects(&self, arc: &Arc) -> bool {
         !self.intersections(arc).is_empty()
+    }
+}
+
+impl Collides for Polygon {
+    fn collides(&self, rhs: &Self) -> bool {
+        todo!()
     }
 }
 

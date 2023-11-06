@@ -4,7 +4,7 @@ use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 use rand::Rng;
 
-use crate::Arc;
+use crate::{Arc, Collides, Polygon};
 
 /// Represents a point on the Earth's surface using an n-vector, which is a normalised vector
 /// perpendicular to the Earth's surface.
@@ -16,6 +16,18 @@ pub struct Point {
 impl fmt::Display for Point {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "(lat:{}, lon::{})", self.latitude(), self.longitude())
+    }
+}
+
+impl Collides<Arc> for Point {
+    fn collides(&self, rhs: &Arc) -> bool {
+        todo!()
+    }
+}
+
+impl Collides<Polygon> for Point {
+    fn collides(&self, rhs: &Polygon) -> bool {
+        todo!()
     }
 }
 

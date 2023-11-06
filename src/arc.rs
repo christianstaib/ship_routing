@@ -4,13 +4,19 @@ use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 use rand::Rng;
 
-use crate::{meters_to_radians, Point};
+use crate::{meters_to_radians, Collides, Point};
 
 /// Represents a minor arc, e.g. the shortest path between to points, called 'from' and 'to'.
 #[derive(Clone, Copy, PartialEq)]
 pub struct Arc {
     from: Point,
     to: Point,
+}
+
+impl Collides for Arc {
+    fn collides(&self, rhs: &Self) -> bool {
+        todo!()
+    }
 }
 
 impl Arc {
