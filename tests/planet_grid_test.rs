@@ -3,7 +3,7 @@ use osm_test::{CollisionDetection, Planet, PlanetGrid};
 use rayon::prelude::*;
 
 #[test]
-fn planet_grid_point_on_land() {
+fn planet_grid() {
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
     let planet = Planet::from_geojson_file(PLANET_PATH).unwrap();
 
@@ -17,7 +17,7 @@ fn planet_grid_point_on_land() {
 
     // updating midpoints
     println!("updating midpoints");
-    planet_grid.spatial_partition.propagte_status();
+    planet_grid.update_midpoints();
 
     // test if points known to be on land are correctly categorized
     const ON_LAND_PATH: &str = "tests/data/geojson/points_on_land.geojson";
