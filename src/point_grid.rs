@@ -1,9 +1,6 @@
 use rayon::prelude::ParallelIterator;
 
-use crate::{
-    Arc, Collides, Contains, ConvecQuadrilateral, Point, PointStatus, Polygon,
-    Tiling,
-};
+use crate::{Arc, Collides, Contains, ConvecQuadrilateral, Point, PointStatus, Polygon, Tiling};
 
 #[derive(Clone)]
 pub struct PointSpatialPartition {
@@ -25,7 +22,7 @@ pub struct PointPlanetGrid {
 }
 
 impl PointPlanetGrid {
-    fn add_point(&mut self, point: &Point) {
+    pub fn add_point(&mut self, point: &Point) {
         self.spatial_partition.add_point(point);
     }
 
@@ -34,6 +31,10 @@ impl PointPlanetGrid {
         PointPlanetGrid {
             spatial_partition: PointSpatialPartition::new_root(&polygons, max_size),
         }
+    }
+
+    pub fn get_points(&self, polygon: &Polygon) -> Vec<Point> {
+        self.spatial_partition.get_points(polygon)
     }
 }
 
@@ -120,7 +121,7 @@ impl PointSpatialPartition {
                 .collect(),
             NodeType::Leaf(points) => points
                 .iter()
-                .filter(|&point| self.boundary.contains(point))
+                .filter(|&point| polygon.contains(point))
                 .cloned()
                 .collect(),
         }

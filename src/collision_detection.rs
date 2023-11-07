@@ -110,6 +110,7 @@ impl Collides<Point> for ConvecQuadrilateral {
 impl Collides<Polygon> for ConvecQuadrilateral {
     fn collides(&self, rhs: &Polygon) -> bool {
         self.outline.iter().any(|point| rhs.collides(point))
+            || rhs.outline.iter().any(|point| self.collides(point))
     }
 }
 
