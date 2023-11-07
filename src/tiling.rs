@@ -1,21 +1,8 @@
-use crate::{Arc, Point, SolidShape};
+use crate::{Arc, Point};
 
 #[derive(Clone)]
 pub struct ConvecQuadrilateral {
     pub outline: Vec<Point>,
-}
-
-impl SolidShape for ConvecQuadrilateral {
-    fn contains(&self, point: &crate::Point) -> bool {
-        self.outline
-            .windows(2)
-            .map(|arc| Arc::new(&arc[0], &arc[1]))
-            .all(|arc| arc.is_on_righthand_side(point))
-    }
-
-    fn intersects(&self, arc: &Arc) -> bool {
-        !self.intersections(arc).is_empty()
-    }
 }
 
 impl ConvecQuadrilateral {
@@ -83,12 +70,12 @@ impl ConvecQuadrilateral {
         }
     }
 
-    pub fn collides(&self, arc: &Arc) -> bool {
-        self.outline.windows(2).any(|outline| {
-            let outline = Arc::new(&outline[0], &outline[1]);
-            arc.collides_arc(&outline)
-        })
-    }
+    // pub fn collides(&self, arc: &Arc) -> bool {
+    //     self.outline.windows(2).any(|outline| {
+    //         let outline = Arc::new(&outline[0], &outline[1]);
+    //         arc.collides_arc(&outline)
+    //     })
+    // }
 
     pub fn get_midpoint(&self) -> Point {
         for _ in 0..5 {

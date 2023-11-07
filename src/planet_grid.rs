@@ -3,8 +3,8 @@ use std::sync::Mutex;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
-    meters_to_radians, Arc, CollisionDetection, ConvecQuadrilateral, Planet, Point, Polygon,
-    SolidShape, Tiling,
+    meters_to_radians, Arc, Collides, CollisionDetection, Contains, ConvecQuadrilateral, Planet,
+    Point, Polygon, Tiling,
 };
 
 #[derive(Clone)]

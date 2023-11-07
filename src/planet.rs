@@ -7,7 +7,7 @@ use std::{
 
 use geojson::{FeatureCollection, Value};
 
-use crate::{Arc, CollisionDetection, Point, Polygon, RawOsmData, SolidShape};
+use crate::{Arc, CollisionDetection, Contains, Point, Polygon, RawOsmData};
 
 #[derive(Clone)]
 pub struct Planet {
@@ -30,11 +30,7 @@ impl CollisionDetection for Planet {
     }
 
     fn intersects_polygon(&self, arc: &Arc) -> bool {
-        self.polygons
-            .iter()
-            .filter(|polygon| polygon.intersects(arc))
-            .next()
-            .is_some()
+        todo!()
     }
 }
 

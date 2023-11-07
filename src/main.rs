@@ -32,7 +32,7 @@ fn test_clipping() {
 
     println!("generating points");
     let start = Instant::now();
-    let n = 4_000_000;
+    let n = 50_000;
     let pb = ProgressBar::new(n as u64);
     while out_planet.points.len() < n {
         let point = Point::random();

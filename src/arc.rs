@@ -13,12 +13,6 @@ pub struct Arc {
     to: Point,
 }
 
-impl Collides for Arc {
-    fn collides(&self, rhs: &Self) -> bool {
-        todo!()
-    }
-}
-
 impl Arc {
     pub fn new(start: &Point, end: &Point) -> Arc {
         Arc {
@@ -134,23 +128,6 @@ impl Arc {
     /// Calculates an vector that is perpendicular to the normal and 'to'.
     fn to_normal(&self) -> Vector3<f64> {
         self.normal().cross(&self.to.n_vector()).normalize()
-    }
-
-    /// Checks if point collides with the arc, meaning that it is really close to the arc.
-    pub fn collides(&self, point: &Point) -> bool {
-        let summed_angle = Arc::new(&self.from(), point).central_angle()
-            + Arc::new(point, &self.to()).central_angle();
-        (summed_angle - self.central_angle()).abs() < meters_to_radians(1.0)
-    }
-
-    /// Checks if two arcs collide. Colliding does not necessarily mean that they intersect, they
-    /// could also be really close to another.
-    pub fn collides_arc(&self, arc: &Arc) -> bool {
-        self.intersects(&arc)
-            || self.collides(arc.from())
-            || self.collides(arc.to())
-            || arc.collides(self.from())
-            || arc.collides(self.to())
     }
 
     /// Returns true if point lies between from_normal and to_normal.

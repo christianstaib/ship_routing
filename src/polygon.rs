@@ -2,58 +2,12 @@ use std::{f64::consts::PI, vec};
 
 use geojson::{Feature, Geometry, Value};
 
-use crate::Collides;
-
 use super::{Arc, Point};
-
-pub trait SolidShape {
-    fn contains(&self, point: &Point) -> bool;
-    fn intersects(&self, arc: &Arc) -> bool;
-}
-
-pub struct EverythingPolygon;
-impl SolidShape for EverythingPolygon {
-    fn contains(&self, _point: &Point) -> bool {
-        true
-    }
-
-    fn intersects(&self, _arc: &Arc) -> bool {
-        false
-    }
-}
-
-pub struct NothingPolygon;
-impl SolidShape for NothingPolygon {
-    fn contains(&self, _point: &Point) -> bool {
-        false
-    }
-
-    fn intersects(&self, _arc: &Arc) -> bool {
-        false
-    }
-}
 
 #[derive(Clone)]
 pub struct Polygon {
     pub outline: Vec<Point>,
     pub inside_point: Point,
-}
-impl SolidShape for Polygon {
-    fn contains(&self, point: &Point) -> bool {
-        let ray = Arc::new(point, &self.inside_point);
-        let intersections = self.intersections(&ray).len();
-        intersections % 2 == 0
-    }
-
-    fn intersects(&self, arc: &Arc) -> bool {
-        !self.intersections(arc).is_empty()
-    }
-}
-
-impl Collides for Polygon {
-    fn collides(&self, rhs: &Self) -> bool {
-        todo!()
-    }
 }
 
 impl Polygon {
