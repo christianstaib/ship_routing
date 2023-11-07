@@ -107,6 +107,12 @@ impl Collides<Point> for ConvecQuadrilateral {
     }
 }
 
+impl Collides<Polygon> for ConvecQuadrilateral {
+    fn collides(&self, rhs: &Polygon) -> bool {
+        self.outline.iter().any(|point| rhs.collides(point))
+    }
+}
+
 impl Collides<Arc> for ConvecQuadrilateral {
     fn collides(&self, rhs: &Arc) -> bool {
         self.outline.windows(2).any(|outline| {
@@ -124,6 +130,8 @@ pub trait Contains<Rhs = Self> {
     fn contains(&self, rhs: &Rhs) -> bool;
 }
 
+// Polygon
+
 impl Contains<Point> for Polygon {
     fn contains(&self, rhs: &Point) -> bool {
         let ray = Arc::new(rhs, &self.inside_point);
@@ -137,6 +145,8 @@ impl Contains<Arc> for Polygon {
         todo!()
     }
 }
+
+// ConvecQuadrilateral
 
 impl Contains<Point> for ConvecQuadrilateral {
     fn contains(&self, rhs: &Point) -> bool {
