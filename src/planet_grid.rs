@@ -82,6 +82,10 @@ impl PlanetGrid {
         }
     }
 
+    pub fn check_collision(&self, arc: &Arc) -> bool {
+        return self.spatial_partition.check_collision(arc);
+    }
+
     pub fn intersections(&self, ray: &Arc) -> Vec<Point> {
         let mut intersections = self.spatial_partition.intersections(ray);
         intersections.sort_by(|x, y| x.longitude().partial_cmp(&y.longitude()).unwrap());
@@ -144,6 +148,30 @@ impl SpatialPartition {
         );
 
         arcs.iter().for_each(|arc| self.add_arc(arc));
+    }
+
+    fn check_collision(&self, arc: &Arc) -> bool {
+        let mut internals = vec![self];
+        while let Some(parent) = internals.pop() {
+            if let NodeType::Leaf(arcs) = &parent.node_type {
+                if arcs.iter().any(|other| other.collides(arc)) {
+                    return true;
+                }
+            } else if let NodeType::Internal(childs) = &parent.node_type {
+                for child in childs.iter() {
+                    let contrains_from = child.boundary.contains(arc.from());
+                    let contrains_to = child.boundary.contains(arc.to());
+                    if contrains_from && contrains_to {
+                        internals.push(child);
+                        break;
+                    } else if child.boundary.collides(arc) {
+                        // expensive check
+                        internals.push(child);
+                    }
+                }
+            }
+        }
+        false
     }
 
     fn add_arc(&mut self, arc: &Arc) {

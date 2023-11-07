@@ -167,7 +167,7 @@ impl Arc {
     // dateline.
     pub fn _make_good_line(&self) -> Vec<Arc> {
         let mut arcs = vec![self.clone()];
-        while arcs[0].central_angle() > meters_to_radians(5000.0) {
+        while arcs[0].central_angle() > meters_to_radians(100_000.0) {
             arcs = arcs
                 .iter()
                 .map(|arc| {
@@ -175,10 +175,30 @@ impl Arc {
                     vec![Arc::new(&arc.from(), &middle), Arc::new(&middle, &arc.to())]
                 })
                 .flatten()
+                .map(|arc| arc.fix_dateline())
+                .flatten()
                 .collect();
         }
         arcs.retain(|arc| (arc.from().longitude() - arc.to().longitude()).abs() < 10.0);
         arcs
+    }
+
+    pub fn fix_dateline(&self) -> Vec<Arc> {
+        let p0 = Point::from_coordinate(90.0, 180.0);
+        let p1 = Point::from_coordinate(0.0, 180.0);
+        let p2 = Point::from_coordinate(-90.0, 180.0);
+        let a0 = Arc::new(&p0, &p1);
+        let a1 = Arc::new(&p1, &p2);
+        for a in vec![a0, a1] {
+            if let Some(intersection) = a.intersection(self) {
+                let intersection = Point::from_coordinate(intersection.latitude(), 180.0);
+                return vec![
+                    Arc::new(self.from(), &intersection),
+                    Arc::new(&intersection, self.to()),
+                ];
+            }
+        }
+        vec![self.clone()]
     }
 
     pub fn to_feature(&self) -> Feature {

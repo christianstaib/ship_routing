@@ -76,19 +76,6 @@ impl Planet {
         Ok(planet)
     }
 
-    pub fn to_geojson_str(&self) -> String {
-        let mut features = Vec::new();
-        features.extend(self.points.iter().map(|point| point.to_feature()));
-        features.extend(self.polygons.iter().map(|polygon| polygon.to_feature()));
-        features.extend(self.arcs.iter().map(|line| line.to_feature()));
-        FeatureCollection {
-            bbox: None,
-            features,
-            foreign_members: None,
-        }
-        .to_string()
-    }
-
     pub fn from_geojson_file(path: &str) -> Result<Planet, Box<dyn Error>> {
         let mut reader = BufReader::new(File::open(path).unwrap());
         let mut json = String::new();
@@ -97,8 +84,23 @@ impl Planet {
     }
 
     pub fn to_geojson_file(&self, path: &str) {
+        let mut features = Vec::new();
+        features.extend(self.points.iter().map(|point| point.to_feature()));
+        features.extend(self.polygons.iter().map(|polygon| polygon.to_feature()));
+        features.extend(self.arcs.iter().map(|line| line.to_feature()));
+
         let mut writer = BufWriter::new(File::create(path).unwrap());
-        write!(writer, "{}", self.to_geojson_str()).unwrap();
+        writeln!(writer, r#"{{"type":"FeatureCollection","features":["#,).unwrap();
+
+        let mut features = features.into_iter().peekable();
+        while let Some(feature) = features.next() {
+            if features.peek().is_some() {
+                writeln!(writer, "{},", feature.to_string()).unwrap();
+            } else {
+                writeln!(writer, "{}", feature.to_string()).unwrap();
+            }
+        }
+        writeln!(writer, r#"]}}"#,).unwrap();
         writer.flush().unwrap();
     }
 }

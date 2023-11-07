@@ -1,11 +1,11 @@
-use std::{env, f64::consts::PI, sync::Mutex, time::Instant};
+use std::{env, f64::consts::PI, time::Instant};
 
 use indicatif::{ProgressBar, ProgressIterator};
 use osm_test::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, PlanetGrid, Point,
-    PointPlanetGrid, Polygon, Tiling,
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Contains, Planet, PlanetGrid,
+    Point, PointPlanetGrid, Polygon,
 };
-use rayon::prelude::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
+use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 fn main() {
     env::set_var("RUST_BACKTRACE", "1");
@@ -18,7 +18,7 @@ fn test_clipping() {
     // const PLANET_PATH: &str = "tests/data/osm/planet-coastlines.osm.pbf";
     // let planet = Planet::from_osm_file(PLANET_PATH);
 
-    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/water_network.geojson";
+    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/planet_grid.geojson";
     let mut out_planet = Planet::new();
 
     println!("generating grid");
@@ -35,11 +35,12 @@ fn test_clipping() {
     planet_grid.update_midpoints();
 
     println!("generating points");
-    let mut point_grid = PointPlanetGrid::new(50);
+    let mut point_grid = PointPlanetGrid::new(10);
     let start = Instant::now();
     let n = 4_000_000;
     let pb = ProgressBar::new(n as u64);
     let mut points = Vec::new();
+
     while points.len() < n {
         let point = Point::random();
         if !planet_grid.is_on_polygon(&point) {
@@ -55,25 +56,36 @@ fn test_clipping() {
             .progress()
             .par_bridge()
             .map(|point| {
-                vec![ur(point), lr(point)]
+                vec![ur(point), lr(point), ll(point), ul(point)]
                     .iter()
                     .filter_map(|polygon| {
                         let mut local_points = point_grid.get_points(&polygon);
-                        local_points.sort_by_cached_key(|x| {
-                            (radians_to_meter(Arc::new(point, x).central_angle()) / 100_0.0) as u64
-                            // sort by mm (100 cm in a m, 10 mm in a cm). I dont want to sory by
-                            // comparing f64 as this would require to recomputer central_angle()
-                            // every time.
+                        //pdqselect::select_by_key(&mut local_points, 2, |x| {
+                        //    (radians_to_meter(Arc::new(point, x).central_angle()) / 100_0.0) as u64
+                        //});
+                        local_points.sort_unstable_by(|x, y| {
+                            Arc::new(point, x)
+                                .central_angle()
+                                .total_cmp(&Arc::new(point, y).central_angle())
                         });
+                        //     // sort by mm (100 cm in a m, 10 mm in a cm). I dont want to sory by
+                        //     // comparing f64 as this would require to recomputer central_angle()
+                        //     // every time.
+                        // });
 
                         // .get(1) is point
                         if let Some(target) = local_points.get(2) {
                             return Some(Arc::new(point, &target));
+                            // return None;
                         }
                         None
+                        // Some(point.clone())
                     })
                     .collect::<Vec<Arc>>()
             })
+            .flatten()
+            //.filter(|arc| !planet_grid.check_collision(arc))
+            .map(|arc| arc._make_good_line())
             .flatten()
             .collect::<Vec<Arc>>(),
     );
@@ -88,24 +100,28 @@ fn test_clipping() {
     out_planet.to_geojson_file(OUT_PLANET_PATH);
 }
 
+const SEARCH_RADIUS: f64 = 40_000.0;
+
+// works
 fn ur(point: &Point) -> Polygon {
     let cloned_point = point.clone();
     Polygon::new(vec![
         cloned_point,
-        Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(3_000.0)),
-        Point::destination_point(&point, 1.0 / 4.0 * PI, meters_to_radians(3_000.0)),
-        Point::destination_point(&point, 0.0 / 4.0 * PI, meters_to_radians(3_000.0)),
+        Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 1.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 0.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
         cloned_point,
     ])
 }
 
+// works
 fn lr(point: &Point) -> Polygon {
     let cloned_point = point.clone();
     Polygon::new(vec![
         cloned_point,
-        Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(3_000.0)),
-        Point::destination_point(&point, 3.0 / 4.0 * PI, meters_to_radians(3_000.0)),
-        Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(3_000.0)),
+        Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 3.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
         cloned_point,
     ])
 }
@@ -113,9 +129,9 @@ fn ll(point: &Point) -> Polygon {
     let cloned_point = point.clone();
     Polygon::new(vec![
         cloned_point,
-        Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(30_000.0)),
-        Point::destination_point(&point, 5.0 / 4.0 * PI, meters_to_radians(30_000.0)),
-        Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(30_000.0)),
+        Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 5.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
         cloned_point,
     ])
 }
@@ -123,9 +139,9 @@ fn ul(point: &Point) -> Polygon {
     let cloned_point = point.clone();
     Polygon::new(vec![
         cloned_point,
-        Point::destination_point(&point, 8.0 / 4.0 * PI, meters_to_radians(30_000.0)),
-        Point::destination_point(&point, 7.0 / 4.0 * PI, meters_to_radians(30_000.0)),
-        Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(30_000.0)),
+        Point::destination_point(&point, 8.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 7.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
         cloned_point,
     ])
 }
