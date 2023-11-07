@@ -4,7 +4,7 @@ use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 use rand::Rng;
 
-use crate::{meters_to_radians, Collides, Point};
+use crate::{meters_to_radians, Point};
 
 /// Represents a minor arc, e.g. the shortest path between to points, called 'from' and 'to'.
 #[derive(Clone, Copy, PartialEq)]

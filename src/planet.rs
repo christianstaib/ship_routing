@@ -29,7 +29,7 @@ impl CollisionDetection for Planet {
             .is_some()
     }
 
-    fn intersects_polygon(&self, arc: &Arc) -> bool {
+    fn intersects_polygon(&self, _arc: &Arc) -> bool {
         todo!()
     }
 }

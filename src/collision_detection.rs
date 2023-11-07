@@ -133,7 +133,7 @@ impl Contains<Point> for Polygon {
 }
 
 impl Contains<Arc> for Polygon {
-    fn contains(&self, rhs: &Arc) -> bool {
+    fn contains(&self, _rhs: &Arc) -> bool {
         todo!()
     }
 }
