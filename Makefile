@@ -1,5 +1,5 @@
-GEOJSON_DIR := data/geojson
-MBTILES_DIR := data/mbtiles
+GEOJSON_DIR := tests/data/test_geojson
+MBTILES_DIR := tests/data/mbtiles
 DOCKER_IMG := metacollin/tippecanoe
 
 generate_mbtiles:
@@ -24,7 +24,7 @@ generate_mbtiles:
   done
 
 start_tileserver:
-	docker run --rm -it -v ./data:/data -p 8080:8080 maptiler/tileserver-gl-light --config /data/config.json
+	docker run --rm -it -v ./tests/data:/data -p 8080:8080 maptiler/tileserver-gl-light --config /data/config.json
 	
 merge:
 	tile-join -o mbtiles/merged.mbtiles mbtiles/planet.mbtiles mbtiles/points.mbtiles --force
