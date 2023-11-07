@@ -11,6 +11,9 @@
     },
     "points": {
       "mbtiles": "points.mbtiles"
+    },
+    "network": {
+      "mbtiles" : "planet_grid.mbtiles"
     }
   }
 }
