@@ -2,8 +2,8 @@ use std::{env, f64::consts::PI, time::Instant};
 
 use indicatif::{ProgressBar, ProgressIterator};
 use osm_test::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Contains, Planet, PlanetGrid,
-    Point, PointPlanetGrid, Polygon,
+    meters_to_radians, Arc, Collides, CollisionDetection, Contains, Planet, PlanetGrid, Point,
+    PointPlanetGrid, Polygon,
 };
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
@@ -23,7 +23,7 @@ fn test_clipping() {
 
     println!("generating grid");
     let start = Instant::now();
-    let mut planet_grid = PlanetGrid::new(100);
+    let mut planet_grid = PlanetGrid::new(20);
     planet
         .polygons
         .iter()
@@ -35,7 +35,7 @@ fn test_clipping() {
     planet_grid.update_midpoints();
 
     println!("generating points");
-    let mut point_grid = PointPlanetGrid::new(10);
+    let mut point_grid = PointPlanetGrid::new(100);
     let start = Instant::now();
     let n = 4_000_000;
     let pb = ProgressBar::new(n as u64);
@@ -50,19 +50,53 @@ fn test_clipping() {
         }
     }
 
-    out_planet.arcs.extend(
+    let rahmen = Polygon::new(vec![
+        Point::from_coordinate(54.35479097745136, -28.293867284246318),
+        Point::from_coordinate(-38.35479097745136, -28.93565356804902),
+        Point::from_coordinate(-39.34746000033059, 17.93565356804902),
+        Point::from_coordinate(54.34746000033059, 17.293867284246318),
+        Point::from_coordinate(54.35479097745136, -28.293867284246318),
+    ]);
+
+    // let points: Vec<Point> = points
+    //     .iter()
+    //     .progress()
+    //     .filter(|&point| rahmen.contains(point))
+    //     .cloned()
+    //     .collect();
+    // for point in &points {
+    //     for other_point in &points {
+    //         if !point.is_approximately_equal(other_point) {
+    //             let arc = Arc::new(&point, &other_point);
+    //             if arc.central_angle() < meters_to_radians(30_000.0) {
+    //                 out_planet.arcs.push(arc);
+    //             }
+    //         }
+    //     }
+    //     out_planet.points.push(point.clone());
+    // }
+
+    // out_planet.polygons.extend(planet.polygons.clone());
+    out_planet.points.extend(
         points
             .iter()
             .progress()
             .par_bridge()
+            .filter(|&point| rahmen.collides(point))
+            //.take(1)
             .map(|point| {
+                //let point = &Point::from_coordinate(0.0, 0.0);
+                //out_planet.points.push(point.clone());
                 vec![ur(point), lr(point), ll(point), ul(point)]
                     .iter()
                     .filter_map(|polygon| {
                         let mut local_points = point_grid.get_points(&polygon);
+                        //println!("len is {}", local_points.len());
+                        //out_planet.polygons.push(polygon.clone());
                         //pdqselect::select_by_key(&mut local_points, 2, |x| {
                         //    (radians_to_meter(Arc::new(point, x).central_angle()) / 100_0.0) as u64
                         //});
+                        //out_planet.points.extend(local_points.clone());
                         local_points.sort_unstable_by(|x, y| {
                             Arc::new(point, x)
                                 .central_angle()
@@ -74,20 +108,22 @@ fn test_clipping() {
                         // });
 
                         // .get(1) is point
-                        if let Some(target) = local_points.get(2) {
-                            return Some(Arc::new(point, &target));
-                            // return None;
+                        if let Some(target) = local_points.get(1) {
+                            // return Some(Arc::new(point, &target));
+                            return None;
                         }
-                        None
-                        // Some(point.clone())
+                        // None
+
+                        out_planet.polygons.push(polygon.clone());
+                        Some(point.clone())
                     })
-                    .collect::<Vec<Arc>>()
+                    .collect::<Vec<Point>>()
             })
             .flatten()
-            //.filter(|arc| !planet_grid.check_collision(arc))
-            .map(|arc| arc._make_good_line())
-            .flatten()
-            .collect::<Vec<Arc>>(),
+            // .filter(|arc| !planet_grid.check_collision(arc))
+            // .map(|arc| arc._make_good_line())
+            // .flatten()
+            .collect::<Vec<Point>>(),
     );
 
     pb.finish();
@@ -100,7 +136,7 @@ fn test_clipping() {
     out_planet.to_geojson_file(OUT_PLANET_PATH);
 }
 
-const SEARCH_RADIUS: f64 = 40_000.0;
+const SEARCH_RADIUS: f64 = 60_000.0;
 
 // works
 fn ur(point: &Point) -> Polygon {

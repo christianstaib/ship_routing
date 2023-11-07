@@ -100,7 +100,8 @@ impl PointSpatialPartition {
                 if points.len() >= parent.max_size {
                     parent.split();
                 }
-            } else if let NodeType::Internal(childs) = &mut parent.node_type {
+            }
+            if let NodeType::Internal(childs) = &mut parent.node_type {
                 for child in childs.iter_mut() {
                     if child.boundary.contains(point) {
                         internals.push(child);

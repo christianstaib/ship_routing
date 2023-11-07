@@ -223,11 +223,30 @@ mod tests {
     use crate::{Arc, Point};
 
     #[test]
-    fn test_central_angle() {
+    fn test_central_angle1() {
         let from = Point::from_coordinate(90.0, 0.0);
         let to = Point::from_coordinate(0.0, 0.0);
         let arc = Arc::new(&from, &to);
-        assert!((arc.central_angle() - (PI / 2.0)).abs() < 1e-10);
+        let angle = arc.central_angle();
+        assert!((angle - (PI / 2.0)).abs() < 1e-10, "angle was {}", angle);
+    }
+
+    #[test]
+    fn test_central_angle2() {
+        let from = Point::from_coordinate(0.0, 135.0);
+        let to = Point::from_coordinate(0.0, -135.0);
+        let arc = Arc::new(&from, &to);
+        let angle = arc.central_angle();
+        assert!((angle - (PI / 2.0)).abs() < 1e-10, "angle was {}", angle);
+    }
+
+    #[test]
+    fn test_central_angle3() {
+        let from = Point::from_coordinate(0.0, 135.0);
+        let to = Point::from_coordinate(0.0, -135.0);
+        let arc = Arc::new(&from, &to);
+        let angle = arc.central_angle();
+        assert!((angle - (PI / 2.0)).abs() < 1e-10, "angle was {}", angle);
     }
 
     #[test]

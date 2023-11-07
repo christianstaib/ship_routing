@@ -85,7 +85,7 @@ impl Point {
     /// - `distance_rad`: the angular distance travelled in radians
     pub fn destination_point(start: &Point, bearing_rad: f64, distance_rad: f64) -> Point {
         let north_pole = Point::north_pole();
-        let east_direction = north_pole.n_vector().cross(start.n_vector());
+        let east_direction = north_pole.n_vector().cross(start.n_vector()).normalize();
         let north_direction = start.n_vector().cross(&east_direction);
         let direction = north_direction * bearing_rad.cos() + east_direction * bearing_rad.sin();
         let destination = start.n_vector() * distance_rad.cos() + direction * distance_rad.sin();
