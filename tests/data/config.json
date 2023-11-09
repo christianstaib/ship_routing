@@ -6,14 +6,11 @@
     }
   },
   "data": {
-    "planet": {
-      "mbtiles": "planet.mbtiles"
-    },
     "points": {
-      "mbtiles": "points.mbtiles"
+      "mbtiles": "points_4m.mbtiles"
     },
     "network": {
-      "mbtiles" : "planet_grid.mbtiles"
+      "mbtiles" : "network.mbtiles"
     }
   }
 }

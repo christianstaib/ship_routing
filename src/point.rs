@@ -1,4 +1,7 @@
-use std::{f64::consts::PI, fmt};
+use std::{
+    f64::consts::PI,
+    fmt,
+};
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
@@ -11,6 +14,7 @@ use crate::Arc;
 #[derive(Clone, Copy, PartialEq)]
 pub struct Point {
     n_vector: Vector3<f64>,
+    pub id: Option<u32>,
 }
 
 impl fmt::Display for Point {
@@ -42,13 +46,14 @@ impl Point {
             lat_rad.sin(),
         );
 
-        Point { n_vector }
+        Point { n_vector, id: None }
     }
 
     /// Constructs a point from a n-vector.
     pub fn from_n_vector(n_vector: &Vector3<f64>) -> Point {
         let point = Point {
             n_vector: n_vector.clone(),
+            id: None,
         };
 
         let lat = point.latitude();
