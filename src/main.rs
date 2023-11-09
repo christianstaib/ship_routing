@@ -5,18 +5,35 @@ use osm_test::{
 };
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
+use std::collections::HashMap;
 use std::io::BufWriter;
 use std::io::Write;
 use std::{env, f64::consts::PI, fs::File};
+
+const SEARCH_RADIUS: f64 = 35_000.0;
 
 fn main() {
     env::set_var("RUST_BACKTRACE", "1");
     const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
     let in_planet = Planet::from_geojson_file(PLANET_PATH).unwrap();
+    // const PLANET_PATH: &str = "tests/data/osm/planet-coastlines.osm.pbf";
+    // let in_planet = Planet::from_osm_file(PLANET_PATH);
+
+    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/network.geojson";
+
     let planet_grid = generate_planet_grid(&in_planet);
     let points = generate_points(4_000_000, &planet_grid);
     let point_grid = generate_point_grid(&points);
     let arcs = generate_arcs(&points, &point_grid, &planet_grid);
+
+    let mut out_planet = Planet::new();
+    out_planet.arcs = arcs
+        .iter()
+        .map(|arc| arc._make_good_line())
+        .flatten()
+        .collect();
+    out_planet.to_geojson_file(OUT_PLANET_PATH);
+
     arcs_to_file(&arcs, &points);
 }
 
@@ -27,20 +44,20 @@ fn generate_points(how_many: u32, planet_grid: &PlanetGrid) -> Vec<Point> {
     let pb = ProgressBar::new(how_many as u64);
     while points.len() < how_many as usize {
         let mut point = Point::random();
-        if planet_grid.is_on_polygon(&point) {
+        if !planet_grid.is_on_polygon(&point) {
             point.id = Some(points.len() as u32);
             points.push(point);
             pb.inc(1);
         }
     }
-    pb.finish();
+    pb.finish_and_clear();
 
     points
 }
 
 fn generate_point_grid(points: &Vec<Point>) -> PointPlanetGrid {
     println!("generating point grid");
-    let mut point_grid = PointPlanetGrid::new(100);
+    let mut point_grid = PointPlanetGrid::new(10);
     points
         .iter()
         .progress()
@@ -50,12 +67,13 @@ fn generate_point_grid(points: &Vec<Point>) -> PointPlanetGrid {
 
 fn generate_planet_grid(planet: &Planet) -> PlanetGrid {
     println!("generating planet grid");
-    let mut planet_grid = PlanetGrid::new(10);
+    let mut planet_grid = PlanetGrid::new(50);
     planet
         .polygons
         .iter()
         .progress()
         .for_each(|polygon| planet_grid.add_polygon(polygon));
+    planet_grid.update_midpoints();
     planet_grid
 }
 
@@ -83,7 +101,7 @@ fn arcs_to_file(arcs: &Vec<Arc>, points: &Vec<Point>) {
             "{} {} {}",
             arc.from().id.unwrap(),
             arc.to().id.unwrap(),
-            radians_to_meter(arc.central_angle())
+            (radians_to_meter(arc.central_angle()) * 1.0) as u32
         )
         .unwrap();
     });
@@ -96,7 +114,7 @@ fn generate_arcs(
     planet_grid: &PlanetGrid,
 ) -> Vec<Arc> {
     println!("generating arcs");
-    points
+    let arcs: Vec<_> = points
         .iter()
         .progress()
         .par_bridge()
@@ -118,121 +136,24 @@ fn generate_arcs(
 
                     None
                 })
-                .filter(|arc| !planet_grid.check_collision(arc))
-                .collect::<Vec<_>>()
-        })
-        .flatten()
-        .collect()
-}
-
-fn test_clipping() {
-    const PLANET_PATH: &str = "tests/data/geojson/planet.geojson";
-    const POINT_PLANET_PATH: &str = "tests/data/test_geojson/points_4m.geojson";
-    const OUT_PLANET_PATH: &str = "tests/data/test_geojson/network.geojson";
-    const FILTER_PLANET_PATH: &str = "tests/data/test_geojson/filter.geojson";
-
-    let planet = Planet::from_geojson_file(PLANET_PATH).unwrap();
-    let points = Planet::from_geojson_file(POINT_PLANET_PATH).unwrap().points;
-    let points: Vec<_> = points
-        .into_iter()
-        .enumerate()
-        .map(|(i, mut point)| {
-            point.id = Some(i as u32);
-            point
-        })
-        .collect();
-
-    let mut out_planet = Planet::new();
-    let filter = Planet::from_geojson_file(FILTER_PLANET_PATH).unwrap();
-    let _filter = filter.polygons.first().unwrap();
-
-    println!("generating grid");
-    let mut planet_grid = PlanetGrid::new(20);
-    planet
-        .polygons
-        .iter()
-        .progress()
-        .for_each(|polygon| planet_grid.add_polygon(polygon));
-    planet_grid.update_midpoints();
-
-    println!("generating points");
-    let mut point_grid = PointPlanetGrid::new(100);
-    points.iter().for_each(|point| point_grid.add_point(point));
-
-    println!("generating network");
-    let _search_pies: Vec<Polygon> = Vec::new();
-    let all_points: Vec<Point> = points
-        .iter()
-        //.filter(|&point| filter.collides(point))
-        .cloned()
-        .collect();
-
-    let out_arc: Vec<Arc> = all_points
-        .iter()
-        .progress()
-        .par_bridge()
-        .map(|point| {
-            vec![ur(point)] //, lr(point), ll(point), ul(point)]
-                .iter()
-                .filter_map(|polygon| {
-                    let mut local_points = point_grid.get_points(&polygon);
-                    local_points.sort_unstable_by(|x, y| {
-                        Arc::new(point, x)
-                            .central_angle()
-                            .total_cmp(&Arc::new(point, y).central_angle())
-                    });
-
-                    // .get(1) is point
-                    if let Some(target) = local_points.get(1) {
-                        return Some(Arc::new(point, &target));
-                        //return None;
-                    }
-
-                    None
-                })
+                //.filter(|arc| !planet_grid.check_collision(arc))
+                // .map(|arc| vec![arc, Arc::new(arc.to(), arc.from())])
+                // .flatten()
                 .collect::<Vec<_>>()
         })
         .flatten()
         .collect();
 
-    // let points_no_neighbour: Vec<Point> = all_points
-    //     .iter()
-    //     .progress()
-    //     .par_bridge()
-    //     .map(|point| {
-    //         vec![ur(point), lr(point), ll(point), ul(point)]
-    //             .iter()
-    //             .filter_map(|polygon| {
-    //                 let mut local_points = point_grid.get_points(&polygon);
-    //                 local_points.sort_unstable_by(|x, y| {
-    //                     Arc::new(point, x)
-    //                         .central_angle()
-    //                         .total_cmp(&Arc::new(point, y).central_angle())
-    //                 });
+    let mut hash_map = HashMap::new();
+    for arc in arcs.into_iter().progress() {
+        hash_map.insert((arc.from().id.unwrap(), arc.to().id.unwrap()), arc);
+    }
 
-    //                 // .get(1) is point
-    //                 if let Some(_) = local_points.get(1) {
-    //                     return None;
-    //                 }
-
-    //                 Some(point.clone())
-    //             })
-    //             .collect::<Vec<Point>>()
-    //     })
-    //     .flatten()
-    //     .collect();
-
-    out_planet.arcs.extend(out_arc);
-    //out_planet.polygons.extend(search_pies);
-    //out_planet.points.extend(points_no_neighbour);
-    //out_planet.points.extend(all_points);
-
-    out_planet.to_geojson_file(OUT_PLANET_PATH);
+    hash_map.into_values().collect()
 }
-
-const SEARCH_RADIUS: f64 = 30_000.0;
 
 // works
+
 fn ur(point: &Point) -> Polygon {
     let cloned_point = point.clone();
     Polygon::new(vec![
