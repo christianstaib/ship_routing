@@ -1,5 +1,6 @@
 mod arc;
 mod collision_detection;
+mod network_generator;
 mod planet;
 mod planet_grid;
 mod point;
@@ -10,6 +11,7 @@ mod tiling;
 
 pub use crate::arc::*;
 pub use crate::collision_detection::*;
+pub use crate::network_generator::*;
 pub use crate::planet::*;
 pub use crate::planet_grid::*;
 pub use crate::point::*;

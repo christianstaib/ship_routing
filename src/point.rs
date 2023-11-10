@@ -1,7 +1,4 @@
-use std::{
-    f64::consts::PI,
-    fmt,
-};
+use std::{f64::consts::PI, fmt};
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;

@@ -5,14 +5,14 @@ use crate::{Arc, Collides, Contains, ConvecQuadrilateral, Point, PointStatus, Po
 #[derive(Clone)]
 pub struct PointSpatialPartition {
     pub boundary: ConvecQuadrilateral,
-    pub node_type: NodeType,
+    pub node_type: PointNodeType,
     pub max_size: usize,
     pub midpoint: Point,
     pub midpoint_flag: PointStatus,
 }
 
 #[derive(Clone)]
-pub enum NodeType {
+pub enum PointNodeType {
     Internal(Vec<PointSpatialPartition>), // four children
     Leaf(Vec<Point>),                     // a bucket of points
 }
@@ -50,7 +50,7 @@ impl PointSpatialPartition {
         let midpoint = boundary.get_midpoint();
         PointSpatialPartition {
             boundary,
-            node_type: NodeType::Internal(
+            node_type: PointNodeType::Internal(
                 polygons
                     .iter()
                     .cloned()
@@ -67,7 +67,7 @@ impl PointSpatialPartition {
         let midpoint = boundary.get_midpoint();
         PointSpatialPartition {
             boundary,
-            node_type: NodeType::Leaf(Vec::with_capacity(max_size + 1)),
+            node_type: PointNodeType::Leaf(Vec::with_capacity(max_size + 1)),
             max_size,
             midpoint,
             midpoint_flag: PointStatus::Outside,
@@ -76,10 +76,10 @@ impl PointSpatialPartition {
 
     fn split(&mut self) {
         let mut points: Vec<Point> = Vec::new();
-        if let NodeType::Leaf(old_points) = &self.node_type {
+        if let PointNodeType::Leaf(old_points) = &self.node_type {
             points.extend(old_points);
         }
-        self.node_type = NodeType::Internal(
+        self.node_type = PointNodeType::Internal(
             self.boundary
                 .split()
                 .into_iter()
@@ -95,13 +95,13 @@ impl PointSpatialPartition {
         while let Some(parent) = internals.pop() {
             // needs to be done before the match block, as the match block pushes a mutable
             // reference to internals.
-            if let NodeType::Leaf(points) = &mut parent.node_type {
+            if let PointNodeType::Leaf(points) = &mut parent.node_type {
                 points.push(point.clone());
                 if points.len() >= parent.max_size {
                     parent.split();
                 }
             }
-            if let NodeType::Internal(childs) = &mut parent.node_type {
+            if let PointNodeType::Internal(childs) = &mut parent.node_type {
                 for child in childs.iter_mut() {
                     if child.boundary.contains(point) {
                         internals.push(child);
@@ -114,13 +114,13 @@ impl PointSpatialPartition {
 
     pub fn get_points(&self, polygon: &Polygon) -> Vec<Point> {
         match &self.node_type {
-            NodeType::Internal(q) => q
+            PointNodeType::Internal(q) => q
                 .iter()
                 .filter(|q| q.boundary.collides(polygon))
                 .map(|q| q.get_points(polygon))
                 .flatten()
                 .collect(),
-            NodeType::Leaf(points) => points
+            PointNodeType::Leaf(points) => points
                 .iter()
                 .filter(|&point| polygon.contains(point))
                 .cloned()
@@ -130,8 +130,8 @@ impl PointSpatialPartition {
 
     pub fn get_leaf_polygons(&self) -> Vec<Arc> {
         match &self.node_type {
-            NodeType::Internal(q) => q.iter().flat_map(|q| q.get_leaf_polygons()).collect(),
-            NodeType::Leaf(_) => self
+            PointNodeType::Internal(q) => q.iter().flat_map(|q| q.get_leaf_polygons()).collect(),
+            PointNodeType::Leaf(_) => self
                 .boundary
                 .outline
                 .windows(2)
