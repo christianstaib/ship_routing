@@ -175,11 +175,22 @@ impl Arc {
                     vec![Arc::new(&arc.from(), &middle), Arc::new(&middle, &arc.to())]
                 })
                 .flatten()
-                .map(|arc| arc.fix_dateline())
-                .flatten()
                 .collect();
         }
-        arcs.retain(|arc| (arc.from().longitude() - arc.to().longitude()).abs() < 10.0);
+        arcs = arcs
+            .iter()
+            .map(|arc| {
+                if (arc.from().longitude() > 170.0 && arc.to().longitude() < -170.0)
+                    || (arc.from().longitude() < -170.0 && arc.to().longitude() > 170.0)
+                {
+                    println!("1");
+                    return arc.fix_dateline();
+                }
+                vec![arc.clone()]
+            })
+            .flatten()
+            .collect();
+
         arcs
     }
 
@@ -192,13 +203,17 @@ impl Arc {
         for a in vec![a0, a1] {
             if let Some(intersection) = a.intersection(self) {
                 let intersection = Point::from_coordinate(intersection.latitude(), 180.0);
+                println!("2");
+                println!("");
                 return vec![
                     Arc::new(self.from(), &intersection),
                     Arc::new(&intersection, self.to()),
                 ];
             }
         }
-        vec![self.clone()]
+
+        // vec![self.clone()]
+        vec![]
     }
 
     pub fn to_feature(&self) -> Feature {

@@ -1,0 +1,20 @@
+use std::{fs::File, io::BufRead, io::BufReader};
+
+use crate::{fmi::Fmi, Point};
+
+pub fn read_paths(in_path: &str, fmi: &Fmi) -> Vec<Vec<Point>> {
+    let reader = BufReader::new(File::open(in_path).unwrap());
+    let lines = reader.lines();
+    let mut paths = Vec::new();
+    for line in lines {
+        let line = line.unwrap();
+        let mut path = Vec::new();
+        for id in line.split(",") {
+            let id: u32 = id.parse().unwrap();
+            path.push(fmi.id_to_point(id));
+        }
+        paths.push(path);
+    }
+
+    paths
+}

@@ -7,13 +7,14 @@ use std::{
 
 use geojson::{FeatureCollection, Value};
 
-use crate::{Arc, CollisionDetection, Contains, Point, Polygon, RawOsmData};
+use crate::{Arc, CollisionDetection, Contains, Linestring, Point, Polygon, RawOsmData};
 
 #[derive(Clone)]
 pub struct Planet {
     pub polygons: Vec<Polygon>,
     pub points: Vec<Point>,
     pub arcs: Vec<Arc>,
+    pub linestrings: Vec<Linestring>,
 }
 
 impl CollisionDetection for Planet {
@@ -41,6 +42,7 @@ impl Planet {
             polygons: Vec::new(),
             points: Vec::new(),
             arcs: Vec::new(),
+            linestrings: Vec::new(),
         }
     }
 
@@ -88,6 +90,11 @@ impl Planet {
         features.extend(self.points.iter().map(|point| point.to_feature()));
         features.extend(self.polygons.iter().map(|polygon| polygon.to_feature()));
         features.extend(self.arcs.iter().map(|line| line.to_feature()));
+        features.extend(
+            self.linestrings
+                .iter()
+                .map(|linestring| linestring.to_feature()),
+        );
 
         let mut writer = BufWriter::new(File::create(path).unwrap());
         writeln!(writer, r#"{{"type":"FeatureCollection","features":["#,).unwrap();
