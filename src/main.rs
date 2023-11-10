@@ -1,3 +1,4 @@
+use indicatif::ProgressIterator;
 use osm_test::fmi::Fmi;
 use osm_test::generate_network;
 use osm_test::read_paths;
@@ -6,11 +7,16 @@ use osm_test::Planet;
 
 fn main() {
     let fmi = Fmi::new("test.fmi");
+    println!("read fmi");
     let paths = read_paths("route.csv", &fmi);
+    println!("read planet");
     let mut planet = Planet::new();
-    planet
-        .linestrings
-        .extend(paths.iter().map(|path| Linestring::new(path.clone())));
+    planet.linestrings.extend(
+        paths
+            .iter()
+            .progress()
+            .map(|path| Linestring::new(path.clone())),
+    );
     planet.to_geojson_file("route.geojson");
 }
 

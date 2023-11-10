@@ -52,10 +52,14 @@ impl Fmi {
     }
 
     pub fn id_to_point(&self, id: u32) -> Point {
-        self.points
-            .iter()
-            .find(|point| point.id.unwrap() == id)
-            .unwrap()
-            .clone()
+        let point = self.points[id as usize];
+        // self.points
+        //     .iter()
+        //     .find(|point| point.id.unwrap() == id)
+        //     .unwrap()
+        //     .clone()
+        assert_eq!(point.id.unwrap(), id);
+
+        point
     }
 }
