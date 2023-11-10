@@ -1,5 +1,3 @@
-use rayon::prelude::ParallelIterator;
-
 use crate::{Arc, Collides, Contains, ConvecQuadrilateral, Point, PointStatus, Polygon, Tiling};
 
 #[derive(Clone)]
