@@ -9,14 +9,15 @@ use crate::{
     PointPlanetGrid, Polygon,
 };
 
-const SEARCH_RADIUS: f64 = 35_000.0;
+pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
+    let radius = (4_000_000.0 * ((30_000.0 as f64).powi(2)) / num_nodes as f64).sqrt();
+    println!("radius is {}", radius);
 
-pub fn generate_network(planet: &Planet, network_path: &str, planet_path: &str) {
     let planet_grid = generate_planet_grid(planet);
-    let points = generate_points(4_0000_000, &planet_grid);
+    let points = generate_points(num_nodes, &planet_grid);
 
     let point_grid = generate_point_grid(&points);
-    let arcs = generate_arcs(&points, &point_grid, &planet_grid);
+    let arcs = generate_arcs(&points, &point_grid, &planet_grid, radius);
 
     let mut out_planet = Planet::new();
     out_planet.arcs = arcs
@@ -104,6 +105,7 @@ fn generate_arcs(
     points: &Vec<Point>,
     point_grid: &PointPlanetGrid,
     planet_grid: &PlanetGrid,
+    radius: f64,
 ) -> Vec<Arc> {
     println!("generating arcs");
     let mut arcs: Vec<_> = points
@@ -111,27 +113,32 @@ fn generate_arcs(
         .progress()
         .par_bridge()
         .map(|point| {
-            vec![ur(point), lr(point), ll(point), ul(point)]
-                .iter()
-                .filter_map(|polygon| {
-                    let mut local_points = point_grid.get_points(&polygon);
-                    local_points.sort_unstable_by(|x, y| {
-                        Arc::new(point, x)
-                            .central_angle()
-                            .total_cmp(&Arc::new(point, y).central_angle())
-                    });
+            vec![
+                ur(point, radius),
+                lr(point, radius),
+                ll(point, radius),
+                ul(point, radius),
+            ]
+            .iter()
+            .filter_map(|polygon| {
+                let mut local_points = point_grid.get_points(&polygon);
+                local_points.sort_unstable_by(|x, y| {
+                    Arc::new(point, x)
+                        .central_angle()
+                        .total_cmp(&Arc::new(point, y).central_angle())
+                });
 
-                    // .get(1) is point
-                    if let Some(target) = local_points.get(1) {
-                        return Some(Arc::new(point, &target));
-                    }
+                // .get(1) is point
+                if let Some(target) = local_points.get(1) {
+                    return Some(Arc::new(point, &target));
+                }
 
-                    None
-                })
-                .filter(|arc| !planet_grid.check_collision(arc))
-                .map(|arc| vec![arc, Arc::new(arc.to(), arc.from())])
-                .flatten()
-                .collect::<Vec<_>>()
+                None
+            })
+            .filter(|arc| !planet_grid.check_collision(arc))
+            .map(|arc| vec![arc, Arc::new(arc.to(), arc.from())])
+            .flatten()
+            .collect::<Vec<_>>()
         })
         .flatten()
         .collect();
@@ -146,45 +153,45 @@ fn generate_arcs(
 
 // works
 
-fn ur(point: &Point) -> Polygon {
+fn ur(point: &Point, radius: f64) -> Polygon {
     let cloned_point = point.clone();
     Polygon::new(vec![
         cloned_point,
-        Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
-        Point::destination_point(&point, 1.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
-        Point::destination_point(&point, 0.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(&point, 1.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(&point, 0.0 / 4.0 * PI, meters_to_radians(radius)),
         cloned_point,
     ])
 }
 
 // works
-fn lr(point: &Point) -> Polygon {
+fn lr(point: &Point, radius: f64) -> Polygon {
     let cloned_point = point.clone();
     Polygon::new(vec![
         cloned_point,
-        Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
-        Point::destination_point(&point, 3.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
-        Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(&point, 3.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(radius)),
         cloned_point,
     ])
 }
-fn ll(point: &Point) -> Polygon {
+fn ll(point: &Point, radius: f64) -> Polygon {
     let cloned_point = point.clone();
     Polygon::new(vec![
         cloned_point,
-        Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
-        Point::destination_point(&point, 5.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
-        Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(&point, 5.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(radius)),
         cloned_point,
     ])
 }
-fn ul(point: &Point) -> Polygon {
+fn ul(point: &Point, radius: f64) -> Polygon {
     let cloned_point = point.clone();
     Polygon::new(vec![
         cloned_point,
-        Point::destination_point(&point, 8.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
-        Point::destination_point(&point, 7.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
-        Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(SEARCH_RADIUS)),
+        Point::destination_point(&point, 8.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(&point, 7.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(radius)),
         cloned_point,
     ])
 }

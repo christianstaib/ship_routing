@@ -6,6 +6,10 @@ use osm_test::Linestring;
 use osm_test::Planet;
 
 fn main() {
+    generate();
+}
+
+fn translate_route() {
     let fmi = Fmi::new("test.fmi");
     println!("read fmi");
     let paths = read_paths("route.csv", &fmi);
@@ -26,5 +30,5 @@ fn generate() {
     const NETWORK_PATH: &str = "test.fmi";
     let planet = Planet::from_geojson_file(PLANET_PATH).unwrap();
 
-    generate_network(&planet, NETWORK_PATH, OUT_PLANET_PATH);
+    generate_network(4_00_000, &planet, NETWORK_PATH, OUT_PLANET_PATH);
 }
