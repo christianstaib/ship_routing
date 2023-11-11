@@ -1,4 +1,5 @@
 use std::io::Write;
+use std::sync::Mutex;
 use std::{collections::HashMap, f64::consts::PI, fs::File, io::BufWriter};
 
 use indicatif::{ProgressBar, ProgressIterator};
@@ -108,6 +109,8 @@ fn generate_arcs(
     radius: f64,
 ) -> Vec<Arc> {
     println!("generating arcs");
+    let lone_points = Planet::new();
+    let lone_points = std::sync::Arc::new(Mutex::new(lone_points));
     let mut arcs: Vec<_> = points
         .iter()
         .progress()
@@ -132,6 +135,7 @@ fn generate_arcs(
                 if let Some(target) = local_points.get(1) {
                     return Some(Arc::new(point, &target));
                 }
+                lone_points.lock().unwrap().points.push(point.clone());
 
                 None
             })
@@ -142,6 +146,8 @@ fn generate_arcs(
         })
         .flatten()
         .collect();
+    let lone_points = lone_points.lock().unwrap();
+    lone_points.to_geojson_file("lone_points.geojson");
 
     let mut hash_map = HashMap::new();
     for arc in arcs.drain(0..).progress() {

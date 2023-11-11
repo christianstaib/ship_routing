@@ -183,7 +183,6 @@ impl Arc {
                 if (arc.from().longitude() > 170.0 && arc.to().longitude() < -170.0)
                     || (arc.from().longitude() < -170.0 && arc.to().longitude() > 170.0)
                 {
-                    println!("1");
                     return arc.fix_dateline();
                 }
                 vec![arc.clone()]
@@ -203,8 +202,6 @@ impl Arc {
         for a in vec![a0, a1] {
             if let Some(intersection) = a.intersection(self) {
                 let intersection = Point::from_coordinate(intersection.latitude(), 180.0);
-                println!("2");
-                println!("");
                 return vec![
                     Arc::new(self.from(), &intersection),
                     Arc::new(&intersection, self.to()),

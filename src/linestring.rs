@@ -50,7 +50,7 @@ impl Linestring {
             points[i][0] += factors[i];
         }
 
-        let mut points = Geometry::new(Value::LineString(points));
+        let points = Geometry::new(Value::LineString(points));
         Feature {
             bbox: None,
             geometry: Some(points),
