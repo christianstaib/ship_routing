@@ -32,5 +32,5 @@ fn _generate() {
     const NETWORK_PATH: &str = "test_400k.fmi";
     let planet = Planet::from_geojson_file(PLANET_PATH).unwrap();
 
-    generate_network(4_000_000, &planet, NETWORK_PATH, OUT_PLANET_PATH);
+    generate_network(400_000, &planet, NETWORK_PATH, OUT_PLANET_PATH);
 }

@@ -6,8 +6,8 @@ use indicatif::{ProgressBar, ProgressIterator};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 use crate::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, PlanetGrid, Point,
-    PointPlanetGrid, Polygon,
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Contains, Planet, PlanetGrid,
+    Point, PointPlanetGrid, Polygon,
 };
 
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
@@ -125,6 +125,13 @@ fn generate_arcs(
             .iter()
             .filter_map(|polygon| {
                 let mut local_points = point_grid.get_points(&polygon);
+                let true_points: Vec<Point> = points
+                    .iter()
+                    .filter(|&point| polygon.contains(point))
+                    .cloned()
+                    .collect();
+                assert_eq!(local_points.len(), true_points.len());
+
                 local_points.sort_unstable_by(|x, y| {
                     Arc::new(point, x)
                         .central_angle()
