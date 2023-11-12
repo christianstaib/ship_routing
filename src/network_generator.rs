@@ -129,12 +129,6 @@ fn generate_arcs(
             .iter()
             .filter_map(|polygon| {
                 let mut local_points = point_grid.get_points(&polygon);
-                let true_points: Vec<Point> = points
-                    .iter()
-                    .filter(|&point| polygon.contains(point))
-                    .cloned()
-                    .collect();
-                assert_eq!(local_points.len(), true_points.len());
 
                 local_points.sort_unstable_by(|x, y| {
                     Arc::new(point, x)
@@ -145,17 +139,17 @@ fn generate_arcs(
                 // .get(1) is point
                 if let Some(target) = local_points.get(1) {
                     let arc = Arc::new(point, &target);
-                    if radians_to_meter(arc.central_angle()) <= 30_000.0 {
-                        return Some(arc);
-                    }
+                    //if radians_to_meter(arc.central_angle()) <= radius {
+                    return Some(arc);
+                    //}
                 }
                 lone_points.lock().unwrap().points.push(point.clone());
 
                 None
             })
             .filter(|arc| !planet_grid.check_collision(arc))
-            // .map(|arc| vec![arc, Arc::new(arc.to(), arc.from())])
-            // .flatten()
+            .map(|arc| vec![arc, Arc::new(arc.to(), arc.from())])
+            .flatten()
             .collect::<Vec<_>>()
         })
         .flatten()

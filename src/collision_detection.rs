@@ -107,10 +107,21 @@ impl Collides<Point> for ConvecQuadrilateral {
     }
 }
 
+// TODO only works with ConvecQuadrilateral
 impl Collides<Polygon> for ConvecQuadrilateral {
     fn collides(&self, rhs: &Polygon) -> bool {
-        self.outline.iter().any(|point| rhs.contains(point))
-            || rhs.outline.iter().any(|point| self.contains(point))
+        !self.outline.windows(2).any(|arc| {
+            let arc = Arc::new(&arc[0], &arc[1]);
+            rhs.outline
+                .iter()
+                .all(|point| !arc.is_on_righthand_side(point))
+        })
+        // self.outline.iter().any(|point| rhs.contains(point))
+        //     || rhs.outline.iter().any(|point| self.contains(point))
+        // || self.outline.windows(2).any(|arc| {
+        //     let arc = Arc::new(&arc[0], &arc[1]);
+        //     arc_polygon_collision(&arc, rhs)
+        // })
     }
 }
 
