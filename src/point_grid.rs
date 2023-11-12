@@ -98,6 +98,7 @@ impl PointSpatialPartition {
                 if points.len() >= parent.max_size {
                     parent.split();
                 }
+                break;
             }
             if let PointNodeType::Internal(childs) = &mut parent.node_type {
                 for child in childs.iter_mut() {
@@ -123,6 +124,13 @@ impl PointSpatialPartition {
                 .filter(|&point| polygon.contains(point))
                 .cloned()
                 .collect(),
+        }
+    }
+
+    pub fn count_points(&self) -> usize {
+        match &self.node_type {
+            PointNodeType::Internal(q) => q.iter().map(|q| q.count_points()).sum(),
+            PointNodeType::Leaf(points) => points.len(),
         }
     }
 
