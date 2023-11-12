@@ -11,13 +11,17 @@ use crate::{
 };
 
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
-    let radius = (4_000_000.0 * ((30_000.0 as f64).powi(2)) / num_nodes as f64).sqrt();
+    let radius = (4_000_000.0 * ((30_000.0 as f64).powi(2)) / num_nodes as f64).sqrt() * 2.0;
     println!("radius is {}", radius);
 
     let planet_grid = generate_planet_grid(planet);
     let points = generate_points(num_nodes, &planet_grid);
 
     let point_grid = generate_point_grid(&points);
+    println!(
+        "there are {} points the point grid",
+        point_grid.spatial_partition.count_points()
+    );
     let arcs = generate_arcs(&points, &point_grid, &planet_grid, radius);
 
     let mut out_planet = Planet::new();
@@ -133,15 +137,18 @@ fn generate_arcs(
 
                 // .get(1) is point
                 if let Some(target) = local_points.get(1) {
-                    return Some(Arc::new(point, &target));
+                    let arc = Arc::new(point, &target);
+                    if radians_to_meter(arc.central_angle()) <= 30_000.0 {
+                        return Some(arc);
+                    }
                 }
                 lone_points.lock().unwrap().points.push(point.clone());
 
                 None
             })
             .filter(|arc| !planet_grid.check_collision(arc))
-            .map(|arc| vec![arc, Arc::new(arc.to(), arc.from())])
-            .flatten()
+            // .map(|arc| vec![arc, Arc::new(arc.to(), arc.from())])
+            // .flatten()
             .collect::<Vec<_>>()
         })
         .flatten()
@@ -149,6 +156,7 @@ fn generate_arcs(
     let lone_points = lone_points.lock().unwrap();
     lone_points.to_geojson_file("lone_points.geojson");
 
+    println!("wrote lone points");
     let mut hash_map = HashMap::new();
     for arc in arcs.drain(0..).progress() {
         hash_map.insert((arc.from().id.unwrap(), arc.to().id.unwrap()), arc);
