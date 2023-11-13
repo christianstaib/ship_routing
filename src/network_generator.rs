@@ -6,9 +6,11 @@ use std::{collections::HashMap, f64::consts::PI, fs::File, io::BufWriter};
 use indicatif::{ProgressBar, ProgressIterator};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
-use crate::geometry::{meters_to_radians, radians_to_meter, Arc, Planet, Point};
+use crate::geometry::{
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point,
+};
 use crate::grids::{PointSpatialPartition, PolygonSpatialPartition};
-use crate::{CollisionDetection, ConvecQuadrilateral};
+use crate::ConvecQuadrilateral;
 
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
     let radius = (4_000_000.0 * ((30_000.0 as f64).powi(2)) / num_nodes as f64).sqrt() * 1.0;

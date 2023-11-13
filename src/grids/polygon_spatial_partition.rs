@@ -1,6 +1,6 @@
 use crate::{
-    geometry::{meters_to_radians, Arc, Point, Polygon},
-    Collides, CollisionDetection, Contains, ConvecQuadrilateral,
+    geometry::{meters_to_radians, Arc, Collides, CollisionDetection, Contains, Point, Polygon},
+    ConvecQuadrilateral,
 };
 
 use super::tiling::Tiling;

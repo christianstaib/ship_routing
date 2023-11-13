@@ -1,4 +1,3 @@
-mod collision_detection;
 pub mod fmi;
 pub mod geometry;
 mod grids;
@@ -7,7 +6,6 @@ mod raw_osm_data;
 mod route;
 mod route_reader;
 
-pub use crate::collision_detection::*;
 pub use crate::grids::*;
 pub use crate::network_generator::*;
 pub use crate::raw_osm_data::*;
