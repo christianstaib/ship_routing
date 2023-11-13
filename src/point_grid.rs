@@ -5,8 +5,6 @@ pub struct PointSpatialPartition {
     pub boundary: ConvecQuadrilateral,
     pub node_type: PointNodeType,
     pub max_size: usize,
-    pub midpoint: Point,
-    pub midpoint_flag: PointStatus,
 }
 
 #[derive(Clone)]
@@ -56,8 +54,6 @@ impl PointSpatialPartition {
                     .collect(),
             ),
             max_size,
-            midpoint,
-            midpoint_flag: PointStatus::Outside,
         }
     }
 
@@ -67,8 +63,6 @@ impl PointSpatialPartition {
             boundary,
             node_type: PointNodeType::Leaf(Vec::with_capacity(max_size + 1)),
             max_size,
-            midpoint,
-            midpoint_flag: PointStatus::Outside,
         }
     }
 
