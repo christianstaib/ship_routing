@@ -70,8 +70,7 @@ impl PointSpatialPartition {
                     parent.split();
                 }
                 break;
-            }
-            if let PointNodeType::Internal(childs) = &mut parent.node_type {
+            } else if let PointNodeType::Internal(childs) = &mut parent.node_type {
                 for child in childs.iter_mut() {
                     if child.boundary.contains(point) {
                         internals.push(child);
@@ -83,19 +82,22 @@ impl PointSpatialPartition {
     }
 
     pub fn get_points(&self, polygon: &ConvecQuadrilateral) -> Vec<Point> {
-        match &self.node_type {
-            PointNodeType::Internal(q) => q
-                .iter()
-                .filter(|q| q.boundary.collides(polygon))
-                .map(|q| q.get_points(polygon))
-                .flatten()
-                .collect(),
-            PointNodeType::Leaf(points) => points
-                .iter()
-                .filter(|&point| polygon.contains(point))
-                .cloned()
-                .collect(),
+        let mut points = Vec::new();
+        let mut internals = vec![self];
+        while let Some(parent) = internals.pop() {
+            if let PointNodeType::Leaf(leaf_points) = &parent.node_type {
+                points.extend(
+                    leaf_points
+                        .iter()
+                        .filter(|&point| polygon.contains(point))
+                        .cloned(),
+                );
+            } else if let PointNodeType::Internal(childs) = &parent.node_type {
+                internals.extend(childs.iter().filter(|q| q.boundary.collides(polygon)));
+            }
         }
+
+        points
     }
 
     pub fn count_points(&self) -> usize {
