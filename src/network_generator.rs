@@ -6,7 +6,7 @@ use indicatif::{ProgressBar, ProgressIterator};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 use crate::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Contains, Planet, PlanetGrid,
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, PlanetGrid,
     Point, PointPlanetGrid, Polygon,
 };
 
