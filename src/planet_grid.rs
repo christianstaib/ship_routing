@@ -59,8 +59,6 @@ impl CollisionDetection for PlanetGrid {
                 PointStatus::Outside => self.reference_point_status = PointStatus::Outside,
             }
         }
-
-        // TODO update midpoints
     }
 
     fn is_on_polygon(&self, point: &Point) -> bool {

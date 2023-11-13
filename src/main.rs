@@ -6,8 +6,8 @@ use osm_test::Linestring;
 use osm_test::Planet;
 
 fn main() {
-    _translate_route();
-    // _generate();
+    // _translate_route();
+    _generate();
 }
 
 fn _translate_route() {

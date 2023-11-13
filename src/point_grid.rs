@@ -1,4 +1,4 @@
-use crate::{Arc, Collides, Contains, ConvecQuadrilateral, Point, PointStatus, Polygon, Tiling};
+use crate::{Arc, Collides, Contains, ConvecQuadrilateral, Point, Polygon, Tiling};
 
 #[derive(Clone)]
 pub struct PointSpatialPartition {
@@ -29,7 +29,7 @@ impl PointPlanetGrid {
         }
     }
 
-    pub fn get_points(&self, polygon: &Polygon) -> Vec<Point> {
+    pub fn get_points(&self, polygon: &ConvecQuadrilateral) -> Vec<Point> {
         self.spatial_partition.get_points(polygon)
     }
 }
@@ -103,7 +103,7 @@ impl PointSpatialPartition {
         }
     }
 
-    pub fn get_points(&self, polygon: &Polygon) -> Vec<Point> {
+    pub fn get_points(&self, polygon: &ConvecQuadrilateral) -> Vec<Point> {
         match &self.node_type {
             PointNodeType::Internal(q) => q
                 .iter()

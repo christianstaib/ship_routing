@@ -4,6 +4,14 @@ use geojson::{Feature, Geometry, Value};
 
 use super::{Arc, Point};
 
+pub struct EverythingPolygon {}
+
+impl EverythingPolygon {
+    pub fn new() -> EverythingPolygon {
+        EverythingPolygon {}
+    }
+}
+
 #[derive(Clone)]
 pub struct Polygon {
     pub outline: Vec<Point>,

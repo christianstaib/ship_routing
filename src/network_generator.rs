@@ -6,8 +6,8 @@ use indicatif::{ProgressBar, ProgressIterator};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 use crate::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, PlanetGrid,
-    Point, PointPlanetGrid, Polygon,
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, ConvecQuadrilateral, Planet,
+    PlanetGrid, Point, PointPlanetGrid,
 };
 
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
@@ -168,9 +168,9 @@ fn generate_arcs(
 
 // works
 
-fn ur(point: &Point, radius: f64) -> Polygon {
+fn ur(point: &Point, radius: f64) -> ConvecQuadrilateral {
     let cloned_point = point.clone();
-    Polygon::new(vec![
+    ConvecQuadrilateral::new(&vec![
         cloned_point,
         Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(radius)),
         Point::destination_point(&point, 1.0 / 4.0 * PI, meters_to_radians(radius)),
@@ -180,9 +180,9 @@ fn ur(point: &Point, radius: f64) -> Polygon {
 }
 
 // works
-fn lr(point: &Point, radius: f64) -> Polygon {
+fn lr(point: &Point, radius: f64) -> ConvecQuadrilateral {
     let cloned_point = point.clone();
-    Polygon::new(vec![
+    ConvecQuadrilateral::new(&vec![
         cloned_point,
         Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(radius)),
         Point::destination_point(&point, 3.0 / 4.0 * PI, meters_to_radians(radius)),
@@ -190,9 +190,9 @@ fn lr(point: &Point, radius: f64) -> Polygon {
         cloned_point,
     ])
 }
-fn ll(point: &Point, radius: f64) -> Polygon {
+fn ll(point: &Point, radius: f64) -> ConvecQuadrilateral {
     let cloned_point = point.clone();
-    Polygon::new(vec![
+    ConvecQuadrilateral::new(&vec![
         cloned_point,
         Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(radius)),
         Point::destination_point(&point, 5.0 / 4.0 * PI, meters_to_radians(radius)),
@@ -200,9 +200,9 @@ fn ll(point: &Point, radius: f64) -> Polygon {
         cloned_point,
     ])
 }
-fn ul(point: &Point, radius: f64) -> Polygon {
+fn ul(point: &Point, radius: f64) -> ConvecQuadrilateral {
     let cloned_point = point.clone();
-    Polygon::new(vec![
+    ConvecQuadrilateral::new(&vec![
         cloned_point,
         Point::destination_point(&point, 8.0 / 4.0 * PI, meters_to_radians(radius)),
         Point::destination_point(&point, 7.0 / 4.0 * PI, meters_to_radians(radius)),

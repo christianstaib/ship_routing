@@ -108,8 +108,8 @@ impl Collides<Point> for ConvecQuadrilateral {
 }
 
 // TODO only works with ConvecQuadrilateral
-impl Collides<Polygon> for ConvecQuadrilateral {
-    fn collides(&self, rhs: &Polygon) -> bool {
+impl Collides<ConvecQuadrilateral> for ConvecQuadrilateral {
+    fn collides(&self, rhs: &ConvecQuadrilateral) -> bool {
         !self.outline.windows(2).any(|arc| {
             let arc = Arc::new(&arc[0], &arc[1]);
             rhs.outline
