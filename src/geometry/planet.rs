@@ -7,9 +7,9 @@ use std::{
 
 use geojson::{FeatureCollection, Value};
 
-use crate::{geometry::Arc, geometry::Linestring, geometry::Point, geometry::Polygon, RawOsmData};
+use crate::{geometry::Arc, geometry::Linestring, geometry::Point, geometry::Polygon};
 
-use super::{collision_detection::CollisionDetection, Contains};
+use super::{collision_detection::CollisionDetection, Contains, OsmData};
 
 #[derive(Clone)]
 pub struct Planet {
@@ -58,7 +58,7 @@ impl Planet {
     }
 
     pub fn from_osm_file(path: &str) -> Self {
-        let raw_osm_data = RawOsmData::from_path(path);
+        let raw_osm_data = OsmData::from_path(path);
         raw_osm_data.to_planet()
     }
 

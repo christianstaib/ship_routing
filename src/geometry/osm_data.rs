@@ -2,15 +2,15 @@ use std::collections::HashMap;
 
 use osmpbf::{Element, ElementReader};
 
-use super::geometry::{Planet, Point, Polygon};
+use super::{Planet, Point, Polygon};
 
 /// a planet struct which ways are not cloesed
-pub struct RawOsmData {
+pub struct OsmData {
     pub nodes: HashMap<i64, Point>,
     pub coastlines: Vec<Vec<i64>>,
 }
 
-impl RawOsmData {
+impl OsmData {
     pub fn to_planet(&self) -> Planet {
         let mut planet = Planet::new();
         planet.polygons.extend(
@@ -28,7 +28,7 @@ impl RawOsmData {
         planet
     }
 
-    pub fn from_path(path: &str) -> RawOsmData {
+    pub fn from_path(path: &str) -> OsmData {
         let mut nodes = HashMap::new();
         let mut coastlines = Vec::new();
 
@@ -51,7 +51,7 @@ impl RawOsmData {
             })
             .unwrap();
 
-        let mut raw_osm_data = RawOsmData { nodes, coastlines };
+        let mut raw_osm_data = OsmData { nodes, coastlines };
         raw_osm_data.close_coastline();
         raw_osm_data
     }
