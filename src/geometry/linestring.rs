@@ -1,6 +1,6 @@
 use geojson::{Feature, Geometry, Value};
 
-use crate::{Arc, Point};
+use crate::{geometry::Arc, geometry::Point};
 
 #[derive(Clone)]
 pub struct Linestring {

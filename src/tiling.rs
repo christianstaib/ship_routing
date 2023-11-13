@@ -1,4 +1,4 @@
-use crate::{Arc, Point};
+use crate::geometry::{Arc, Point};
 
 #[derive(Clone)]
 pub struct ConvecQuadrilateral {

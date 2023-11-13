@@ -4,7 +4,7 @@ use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 use rand::Rng;
 
-use crate::{meters_to_radians, Point};
+use crate::geometry::{meters_to_radians, Point};
 
 /// Represents a minor arc, e.g. the shortest path between to points, called 'from' and 'to'.
 #[derive(Clone, Copy, PartialEq)]
@@ -232,7 +232,7 @@ impl Arc {
 mod tests {
     use std::f64::consts::PI;
 
-    use crate::{Arc, Point};
+    use crate::geometry::{Arc, Point};
 
     #[test]
     fn test_central_angle1() {

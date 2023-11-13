@@ -7,7 +7,10 @@ use std::{
 
 use geojson::{FeatureCollection, Value};
 
-use crate::{Arc, CollisionDetection, Contains, Linestring, Point, Polygon, RawOsmData};
+use crate::{
+    geometry::Arc, geometry::Linestring, geometry::Point, geometry::Polygon, CollisionDetection,
+    Contains, RawOsmData,
+};
 
 #[derive(Clone)]
 pub struct Planet {

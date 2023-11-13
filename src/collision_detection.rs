@@ -1,4 +1,7 @@
-use crate::{meters_to_radians, Arc, ConvecQuadrilateral, Point, Polygon};
+use crate::{
+    geometry::{meters_to_radians, Arc, Point, Polygon},
+    ConvecQuadrilateral,
+};
 
 pub trait CollisionDetection {
     fn add_polygon(&mut self, polygon: &Polygon);

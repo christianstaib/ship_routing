@@ -1,10 +1,9 @@
+use crate::geometry::Arc;
 use std::{f64::consts::PI, fmt};
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 use rand::Rng;
-
-use crate::Arc;
 
 /// Represents a point on the Earth's surface using an n-vector, which is a normalised vector
 /// perpendicular to the Earth's surface.
@@ -166,7 +165,7 @@ pub fn radians_to_meter(radians: f64) -> f64 {
 mod tests {
     use std::f64::consts::PI;
 
-    use crate::{meters_to_radians, radians_to_meter, Point};
+    use crate::geometry::{meters_to_radians, radians_to_meter, Point};
 
     #[test]
     fn conversion_between_n_vector_and_coordinates() {

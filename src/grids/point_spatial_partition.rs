@@ -1,4 +1,7 @@
-use crate::{Arc, Collides, Contains, ConvecQuadrilateral, Point, Tiling};
+use crate::{
+    geometry::{Arc, Point},
+    Collides, Contains, ConvecQuadrilateral, Tiling,
+};
 
 #[derive(Clone)]
 pub struct PointSpatialPartition {
@@ -100,13 +103,7 @@ impl PointSpatialPartition {
         points
     }
 
-    pub fn count_points(&self) -> usize {
-        match &self.node_type {
-            PointNodeType::Internal(q) => q.iter().map(|q| q.count_points()).sum(),
-            PointNodeType::Leaf(points) => points.len(),
-        }
-    }
-
+    // TODO remove
     pub fn get_leaf_polygons(&self) -> Vec<Arc> {
         match &self.node_type {
             PointNodeType::Internal(q) => q.iter().flat_map(|q| q.get_leaf_polygons()).collect(),

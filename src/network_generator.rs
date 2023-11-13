@@ -6,8 +6,9 @@ use std::{collections::HashMap, f64::consts::PI, fs::File, io::BufWriter};
 use indicatif::{ProgressBar, ProgressIterator};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
+use crate::geometry::{meters_to_radians, radians_to_meter, Arc, Planet, Point};
 use crate::grids::{PointSpatialPartition, PolygonSpatialPartition};
-use crate::{meters_to_radians, radians_to_meter, Arc, ConvecQuadrilateral, Planet, Point};
+use crate::{CollisionDetection, ConvecQuadrilateral};
 
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
     let radius = (4_000_000.0 * ((30_000.0 as f64).powi(2)) / num_nodes as f64).sqrt() * 1.0;
@@ -17,10 +18,7 @@ pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, pla
     let points = generate_points(num_nodes, &planet_grid);
 
     let point_grid = generate_point_grid(&points);
-    println!(
-        "there are {} points the point grid",
-        point_grid.count_points()
-    );
+
     let start = Instant::now();
     let arcs = generate_arcs(&points, &point_grid, &planet_grid, radius);
     println!("took {:?} to generate arcs", start.elapsed());
@@ -148,7 +146,7 @@ fn generate_arcs(
 
                 None
             })
-            .filter(|arc| !planet_grid.check_collision(arc))
+            .filter(|arc| !planet_grid.intersects_polygon(arc))
             .map(|arc| vec![arc, Arc::new(arc.to(), arc.from())])
             .flatten()
             .collect::<Vec<_>>()

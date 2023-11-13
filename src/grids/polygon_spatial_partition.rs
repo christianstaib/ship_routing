@@ -1,6 +1,6 @@
 use crate::{
-    meters_to_radians, Arc, Collides, CollisionDetection, Contains, ConvecQuadrilateral, Point,
-    Polygon, Tiling,
+    geometry::{meters_to_radians, Arc, Point, Polygon},
+    Collides, CollisionDetection, Contains, ConvecQuadrilateral, Tiling,
 };
 
 #[derive(Clone)]
@@ -42,8 +42,8 @@ impl CollisionDetection for PolygonSpatialPartition {
         self.is_on_polygon(point)
     }
 
-    fn intersects_polygon(&self, _arc: &Arc) -> bool {
-        todo!()
+    fn intersects_polygon(&self, arc: &Arc) -> bool {
+        self.check_collision(arc)
     }
 }
 
@@ -116,7 +116,7 @@ impl PolygonSpatialPartition {
         arcs.iter().for_each(|arc| self.add_arc(arc));
     }
 
-    pub fn check_collision(&self, arc: &Arc) -> bool {
+    fn check_collision(&self, arc: &Arc) -> bool {
         let mut internals = vec![self];
         while let Some(parent) = internals.pop() {
             if let NodeType::Leaf(arcs) = &parent.node_type {
