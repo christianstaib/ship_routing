@@ -1,12 +1,11 @@
 mod arc;
 mod collision_detection;
 pub mod fmi;
+mod grids;
 mod linestring;
 mod network_generator;
 mod planet;
-mod planet_grid;
 mod point;
-mod point_grid;
 mod polygon;
 mod raw_osm_data;
 mod route;
@@ -15,12 +14,11 @@ mod tiling;
 
 pub use crate::arc::*;
 pub use crate::collision_detection::*;
+pub use crate::grids::*;
 pub use crate::linestring::*;
 pub use crate::network_generator::*;
 pub use crate::planet::*;
-pub use crate::planet_grid::*;
 pub use crate::point::*;
-pub use crate::point_grid::*;
 pub use crate::polygon::*;
 pub use crate::raw_osm_data::*;
 pub use crate::route::*;

@@ -1,17 +1,19 @@
 use std::io::Write;
 use std::sync::Mutex;
+use std::time::Instant;
 use std::{collections::HashMap, f64::consts::PI, fs::File, io::BufWriter};
 
 use indicatif::{ProgressBar, ProgressIterator};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
+use crate::grids::{PointSpatialPartition, SpatialPartition};
 use crate::{
     meters_to_radians, radians_to_meter, Arc, CollisionDetection, ConvecQuadrilateral, Planet,
-    PlanetGrid, Point, PointSpatialPartition,
+    Point,
 };
 
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
-    let radius = (4_000_000.0 * ((30_000.0 as f64).powi(2)) / num_nodes as f64).sqrt() * 2.0;
+    let radius = (4_000_000.0 * ((30_000.0 as f64).powi(2)) / num_nodes as f64).sqrt() * 1.0;
     println!("radius is {}", radius);
 
     let planet_grid = generate_planet_grid(planet);
@@ -22,7 +24,9 @@ pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, pla
         "there are {} points the point grid",
         point_grid.count_points()
     );
+    let start = Instant::now();
     let arcs = generate_arcs(&points, &point_grid, &planet_grid, radius);
+    println!("took {:?} to generate arcs", start.elapsed());
 
     let mut out_planet = Planet::new();
     out_planet.arcs = arcs
@@ -35,7 +39,7 @@ pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, pla
     arcs_to_file(&arcs, &points, network_path);
 }
 
-fn generate_points(how_many: u32, planet_grid: &PlanetGrid) -> Vec<Point> {
+fn generate_points(how_many: u32, planet_grid: &SpatialPartition) -> Vec<Point> {
     println!("generating points");
     let mut points = Vec::new();
 
@@ -63,15 +67,15 @@ fn generate_point_grid(points: &Vec<Point>) -> PointSpatialPartition {
     point_grid
 }
 
-fn generate_planet_grid(planet: &Planet) -> PlanetGrid {
+fn generate_planet_grid(planet: &Planet) -> SpatialPartition {
     println!("generating planet grid");
-    let mut planet_grid = PlanetGrid::new(50);
+    let mut planet_grid = SpatialPartition::new_root(50);
     planet
         .polygons
         .iter()
         .progress()
         .for_each(|polygon| planet_grid.add_polygon(polygon));
-    planet_grid.update_midpoints();
+    planet_grid.propagate_status();
     planet_grid
 }
 
@@ -109,7 +113,7 @@ fn arcs_to_file(arcs: &Vec<Arc>, points: &Vec<Point>, path: &str) {
 fn generate_arcs(
     points: &Vec<Point>,
     point_grid: &PointSpatialPartition,
-    planet_grid: &PlanetGrid,
+    planet_grid: &SpatialPartition,
     radius: f64,
 ) -> Vec<Arc> {
     println!("generating arcs");

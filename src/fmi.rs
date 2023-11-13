@@ -6,7 +6,7 @@ use std::{
 
 use indicatif::ProgressIterator;
 
-use crate::{Point, PointSpatialPartition};
+use crate::{grids::PointSpatialPartition, Point};
 
 pub struct Fmi {
     points_grid: PointSpatialPartition,

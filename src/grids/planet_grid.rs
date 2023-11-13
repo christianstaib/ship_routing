@@ -37,17 +37,13 @@ impl PointStatus {
     }
 }
 
-pub struct PlanetGrid {
-    pub spatial_partition: SpatialPartition,
-}
-
-impl CollisionDetection for PlanetGrid {
+impl CollisionDetection for SpatialPartition {
     fn add_polygon(&mut self, polygon: &Polygon) {
-        self.spatial_partition.add_polygon(polygon)
+        self.add_polygon(polygon)
     }
 
     fn is_on_polygon(&self, point: &Point) -> bool {
-        self.spatial_partition.is_on_polygon(point)
+        self.is_on_polygon(point)
     }
 
     fn intersects_polygon(&self, _arc: &Arc) -> bool {
@@ -55,32 +51,8 @@ impl CollisionDetection for PlanetGrid {
     }
 }
 
-impl PlanetGrid {
-    pub fn new(max_size: usize) -> PlanetGrid {
-        let polygons = Tiling::base_tiling();
-        PlanetGrid {
-            spatial_partition: SpatialPartition::new_root(&polygons, max_size),
-        }
-    }
-
-    pub fn check_collision(&self, arc: &Arc) -> bool {
-        return self.spatial_partition.check_collision(arc);
-    }
-
-    pub fn intersections(&self, ray: &Arc) -> Vec<Point> {
-        let mut intersections = self.spatial_partition.intersections(ray);
-        intersections.sort_by(|x, y| x.longitude().partial_cmp(&y.longitude()).unwrap());
-        intersections.dedup(); // i dont know exactly why this is necesary, but it is :(
-        intersections
-    }
-
-    pub fn update_midpoints(&mut self) {
-        self.spatial_partition.propagate_status();
-    }
-}
-
 impl SpatialPartition {
-    pub fn new_root(polygons: &Vec<ConvecQuadrilateral>, max_size: usize) -> SpatialPartition {
+    pub fn new_root(max_size: usize) -> SpatialPartition {
         let boundary = ConvecQuadrilateral::new(&vec![
             Point::from_coordinate(0.0, 0.0),
             Point::from_coordinate(1.0, 1.0),
@@ -92,7 +64,7 @@ impl SpatialPartition {
         SpatialPartition {
             boundary,
             node_type: NodeType::Internal(
-                polygons
+                Tiling::base_tiling()
                     .iter()
                     .cloned()
                     .map(|p| SpatialPartition::new_leaf(p, max_size))
@@ -148,7 +120,7 @@ impl SpatialPartition {
         arcs.iter().for_each(|arc| self.add_arc(arc));
     }
 
-    fn check_collision(&self, arc: &Arc) -> bool {
+    pub fn check_collision(&self, arc: &Arc) -> bool {
         let mut internals = vec![self];
         while let Some(parent) = internals.pop() {
             if let NodeType::Leaf(arcs) = &parent.node_type {
