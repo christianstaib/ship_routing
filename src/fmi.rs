@@ -9,7 +9,6 @@ use indicatif::ProgressIterator;
 use crate::{grids::PointSpatialPartition, Point};
 
 pub struct Fmi {
-    points_grid: PointSpatialPartition,
     points: Vec<Point>,
 }
 
@@ -45,10 +44,7 @@ impl Fmi {
             points.push(point);
         }
 
-        Fmi {
-            points_grid,
-            points,
-        }
+        Fmi { points }
     }
 
     pub fn id_to_point(&self, id: u32) -> Point {

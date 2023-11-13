@@ -1,5 +1,5 @@
 use indicatif::ProgressIterator;
-use osm_test::{Planet, SpatialPartition};
+use osm_test::{Planet, PolygonSpatialPartition};
 use rayon::prelude::*;
 
 #[test]
@@ -8,7 +8,7 @@ fn planet_grid() {
     let planet = Planet::from_geojson_file(PLANET_PATH).unwrap();
 
     // generating grid
-    let mut planet_grid = SpatialPartition::new_root(50);
+    let mut planet_grid = PolygonSpatialPartition::new(50);
     planet
         .polygons
         .iter()
@@ -17,7 +17,7 @@ fn planet_grid() {
 
     // updating midpoints
     println!("updating midpoints");
-    planet_grid.propagate_status();
+    planet_grid.update_midpoints();
 
     // test if points known to be on land are correctly categorized
     const ON_LAND_PATH: &str = "tests/data/geojson/points_on_land.geojson";

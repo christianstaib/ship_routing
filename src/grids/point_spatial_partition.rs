@@ -2,13 +2,13 @@ use crate::{Arc, Collides, Contains, ConvecQuadrilateral, Point, Tiling};
 
 #[derive(Clone)]
 pub struct PointSpatialPartition {
-    pub boundary: ConvecQuadrilateral,
-    pub node_type: PointNodeType,
-    pub max_size: usize,
+    boundary: ConvecQuadrilateral,
+    node_type: PointNodeType,
+    max_size: usize,
 }
 
 #[derive(Clone)]
-pub enum PointNodeType {
+enum PointNodeType {
     Internal(Vec<PointSpatialPartition>), // four children
     Leaf(Vec<Point>),                     // a bucket of points
 }
