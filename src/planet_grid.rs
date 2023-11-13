@@ -39,26 +39,11 @@ impl PointStatus {
 
 pub struct PlanetGrid {
     pub spatial_partition: SpatialPartition,
-    reference_point: Point,
-    reference_point_status: PointStatus,
 }
 
 impl CollisionDetection for PlanetGrid {
     fn add_polygon(&mut self, polygon: &Polygon) {
-        polygon
-            .outline
-            .windows(2)
-            .map(|arc| Arc::new(&arc[0], &arc[1]))
-            .for_each(|arc| {
-                self.spatial_partition.add_arc(&arc);
-            });
-
-        if polygon.contains(&self.reference_point) {
-            match self.reference_point_status {
-                PointStatus::Inside => self.reference_point_status = PointStatus::Outside,
-                PointStatus::Outside => self.reference_point_status = PointStatus::Outside,
-            }
-        }
+        self.spatial_partition.add_polygon(polygon)
     }
 
     fn is_on_polygon(&self, point: &Point) -> bool {
@@ -75,8 +60,6 @@ impl PlanetGrid {
         let polygons = Tiling::base_tiling();
         PlanetGrid {
             spatial_partition: SpatialPartition::new_root(&polygons, max_size),
-            reference_point: Point::random(),
-            reference_point_status: PointStatus::Outside,
         }
     }
 
@@ -129,6 +112,23 @@ impl SpatialPartition {
             max_size,
             midpoint,
             midpoint_flag: PointStatus::Outside,
+        }
+    }
+
+    pub fn add_polygon(&mut self, polygon: &Polygon) {
+        polygon
+            .outline
+            .windows(2)
+            .map(|arc| Arc::new(&arc[0], &arc[1]))
+            .for_each(|arc| {
+                self.add_arc(&arc);
+            });
+
+        if polygon.contains(&self.midpoint) {
+            match self.midpoint_flag {
+                PointStatus::Inside => self.midpoint_flag = PointStatus::Outside,
+                PointStatus::Outside => self.midpoint_flag = PointStatus::Outside,
+            }
         }
     }
 
