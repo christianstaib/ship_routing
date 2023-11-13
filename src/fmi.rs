@@ -6,17 +6,17 @@ use std::{
 
 use indicatif::ProgressIterator;
 
-use crate::{Point, PointPlanetGrid};
+use crate::{Point, PointSpatialPartition};
 
 pub struct Fmi {
-    points_grid: PointPlanetGrid,
+    points_grid: PointSpatialPartition,
     points: Vec<Point>,
 }
 
 impl Fmi {
     pub fn new(path: &str) -> Fmi {
         let mut points = Vec::new();
-        let mut points_grid = PointPlanetGrid::new(25);
+        let mut points_grid = PointSpatialPartition::new_root(25);
         let reader = BufReader::new(File::open(path).unwrap());
         let mut lines = reader.lines();
         let num_nodes: usize = lines

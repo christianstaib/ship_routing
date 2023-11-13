@@ -7,7 +7,7 @@ use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 use crate::{
     meters_to_radians, radians_to_meter, Arc, CollisionDetection, ConvecQuadrilateral, Planet,
-    PlanetGrid, Point, PointPlanetGrid,
+    PlanetGrid, Point, PointSpatialPartition,
 };
 
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
@@ -20,7 +20,7 @@ pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, pla
     let point_grid = generate_point_grid(&points);
     println!(
         "there are {} points the point grid",
-        point_grid.spatial_partition.count_points()
+        point_grid.count_points()
     );
     let arcs = generate_arcs(&points, &point_grid, &planet_grid, radius);
 
@@ -53,9 +53,9 @@ fn generate_points(how_many: u32, planet_grid: &PlanetGrid) -> Vec<Point> {
     points
 }
 
-fn generate_point_grid(points: &Vec<Point>) -> PointPlanetGrid {
+fn generate_point_grid(points: &Vec<Point>) -> PointSpatialPartition {
     println!("generating point grid");
-    let mut point_grid = PointPlanetGrid::new(10);
+    let mut point_grid = PointSpatialPartition::new_root(10);
     points
         .iter()
         .progress()
@@ -108,7 +108,7 @@ fn arcs_to_file(arcs: &Vec<Arc>, points: &Vec<Point>, path: &str) {
 
 fn generate_arcs(
     points: &Vec<Point>,
-    point_grid: &PointPlanetGrid,
+    point_grid: &PointSpatialPartition,
     planet_grid: &PlanetGrid,
     radius: f64,
 ) -> Vec<Arc> {

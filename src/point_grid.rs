@@ -1,4 +1,4 @@
-use crate::{Arc, Collides, Contains, ConvecQuadrilateral, Point, Polygon, Tiling};
+use crate::{Arc, Collides, Contains, ConvecQuadrilateral, Point, Tiling};
 
 #[derive(Clone)]
 pub struct PointSpatialPartition {
@@ -13,29 +13,8 @@ pub enum PointNodeType {
     Leaf(Vec<Point>),                     // a bucket of points
 }
 
-pub struct PointPlanetGrid {
-    pub spatial_partition: PointSpatialPartition,
-}
-
-impl PointPlanetGrid {
-    pub fn add_point(&mut self, point: &Point) {
-        self.spatial_partition.add_point(point);
-    }
-
-    pub fn new(max_size: usize) -> PointPlanetGrid {
-        let polygons = Tiling::base_tiling();
-        PointPlanetGrid {
-            spatial_partition: PointSpatialPartition::new_root(&polygons, max_size),
-        }
-    }
-
-    pub fn get_points(&self, polygon: &ConvecQuadrilateral) -> Vec<Point> {
-        self.spatial_partition.get_points(polygon)
-    }
-}
-
 impl PointSpatialPartition {
-    pub fn new_root(polygons: &Vec<ConvecQuadrilateral>, max_size: usize) -> PointSpatialPartition {
+    pub fn new_root(max_size: usize) -> PointSpatialPartition {
         let boundary = ConvecQuadrilateral::new(&vec![
             Point::from_coordinate(0.0, 0.0),
             Point::from_coordinate(1.0, 1.0),
@@ -46,7 +25,7 @@ impl PointSpatialPartition {
         PointSpatialPartition {
             boundary,
             node_type: PointNodeType::Internal(
-                polygons
+                Tiling::base_tiling()
                     .iter()
                     .cloned()
                     .map(|p| PointSpatialPartition::new_leaf(p, max_size))
@@ -56,7 +35,7 @@ impl PointSpatialPartition {
         }
     }
 
-    pub fn new_leaf(boundary: ConvecQuadrilateral, max_size: usize) -> PointSpatialPartition {
+    fn new_leaf(boundary: ConvecQuadrilateral, max_size: usize) -> PointSpatialPartition {
         PointSpatialPartition {
             boundary,
             node_type: PointNodeType::Leaf(Vec::with_capacity(max_size + 1)),
@@ -80,7 +59,7 @@ impl PointSpatialPartition {
         points.iter().for_each(|point| self.add_point(point));
     }
 
-    fn add_point(&mut self, point: &Point) {
+    pub fn add_point(&mut self, point: &Point) {
         let mut internals = vec![self];
         while let Some(parent) = internals.pop() {
             // needs to be done before the match block, as the match block pushes a mutable
