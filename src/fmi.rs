@@ -58,4 +58,22 @@ impl Fmi {
 
         point
     }
+
+    pub fn read_paths(&self, in_path: &str) -> Vec<Vec<Point>> {
+        let reader = BufReader::new(File::open(in_path).unwrap());
+        let lines = reader.lines();
+        let mut paths = Vec::new();
+        for line in lines {
+            let line = line.unwrap();
+            let mut path = Vec::new();
+            let line: Vec<&str> = line.split(",").collect();
+            for id in line {
+                let id: u32 = id.parse().unwrap();
+                path.push(self.id_to_point(id));
+            }
+            paths.push(path);
+        }
+
+        paths
+    }
 }

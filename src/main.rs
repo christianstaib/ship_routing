@@ -3,7 +3,6 @@ use osm_test::fmi::Fmi;
 use osm_test::generate_network;
 use osm_test::geometry::Linestring;
 use osm_test::geometry::Planet;
-use osm_test::read_paths;
 
 fn main() {
     // _translate_route();
@@ -14,7 +13,7 @@ fn _translate_route() {
     let size = "4M";
     let fmi = Fmi::new(format!("test_{}.fmi", size).as_str());
     println!("read fmi");
-    let paths = read_paths(format!("route_{}.csv", size).as_str(), &fmi);
+    let paths = fmi.read_paths(format!("route_{}.csv", size).as_str());
     println!("read planet");
     let mut planet = Planet::new();
     planet.linestrings.extend(
