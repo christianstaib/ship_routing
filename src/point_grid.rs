@@ -43,7 +43,6 @@ impl PointSpatialPartition {
             Point::from_coordinate(1.0, -1.0),
             Point::from_coordinate(0.0, 0.0),
         ]);
-        let midpoint = boundary.get_midpoint();
         PointSpatialPartition {
             boundary,
             node_type: PointNodeType::Internal(
@@ -58,7 +57,6 @@ impl PointSpatialPartition {
     }
 
     pub fn new_leaf(boundary: ConvecQuadrilateral, max_size: usize) -> PointSpatialPartition {
-        let midpoint = boundary.get_midpoint();
         PointSpatialPartition {
             boundary,
             node_type: PointNodeType::Leaf(Vec::with_capacity(max_size + 1)),
