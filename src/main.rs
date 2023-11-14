@@ -1,8 +1,8 @@
 use indicatif::ProgressIterator;
-use osm_test::fmi::generate_network;
-use osm_test::fmi::Fmi;
 use osm_test::geometry::Linestring;
 use osm_test::geometry::Planet;
+use osm_test::spatial_graph::generate_network;
+use osm_test::spatial_graph::Fmi;
 
 fn main() {
     _translate_route();
