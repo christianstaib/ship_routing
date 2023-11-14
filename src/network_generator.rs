@@ -25,13 +25,13 @@ pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, pla
     let arcs = generate_arcs(&points, &point_grid, &planet_grid, radius);
     println!("took {:?} to generate arcs", start.elapsed());
 
-    let mut out_planet = Planet::new();
-    out_planet.arcs = arcs
-        .iter()
-        .map(|arc| arc._make_good_line())
-        .flatten()
-        .collect();
-    out_planet.to_geojson_file(planet_path);
+    // let mut out_planet = Planet::new();
+    // out_planet.arcs = arcs
+    //     .iter()
+    //     .map(|arc| arc._make_good_line())
+    //     .flatten()
+    //     .collect();
+    // out_planet.to_geojson_file(planet_path);
 
     arcs_to_file(&arcs, &points, network_path);
 }
@@ -42,9 +42,8 @@ fn generate_points(how_many: u32, planet_grid: &PolygonSpatialPartition) -> Vec<
 
     let pb = ProgressBar::new(how_many as u64);
     while points.len() < how_many as usize {
-        let mut point = Point::random();
+        let point = Point::random();
         if !planet_grid.is_on_polygon(&point) {
-            // point.id = Some(points.len() as u32);
             points.push(point);
             pb.inc(1);
         }
@@ -77,9 +76,10 @@ fn generate_planet_grid(planet: &Planet) -> PolygonSpatialPartition {
 }
 
 fn arcs_to_file(arcs: &Vec<Arc>, points: &Vec<Point>, path: &str) {
-    let mut hash_map = HashMap::new();
-    for (i, point) in points.iter().enumerate() {
-        hash_map.insert(point, i);
+    println!("enumerating points");
+    let mut point_id_map = HashMap::new();
+    for (i, point) in points.iter().enumerate().progress() {
+        point_id_map.insert(point, i);
     }
 
     let mut writer = BufWriter::new(File::create(path).unwrap());
@@ -90,7 +90,8 @@ fn arcs_to_file(arcs: &Vec<Arc>, points: &Vec<Point>, path: &str) {
         writeln!(
             writer,
             "{} {} {}",
-            point.id.unwrap(),
+            point_id_map.get(point).unwrap(),
+            // 0, //TODO point.id.unwrap(),
             point.latitude(),
             point.longitude()
         )
@@ -103,8 +104,8 @@ fn arcs_to_file(arcs: &Vec<Arc>, points: &Vec<Point>, path: &str) {
         writeln!(
             writer,
             "{} {} {}",
-            arc.from().id.unwrap(),
-            arc.to().id.unwrap(),
+            point_id_map.get(arc.from()).unwrap(), // 0, // TODO arc.from().id.unwrap(),
+            point_id_map.get(arc.to()).unwrap(),   // 0, // TODO arc.to().id.unwrap(),
             (radians_to_meter(arc.central_angle()) * 1.0) as u32
         )
         .unwrap();
