@@ -9,8 +9,8 @@ use rayon::prelude::{ParallelBridge, ParallelIterator};
 use crate::geometry::{
     meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point,
 };
-use crate::grids::{PointSpatialPartition, PolygonSpatialPartition};
-use crate::ConvecQuadrilateral;
+use crate::spatial_partition::ConvecQuadrilateral;
+use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
 
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
     let radius = (4_000_000.0 * ((30_000.0 as f64).powi(2)) / num_nodes as f64).sqrt() * 1.0;

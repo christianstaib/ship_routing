@@ -1,9 +1,8 @@
-use crate::{
-    geometry::{meters_to_radians, Arc, Collides, CollisionDetection, Contains, Point, Polygon},
-    ConvecQuadrilateral,
+use crate::geometry::{
+    meters_to_radians, Arc, Collides, CollisionDetection, Contains, Point, Polygon,
 };
 
-use super::tiling::Tiling;
+use super::{tiling::Tiling, ConvecQuadrilateral};
 
 #[derive(Clone)]
 pub struct PolygonSpatialPartition {

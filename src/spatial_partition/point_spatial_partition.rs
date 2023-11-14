@@ -1,9 +1,6 @@
-use crate::{
-    geometry::{Arc, Collides, Contains, Point},
-    ConvecQuadrilateral,
-};
+use crate::geometry::{Arc, Collides, Contains, Point};
 
-use super::tiling::Tiling;
+use super::{tiling::Tiling, ConvecQuadrilateral};
 
 #[derive(Clone)]
 pub struct PointSpatialPartition {
