@@ -1,5 +1,5 @@
 use indicatif::ProgressIterator;
-use osm_test::{geometry::Planet, PolygonSpatialPartition};
+use osm_test::{geometry::Planet, spatial_partition::PolygonSpatialPartition};
 use rayon::prelude::*;
 
 #[test]

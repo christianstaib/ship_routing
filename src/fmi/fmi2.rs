@@ -6,10 +6,14 @@ use std::{
 
 use indicatif::ProgressIterator;
 
-use crate::{geometry::Point, spatial_partition::PointSpatialPartition};
+use crate::{
+    geometry::{Arc, Point},
+    spatial_partition::PointSpatialPartition,
+};
 
 pub struct Fmi {
     points: Vec<Point>,
+    arcs: Vec<Arc>,
 }
 
 impl Fmi {
@@ -31,7 +35,8 @@ impl Fmi {
             points.push(point);
         }
 
-        Fmi { points }
+        let arcs = Vec::new();
+        Fmi { points, arcs }
     }
 
     pub fn id_to_point(&self, id: u32) -> Point {

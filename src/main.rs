@@ -1,12 +1,12 @@
 use indicatif::ProgressIterator;
+use osm_test::fmi::generate_network;
 use osm_test::fmi::Fmi;
-use osm_test::generate_network;
 use osm_test::geometry::Linestring;
 use osm_test::geometry::Planet;
 
 fn main() {
-   _translate_route();
-   // _generate();
+    _translate_route();
+    // _generate();
 }
 
 fn _translate_route() {
