@@ -24,13 +24,18 @@ impl Fmi {
         let mut lines = reader.lines();
         let num_nodes = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
         let _num_arcs: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
-        for line in lines.take(num_nodes).progress_count(num_nodes as u64) {
+        for (i, line) in lines
+            .take(num_nodes)
+            .enumerate()
+            .progress_count(num_nodes as u64)
+        {
             let line = line.unwrap();
             let mut line = line.split_whitespace();
             let id: u32 = line.next().unwrap().parse().unwrap();
+            assert_eq!(id as usize, i);
             let lat: f64 = line.next().unwrap().parse().unwrap();
             let lon: f64 = line.next().unwrap().parse().unwrap();
-            let mut point = Point::from_coordinate(lat, lon);
+            let point = Point::from_coordinate(lat, lon);
             points_grid.add_point(&point);
             points.push(point);
         }
