@@ -103,8 +103,8 @@ impl PolygonSpatialPartition {
 
     fn split(&mut self) {
         let mut arcs: Vec<Arc> = Vec::new();
-        if let NodeType::Leaf(old_arcs) = &self.node_type {
-            arcs.extend(old_arcs);
+        if let NodeType::Leaf(old_arcs) = &mut self.node_type {
+            arcs.extend(old_arcs.drain(0..));
         }
         self.node_type = NodeType::Internal(
             self.boundary

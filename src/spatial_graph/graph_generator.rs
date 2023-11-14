@@ -24,15 +24,19 @@ pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, pla
     let arcs = generate_arcs(&points, &point_grid, &planet_grid, radius);
     println!("took {:?} to generate arcs", start.elapsed());
 
-    // let mut out_planet = Planet::new();
-    // out_planet.arcs = arcs
-    //     .iter()
-    //     .map(|arc| arc._make_good_line())
-    //     .flatten()
-    //     .collect();
-    // out_planet.to_geojson_file(planet_path);
+    write_arcs_to_geojson(&arcs, planet_path);
 
     arcs_to_file(&arcs, &points, network_path);
+}
+
+fn write_arcs_to_geojson(arcs: &Vec<Arc>, planet_path: &str) {
+    let mut out_planet = Planet::new();
+    out_planet.arcs = arcs
+        .iter()
+        .map(|arc| arc._make_good_line())
+        .flatten()
+        .collect();
+    out_planet.to_geojson_file(planet_path);
 }
 
 fn generate_points(how_many: u32, planet_grid: &PolygonSpatialPartition) -> Vec<Point> {
@@ -90,7 +94,6 @@ fn arcs_to_file(arcs: &Vec<Arc>, points: &Vec<Point>, path: &str) {
             writer,
             "{} {} {}",
             point_id_map.get(point).unwrap(),
-            // 0, //TODO point.id.unwrap(),
             point.latitude(),
             point.longitude()
         )
@@ -103,8 +106,8 @@ fn arcs_to_file(arcs: &Vec<Arc>, points: &Vec<Point>, path: &str) {
         writeln!(
             writer,
             "{} {} {}",
-            point_id_map.get(arc.from()).unwrap(), // 0, // TODO arc.from().id.unwrap(),
-            point_id_map.get(arc.to()).unwrap(),   // 0, // TODO arc.to().id.unwrap(),
+            point_id_map.get(arc.from()).unwrap(),
+            point_id_map.get(arc.to()).unwrap(),
             (radians_to_meter(arc.central_angle()) * 1.0) as u32
         )
         .unwrap();
@@ -119,7 +122,7 @@ fn generate_arcs(
     radius: f64,
 ) -> Vec<Arc> {
     println!("generating arcs");
-    let mut arcs: Vec<_> = points
+    points
         .iter()
         .progress()
         .par_bridge()
@@ -151,21 +154,10 @@ fn generate_arcs(
                 None
             })
             .filter(|arc| !planet_grid.intersects_polygon(arc))
-            .map(|arc| vec![arc, Arc::new(arc.to(), arc.from())])
-            .flatten()
             .collect::<Vec<_>>()
         })
         .flatten()
-        .collect();
-
-    // println!("wrote lone points");
-    // let mut hash_map = HashMap::new();
-    // for arc in arcs.drain(0..).progress() {
-    //     hash_map.insert((arc.from(), arc.to()), arc);
-    // }
-
-    // hash_map.drain().map(|(_, arc)| arc).collect()
-    arcs
+        .collect()
 }
 
 // works

@@ -7,7 +7,7 @@ use rand::Rng;
 use crate::geometry::{meters_to_radians, Point};
 
 /// Represents a minor arc, e.g. the shortest path between to points, called 'from' and 'to'.
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Arc {
     from: Point,
     to: Point,

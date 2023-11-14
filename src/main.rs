@@ -5,8 +5,8 @@ use osm_test::spatial_graph::generate_network;
 use osm_test::spatial_graph::Fmi;
 
 fn main() {
-    _translate_route();
-    // _generate();
+    // _translate_route();
+    _generate();
 }
 
 fn _translate_route() {
