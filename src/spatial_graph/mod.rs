@@ -1,5 +1,5 @@
-mod fmi2;
+mod graph;
 mod graph_generator;
 
-pub use fmi2::*;
+pub use graph::*;
 pub use graph_generator::*;

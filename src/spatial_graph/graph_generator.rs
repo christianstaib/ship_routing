@@ -1,5 +1,4 @@
 use std::io::Write;
-use std::sync::Mutex;
 use std::time::Instant;
 use std::{collections::HashMap, f64::consts::PI, fs::File, io::BufWriter};
 
@@ -120,8 +119,6 @@ fn generate_arcs(
     radius: f64,
 ) -> Vec<Arc> {
     println!("generating arcs");
-    let lone_points = Planet::new();
-    let lone_points = std::sync::Arc::new(Mutex::new(lone_points));
     let mut arcs: Vec<_> = points
         .iter()
         .progress()
@@ -146,11 +143,10 @@ fn generate_arcs(
                 // .get(1) is point
                 if let Some(target) = local_points.get(1) {
                     let arc = Arc::new(point, &target);
-                    //if radians_to_meter(arc.central_angle()) <= radius {
-                    return Some(arc);
-                    //}
+                    if radians_to_meter(arc.central_angle()) <= radius {
+                        return Some(arc);
+                    }
                 }
-                lone_points.lock().unwrap().points.push(point.clone());
 
                 None
             })
@@ -161,13 +157,11 @@ fn generate_arcs(
         })
         .flatten()
         .collect();
-    let lone_points = lone_points.lock().unwrap();
-    lone_points.to_geojson_file("lone_points.geojson");
 
     // println!("wrote lone points");
     // let mut hash_map = HashMap::new();
     // for arc in arcs.drain(0..).progress() {
-    //     hash_map.insert((arc.from().id.unwrap(), arc.to().id.unwrap()), arc);
+    //     hash_map.insert((arc.from(), arc.to()), arc);
     // }
 
     // hash_map.drain().map(|(_, arc)| arc).collect()
