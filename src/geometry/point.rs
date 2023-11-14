@@ -1,5 +1,5 @@
 use crate::geometry::Arc;
-use std::{f64::consts::PI, fmt};
+use std::{f64::consts::PI, fmt, hash::Hash};
 
 use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
@@ -10,7 +10,14 @@ use rand::Rng;
 #[derive(Clone, Copy, PartialEq)]
 pub struct Point {
     n_vector: Vector3<f64>,
-    pub id: Option<u32>,
+}
+
+impl Hash for Point {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.n_vector.x.to_bits().hash(state);
+        self.n_vector.y.to_bits().hash(state);
+        self.n_vector.z.to_bits().hash(state);
+    }
 }
 
 impl fmt::Display for Point {
@@ -42,14 +49,13 @@ impl Point {
             lat_rad.sin(),
         );
 
-        Point { n_vector, id: None }
+        Point { n_vector }
     }
 
     /// Constructs a point from a n-vector.
     pub fn from_n_vector(n_vector: &Vector3<f64>) -> Point {
         let point = Point {
             n_vector: n_vector.clone(),
-            id: None,
         };
 
         let lat = point.latitude();

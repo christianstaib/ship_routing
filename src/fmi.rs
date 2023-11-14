@@ -18,20 +18,8 @@ impl Fmi {
         let mut points_grid = PointSpatialPartition::new_root(25);
         let reader = BufReader::new(File::open(path).unwrap());
         let mut lines = reader.lines();
-        let num_nodes: usize = lines
-            .by_ref()
-            .next()
-            .unwrap()
-            .unwrap()
-            .parse::<_>()
-            .unwrap();
-        let _num_arcs: usize = lines
-            .by_ref()
-            .next()
-            .unwrap()
-            .unwrap()
-            .parse::<_>()
-            .unwrap();
+        let num_nodes = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
+        let _num_arcs: usize = lines.by_ref().next().unwrap().unwrap().parse().unwrap();
         for line in lines.take(num_nodes).progress_count(num_nodes as u64) {
             let line = line.unwrap();
             let mut line = line.split_whitespace();
@@ -39,7 +27,6 @@ impl Fmi {
             let lat: f64 = line.next().unwrap().parse().unwrap();
             let lon: f64 = line.next().unwrap().parse().unwrap();
             let mut point = Point::from_coordinate(lat, lon);
-            point.id = Some(id);
             points_grid.add_point(&point);
             points.push(point);
         }
@@ -49,12 +36,6 @@ impl Fmi {
 
     pub fn id_to_point(&self, id: u32) -> Point {
         let point = self.points[id as usize];
-        // self.points
-        //     .iter()
-        //     .find(|point| point.id.unwrap() == id)
-        //     .unwrap()
-        //     .clone()
-        assert_eq!(point.id.unwrap(), id);
 
         point
     }

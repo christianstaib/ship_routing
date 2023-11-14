@@ -44,7 +44,7 @@ fn generate_points(how_many: u32, planet_grid: &PolygonSpatialPartition) -> Vec<
     while points.len() < how_many as usize {
         let mut point = Point::random();
         if !planet_grid.is_on_polygon(&point) {
-            point.id = Some(points.len() as u32);
+            // point.id = Some(points.len() as u32);
             points.push(point);
             pb.inc(1);
         }
@@ -77,6 +77,11 @@ fn generate_planet_grid(planet: &Planet) -> PolygonSpatialPartition {
 }
 
 fn arcs_to_file(arcs: &Vec<Arc>, points: &Vec<Point>, path: &str) {
+    let mut hash_map = HashMap::new();
+    for (i, point) in points.iter().enumerate() {
+        hash_map.insert(point, i);
+    }
+
     let mut writer = BufWriter::new(File::create(path).unwrap());
     writeln!(writer, "{}", points.len()).unwrap();
     writeln!(writer, "{}", arcs.len()).unwrap();
@@ -158,13 +163,14 @@ fn generate_arcs(
     let lone_points = lone_points.lock().unwrap();
     lone_points.to_geojson_file("lone_points.geojson");
 
-    println!("wrote lone points");
-    let mut hash_map = HashMap::new();
-    for arc in arcs.drain(0..).progress() {
-        hash_map.insert((arc.from().id.unwrap(), arc.to().id.unwrap()), arc);
-    }
+    // println!("wrote lone points");
+    // let mut hash_map = HashMap::new();
+    // for arc in arcs.drain(0..).progress() {
+    //     hash_map.insert((arc.from().id.unwrap(), arc.to().id.unwrap()), arc);
+    // }
 
-    hash_map.drain().map(|(_, arc)| arc).collect()
+    // hash_map.drain().map(|(_, arc)| arc).collect()
+    arcs
 }
 
 // works
