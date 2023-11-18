@@ -54,6 +54,22 @@ impl Fmi {
         Fmi { points, arcs }
     }
 
+    pub fn nearest(&self, lon: f64, lat: f64) -> u32 {
+        let point = Point::from_coordinate(lat, lon);
+        self.points
+            .iter()
+            .enumerate()
+            .min_by(|(_, a), (_, b)| {
+                let a = Arc::new(&a, &point);
+                let b = Arc::new(&b, &point);
+                a.central_angle().partial_cmp(&b.central_angle()).unwrap()
+            })
+            .map(|(i, _)| i)
+            .unwrap()
+            .try_into()
+            .unwrap()
+    }
+
     pub fn id_to_point(&self, id: u32) -> Point {
         let point = self.points[id as usize];
 

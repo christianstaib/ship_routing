@@ -87,6 +87,32 @@ impl Planet {
         Planet::from_geojson_str(json.as_str())
     }
 
+    pub fn to_geojson_str(&self) -> String {
+        let mut features = Vec::new();
+        features.extend(self.points.iter().map(|point| point.to_feature()));
+        features.extend(self.polygons.iter().map(|polygon| polygon.to_feature()));
+        features.extend(self.arcs.iter().map(|line| line.to_feature()));
+        features.extend(
+            self.linestrings
+                .iter()
+                .map(|linestring| linestring.to_feature()),
+        );
+
+        let mut writer = String::new();
+        writer += r#"{"type":"FeatureCollection","features":["#;
+
+        let mut features = features.into_iter().peekable();
+        while let Some(feature) = features.next() {
+            if features.peek().is_some() {
+                writer += &format!("{},", feature.to_string());
+            } else {
+                writer += &format!("{}", feature.to_string());
+            }
+        }
+        writer += r#"]}"#;
+        writer
+    }
+
     pub fn to_geojson_file(&self, path: &str) {
         let mut features = Vec::new();
         features.extend(self.points.iter().map(|point| point.to_feature()));

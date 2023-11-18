@@ -24,7 +24,10 @@ generate_mbtiles:
   done
 
 start_tileserver:
-	docker run --rm -it -v ./tests/data:/data -p 8080:8080 maptiler/tileserver-gl-light --config /data/config.json
+	docker run --rm -it -v ./tests/data:/data -p 8080:8080 maptiler/tileserver-gl --config /data/config.json
 	
 merge:
 	tile-join -o mbtiles/merged.mbtiles mbtiles/planet.mbtiles mbtiles/points.mbtiles --force
+
+leaflet:
+	docker run -dit --name leaflet -p 8080:80 -v ./public-html:/usr/local/apache2/htdocs/ httpd:2.4
