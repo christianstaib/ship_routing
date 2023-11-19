@@ -1,14 +1,26 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use osm_test::dijsktra::dijkstra;
 use osm_test::geometry::Linestring;
 use osm_test::geometry::Planet;
-use osm_test::graph::get_route;
-use osm_test::graph::Graph;
+use osm_test::routing::dijkstra;
+use osm_test::routing::get_route;
+use osm_test::routing::Dijkstra;
+use osm_test::routing::Graph;
 use osm_test::spatial_graph::Fmi;
 use serde_derive::{Deserialize, Serialize};
 use warp::{http::Response, Filter};
+
+use clap::Parser;
+
+/// Starts a routing service on localhost:3030/route
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Path of .fmi file
+    #[arg(short, long)]
+    fmi_path: String,
+}
 
 #[derive(Deserialize, Serialize)]
 struct RouteRequest {
@@ -18,13 +30,16 @@ struct RouteRequest {
 
 #[tokio::main]
 async fn main() {
+    let args = Args::parse();
+
     let cors = warp::cors()
         .allow_any_origin() // For development. For production, specify allowed origins.
         .allow_headers(vec!["Content-Type"]) // Specify allowed headers
         .allow_methods(vec!["GET", "POST", "OPTIONS"]); // Specify allowed methods
 
-    let graph = Arc::new(Graph::from_file("test_4M.fmi"));
-    let fmi = Arc::new(Fmi::new("test_4M.fmi"));
+    let graph = Graph::from_file(args.fmi_path.as_str());
+    let graph = Arc::new(graph);
+    let fmi = Arc::new(Fmi::new(args.fmi_path.as_str()));
 
     let promote = warp::post()
         .and(warp::path("route"))
@@ -33,10 +48,11 @@ async fn main() {
             let from = fmi.nearest(route_request.from.0, route_request.from.1);
             let to = fmi.nearest(route_request.to.0, route_request.to.1);
 
+            let dijkstra = Dijkstra::new(&graph);
             let start = Instant::now();
-            let (used_edges, cost) = dijkstra(&graph.clone(), from, to);
-            let route = get_route(&graph, from, to, used_edges);
+            let (used_edges, cost) = dijkstra.dijkstra(from, to);
             let time = start.elapsed();
+            let route = get_route(&graph, from, to, used_edges);
 
             let mut ids = Vec::new();
             if let Some(route) = route {
@@ -50,8 +66,6 @@ async fn main() {
             let mut planet = Planet::new();
             planet.linestrings.push(linesstring);
 
-            let response = planet.to_geojson_str();
-
             println!(
                 "route_request: {:>7} -> {:>7}, cost: {:>9}, took: {:>3}ms",
                 from,
@@ -59,7 +73,7 @@ async fn main() {
                 cost,
                 time.as_millis()
             );
-            Response::builder().body(format!("{}", response))
+            Response::builder().body(format!("{}", planet.to_geojson_str()))
         })
         .with(cors);
 
