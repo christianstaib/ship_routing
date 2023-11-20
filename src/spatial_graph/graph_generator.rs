@@ -1,4 +1,5 @@
 use std::io::Write;
+use std::sync::Mutex;
 use std::time::Instant;
 use std::{collections::HashMap, f64::consts::PI, fs::File, io::BufWriter};
 
@@ -6,7 +7,7 @@ use indicatif::{ProgressBar, ProgressIterator};
 use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 use crate::geometry::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point,
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Contains, Planet, Point, Polygon,
 };
 use crate::spatial_partition::ConvecQuadrilateral;
 use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
@@ -52,6 +53,9 @@ fn generate_points(how_many: u32, planet_grid: &PolygonSpatialPartition) -> Vec<
         }
     }
     pb.finish_and_clear();
+
+    // let filter = Planet::from_geojson_file("filter.geojson").unwrap();
+    // points.retain(|p| filter.polygons[0].contains(p));
 
     points
 }
@@ -122,6 +126,7 @@ fn generate_arcs(
     radius: f64,
 ) -> Vec<Arc> {
     println!("generating arcs");
+    let lone_points = std::sync::Arc::new(Mutex::new(Planet::new()));
     let arcs: Vec<_> = points
         .iter()
         .progress()
@@ -143,14 +148,29 @@ fn generate_arcs(
                         .total_cmp(&Arc::new(point, y).central_angle())
                 });
 
-                // .get(1) is point
-                if let Some(target) = local_points.get(1) {
+                if let Some(maybe_point) = local_points.get(0) {
+                    if maybe_point == point {
+                        local_points.remove(0);
+                    }
+                }
+                if let Some(target) = local_points.get(0) {
                     let arc = Arc::new(point, &target);
                     if radians_to_meter(arc.central_angle()) <= radius {
                         return Some(arc);
                     }
                 }
 
+                lone_points
+                    .lock()
+                    .unwrap()
+                    .points
+                    .extend(local_points.clone());
+                lone_points
+                    .lock()
+                    .unwrap()
+                    .polygons
+                    .push(Polygon::new(polygon.outline.clone()));
+                lone_points.lock().unwrap().points.push(point.clone());
                 None
             })
             .filter(|arc| !planet_grid.intersects_polygon(arc))
@@ -169,7 +189,11 @@ fn ur(point: &Point, radius: f64) -> ConvecQuadrilateral {
     ConvecQuadrilateral::new(&vec![
         cloned_point,
         Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(radius)),
-        Point::destination_point(&point, 1.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(
+            &point,
+            1.0 / 4.0 * PI,
+            meters_to_radians((radius.powi(2) + radius.powi(2)).sqrt()),
+        ),
         Point::destination_point(&point, 0.0 / 4.0 * PI, meters_to_radians(radius)),
         cloned_point,
     ])
@@ -181,7 +205,11 @@ fn lr(point: &Point, radius: f64) -> ConvecQuadrilateral {
     ConvecQuadrilateral::new(&vec![
         cloned_point,
         Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(radius)),
-        Point::destination_point(&point, 3.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(
+            &point,
+            3.0 / 4.0 * PI,
+            meters_to_radians((radius.powi(2) + radius.powi(2)).sqrt()),
+        ),
         Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(radius)),
         cloned_point,
     ])
@@ -191,7 +219,11 @@ fn ll(point: &Point, radius: f64) -> ConvecQuadrilateral {
     ConvecQuadrilateral::new(&vec![
         cloned_point,
         Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(radius)),
-        Point::destination_point(&point, 5.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(
+            &point,
+            5.0 / 4.0 * PI,
+            meters_to_radians((radius.powi(2) + radius.powi(2)).sqrt()),
+        ),
         Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(radius)),
         cloned_point,
     ])
@@ -201,7 +233,11 @@ fn ul(point: &Point, radius: f64) -> ConvecQuadrilateral {
     ConvecQuadrilateral::new(&vec![
         cloned_point,
         Point::destination_point(&point, 8.0 / 4.0 * PI, meters_to_radians(radius)),
-        Point::destination_point(&point, 7.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(
+            &point,
+            7.0 / 4.0 * PI,
+            meters_to_radians((radius.powi(2) + radius.powi(2)).sqrt()),
+        ),
         Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(radius)),
         cloned_point,
     ])
