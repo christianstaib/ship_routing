@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead};
 
@@ -50,7 +51,7 @@ impl Graph {
             })
             .collect();
 
-        let mut edges: Vec<Edge> = lines
+        let edges: Vec<Edge> = lines
             .by_ref()
             .take(number_of_edges)
             .map(|edge_line| {
@@ -70,11 +71,38 @@ impl Graph {
             })
             .collect();
 
-        let mut edges_start_for_node: Vec<u32> = vec![0; number_of_nodes + 1];
+        // make bidrectional
+        let mut edge_map = HashMap::new();
+        edges.iter().for_each(|edge| {
+            if edge.cost
+                < *edge_map
+                    .get(&(edge.source_id, edge.target_id))
+                    .unwrap_or(&u32::MAX)
+            {
+                edge_map.insert((edge.source_id, edge.target_id), edge.cost);
+            }
+            // if edge.cost
+            //     < *edge_map
+            //         .get(&(edge.target_id, edge.source_id))
+            //         .unwrap_or(&u32::MAX)
+            // {
+            //     edge_map.insert((edge.target_id, edge.source_id), edge.cost);
+            // }
+        });
+        let mut edges: Vec<_> = edge_map
+            .iter()
+            .map(|(k, v)| Edge {
+                source_id: k.0,
+                target_id: k.1,
+                cost: *v,
+            })
+            .collect();
+
+        let mut edges_start_for_node: Vec<u32> = vec![0; edges.len() + 1];
 
         // temporarrly adding a node in order to generate the list
         edges.push(Edge {
-            source_id: number_of_nodes as u32,
+            source_id: edges.len() as u32,
             target_id: 0,
             cost: 0,
         });

@@ -3,7 +3,6 @@ use std::time::Instant;
 
 use osm_test::geometry::Linestring;
 use osm_test::geometry::Planet;
-use osm_test::routing::dijkstra;
 use osm_test::routing::get_route;
 use osm_test::routing::Dijkstra;
 use osm_test::routing::Graph;

@@ -122,7 +122,7 @@ fn generate_arcs(
     radius: f64,
 ) -> Vec<Arc> {
     println!("generating arcs");
-    points
+    let arcs: Vec<_> = points
         .iter()
         .progress()
         .par_bridge()
@@ -157,7 +157,9 @@ fn generate_arcs(
             .collect::<Vec<_>>()
         })
         .flatten()
-        .collect()
+        .collect();
+
+    arcs
 }
 
 // works
