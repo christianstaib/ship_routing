@@ -133,10 +133,10 @@ fn generate_arcs(
         .par_bridge()
         .map(|point| {
             vec![
-                ur(point, radius),
-                lr(point, radius),
-                ll(point, radius),
-                ul(point, radius),
+                create_quadrilateral(point, radius, Quadrant::UR),
+                create_quadrilateral(point, radius, Quadrant::LR),
+                create_quadrilateral(point, radius, Quadrant::LL),
+                create_quadrilateral(point, radius, Quadrant::UL),
             ]
             .iter()
             .filter_map(|polygon| {
@@ -184,61 +184,45 @@ fn generate_arcs(
 
 // works
 
-fn ur(point: &Point, radius: f64) -> ConvecQuadrilateral {
-    let cloned_point = point.clone();
-    ConvecQuadrilateral::new(&vec![
-        cloned_point,
-        Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(radius)),
-        Point::destination_point(
-            &point,
-            1.0 / 4.0 * PI,
-            meters_to_radians((radius.powi(2) + radius.powi(2)).sqrt()),
-        ),
-        Point::destination_point(&point, 0.0 / 4.0 * PI, meters_to_radians(radius)),
-        cloned_point,
-    ])
+enum Quadrant {
+    UR,
+    LR,
+    LL,
+    UL,
 }
 
-// works
-fn lr(point: &Point, radius: f64) -> ConvecQuadrilateral {
-    let cloned_point = point.clone();
-    ConvecQuadrilateral::new(&vec![
-        cloned_point,
-        Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(radius)),
-        Point::destination_point(
-            &point,
-            3.0 / 4.0 * PI,
-            meters_to_radians((radius.powi(2) + radius.powi(2)).sqrt()),
-        ),
-        Point::destination_point(&point, 2.0 / 4.0 * PI, meters_to_radians(radius)),
-        cloned_point,
-    ])
+impl Quadrant {
+    fn start_angle(&self) -> f64 {
+        match *self {
+            Quadrant::UR => 0.0,
+            Quadrant::LR => 1.0,
+            Quadrant::LL => 2.0,
+            Quadrant::UL => 3.0,
+        }
+    }
 }
-fn ll(point: &Point, radius: f64) -> ConvecQuadrilateral {
+
+fn create_quadrilateral(point: &Point, radius: f64, quadrant: Quadrant) -> ConvecQuadrilateral {
+    let start_angle = quadrant.start_angle();
+
     let cloned_point = point.clone();
     ConvecQuadrilateral::new(&vec![
         cloned_point,
-        Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(radius)),
         Point::destination_point(
             &point,
-            5.0 / 4.0 * PI,
-            meters_to_radians((radius.powi(2) + radius.powi(2)).sqrt()),
+            start_angle + 0.0 / 4.0 * PI,
+            meters_to_radians(radius),
         ),
-        Point::destination_point(&point, 4.0 / 4.0 * PI, meters_to_radians(radius)),
-        cloned_point,
-    ])
-}
-fn ul(point: &Point, radius: f64) -> ConvecQuadrilateral {
-    let cloned_point = point.clone();
-    ConvecQuadrilateral::new(&vec![
-        cloned_point,
-        Point::destination_point(&point, 8.0 / 4.0 * PI, meters_to_radians(radius)),
         Point::destination_point(
             &point,
-            7.0 / 4.0 * PI,
+            start_angle + 1.0 / 4.0 * PI,
             meters_to_radians((radius.powi(2) + radius.powi(2)).sqrt()),
         ),
-        Point::destination_point(&point, 6.0 / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(
+            &point,
+            start_angle + 2.0 / 4.0 * PI,
+            meters_to_radians(radius),
+        ),
         cloned_point,
     ])
 }
