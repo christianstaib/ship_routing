@@ -114,6 +114,7 @@ impl Planet {
     }
 
     pub fn to_geojson_file(&self, path: &str) {
+        println!("writing to file");
         let mut features = Vec::new();
         features.extend(self.points.iter().map(|point| point.to_feature()));
         features.extend(self.polygons.iter().map(|polygon| polygon.to_feature()));

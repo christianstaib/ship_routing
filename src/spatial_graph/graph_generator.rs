@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use std::time::Instant;
 use std::{collections::HashMap, f64::consts::PI, fs::File, io::BufWriter};
 
 use indicatif::{ProgressBar, ProgressIterator};
@@ -14,8 +15,10 @@ use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
 use super::Fmi;
 
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
+    let start = Instant::now();
     let planet_grid = generate_planet_grid(planet);
     let points = generate_points(num_nodes, &planet_grid);
+    println!("took {:?}", start.elapsed());
     let point_grid = generate_point_grid(&points);
     let arcs = generate_arcs(&points, &point_grid, &planet_grid, 30_000.0);
 
@@ -26,7 +29,6 @@ pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, pla
 
 fn generate_points(how_many: u32, planet_grid: &PolygonSpatialPartition) -> Vec<Point> {
     println!("generating points");
-
     PointGenerator::new()
         .filter(|point| point.latitude() >= -82.0)
         .filter(|point| !planet_grid.is_on_polygon(point))
