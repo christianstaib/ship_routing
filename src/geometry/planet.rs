@@ -20,13 +20,6 @@ pub struct Planet {
 }
 
 impl CollisionDetection for Planet {
-<<<<<<< HEAD
-=======
-    fn add_polygon(&mut self, polygon: &Polygon) {
-        self.polygons.push(polygon.clone());
-    }
-
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     fn is_on_polygon(&self, point: &Point) -> bool {
         self.polygons
             .iter()
@@ -51,13 +44,10 @@ impl Planet {
         }
     }
 
-<<<<<<< HEAD
     fn add_polygon(&mut self, polygon: &Polygon) {
         self.polygons.push(polygon.clone());
     }
 
-=======
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     /// Returns the intersection points between all polygons and the arc.
     pub fn intersections(&self, arc: &Arc) -> Vec<Point> {
         self.polygons

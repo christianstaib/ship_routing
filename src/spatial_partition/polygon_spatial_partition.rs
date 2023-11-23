@@ -1,12 +1,9 @@
-<<<<<<< HEAD
 
 
 use indicatif::ProgressIterator;
 use log::{warn};
 use rayon::prelude::*;
 
-=======
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 use crate::geometry::{
     meters_to_radians, Arc, Collides, CollisionDetection, Contains, Point, Polygon,
 };
@@ -44,13 +41,6 @@ impl PointStatus {
 }
 
 impl CollisionDetection for PolygonSpatialPartition {
-<<<<<<< HEAD
-=======
-    fn add_polygon(&mut self, polygon: &Polygon) {
-        self.add_polygon(polygon)
-    }
-
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     fn is_on_polygon(&self, point: &Point) -> bool {
         self.is_on_polygon(point)
     }
@@ -96,7 +86,6 @@ impl PolygonSpatialPartition {
         }
     }
 
-<<<<<<< HEAD
     pub fn add_polygons(&mut self, polygons: &Vec<Polygon>) {
         warn!("xxxxxxxxx adding polgons");
         polygons
@@ -116,23 +105,6 @@ impl PolygonSpatialPartition {
             .for_each(|arc| self.add_arc(&arc));
 
         self.update_midpoints();
-=======
-    pub fn add_polygon(&mut self, polygon: &Polygon) {
-        polygon
-            .outline
-            .windows(2)
-            .map(|arc| Arc::new(&arc[0], &arc[1]))
-            .for_each(|arc| {
-                self.add_arc(&arc);
-            });
-
-        if polygon.contains(&self.midpoint) {
-            match self.midpoint_flag {
-                PointStatus::Inside => self.midpoint_flag = PointStatus::Outside,
-                PointStatus::Outside => self.midpoint_flag = PointStatus::Outside,
-            }
-        }
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     }
 
     fn split(&mut self) {
@@ -210,11 +182,7 @@ impl PolygonSpatialPartition {
         }
     }
 
-<<<<<<< HEAD
     fn update_midpoints(&mut self) {
-=======
-    pub fn update_midpoints(&mut self) {
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
         let mut stack = Vec::new();
         stack.push(self);
 

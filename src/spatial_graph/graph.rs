@@ -1,18 +1,12 @@
 use std::{
-<<<<<<< HEAD
     collections::HashMap,
     fs::File,
     io::{BufRead, BufReader, BufWriter, Write},
-=======
-    fs::File,
-    io::{BufRead, BufReader},
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     usize,
 };
 
 use indicatif::ProgressIterator;
 
-<<<<<<< HEAD
 use crate::geometry::{radians_to_meter, Arc, Planet, Point};
 
 pub struct Fmi {
@@ -22,17 +16,6 @@ pub struct Fmi {
 
 impl Fmi {
     pub fn from_file(path: &str) -> Fmi {
-=======
-use crate::geometry::{Arc, Point};
-
-pub struct Fmi {
-    points: Vec<Point>,
-    arcs: Vec<Arc>,
-}
-
-impl Fmi {
-    pub fn new(path: &str) -> Fmi {
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
         let reader = BufReader::new(File::open(path).unwrap());
         let mut lines = reader.lines();
 
@@ -72,7 +55,6 @@ impl Fmi {
         Fmi { points, arcs }
     }
 
-<<<<<<< HEAD
     pub fn to_file(&self, path: &str) {
         println!("enumerating points");
         let mut point_id_map = HashMap::new();
@@ -121,8 +103,6 @@ impl Fmi {
         planet
     }
 
-=======
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     pub fn nearest(&self, lon: f64, lat: f64) -> u32 {
         let point = Point::from_coordinate(lat, lon);
         self.points
@@ -150,20 +130,4 @@ impl Fmi {
             .map(|&id| self.points[id as usize].clone())
             .collect()
     }
-<<<<<<< HEAD
-=======
-
-    pub fn read_paths(&self, in_path: &str) -> Vec<Vec<Point>> {
-        let reader = BufReader::new(File::open(in_path).unwrap());
-        let lines = reader.lines();
-        let mut paths = Vec::new();
-        for line in lines {
-            let line = line.unwrap();
-            let line = line.split(",").map(|id| id.parse().unwrap()).collect();
-            paths.push(self.convert_path(&line));
-        }
-
-        paths
-    }
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 }

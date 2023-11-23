@@ -28,7 +28,6 @@ impl fmt::Display for Point {
     }
 }
 
-<<<<<<< HEAD
 pub struct PointGenerator {}
 
 impl Iterator for PointGenerator {
@@ -45,8 +44,6 @@ impl PointGenerator {
     }
 }
 
-=======
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 impl Point {
     /// Creates a `Point` from given latitude and longitude values, asserting that they are within valid ranges
     /// (-90.0 <= latitude <= 90, -180.0 <= longitude <= 180.0).
@@ -106,13 +103,10 @@ impl Point {
         Point::from_coordinate(lat, lon)
     }
 
-<<<<<<< HEAD
     pub fn random_generator() -> impl Iterator<Item = Point> {
         std::iter::repeat_with(|| Point::random())
     }
 
-=======
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     /// Calculates the destination point given a start point, bearing, and distance on a sphere.
     /// The destination is computed using vector math on a unit sphere where:
     /// - `start`: the n-vector representing the start point

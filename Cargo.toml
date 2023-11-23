@@ -24,8 +24,5 @@ warp = "0.3"
 serde_derive = "1.0.192"
 serde = "1.0.192"
 clap = { version = "4.4.8", features = ["derive"] }
-<<<<<<< HEAD
 env_logger = "0.10.1"
 log = "0.4.20"
-=======
->>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
