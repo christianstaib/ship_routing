@@ -38,7 +38,11 @@ async fn main() {
 
     let graph = Graph::from_file(args.fmi_path.as_str());
     let graph = Arc::new(graph);
+<<<<<<< HEAD
+    let fmi = Arc::new(Fmi::from_file(args.fmi_path.as_str()));
+=======
     let fmi = Arc::new(Fmi::new(args.fmi_path.as_str()));
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 
     let promote = warp::post()
         .and(warp::path("route"))

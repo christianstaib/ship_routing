@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+use indicatif::ProgressIterator;
+
+=======
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 use crate::geometry::{Arc, Collides, Contains, Point};
 
 use super::{tiling::Tiling, ConvecQuadrilateral};
@@ -61,6 +66,17 @@ impl PointSpatialPartition {
         points.iter().for_each(|point| self.add_point(point));
     }
 
+<<<<<<< HEAD
+    pub fn add_points(&mut self, points: &Vec<Point>) {
+        println!("len is {}", points.len());
+        points
+            .iter()
+            .progress()
+            .for_each(|point| self.add_point(point));
+    }
+
+=======
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     pub fn add_point(&mut self, point: &Point) {
         let mut internals = vec![self];
         while let Some(parent) = internals.pop() {

@@ -1,11 +1,28 @@
 use std::{
+<<<<<<< HEAD
+    collections::HashMap,
+    fs::File,
+    io::{BufRead, BufReader, BufWriter, Write},
+=======
     fs::File,
     io::{BufRead, BufReader},
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     usize,
 };
 
 use indicatif::ProgressIterator;
 
+<<<<<<< HEAD
+use crate::geometry::{radians_to_meter, Arc, Planet, Point};
+
+pub struct Fmi {
+    pub points: Vec<Point>,
+    pub arcs: Vec<Arc>,
+}
+
+impl Fmi {
+    pub fn from_file(path: &str) -> Fmi {
+=======
 use crate::geometry::{Arc, Point};
 
 pub struct Fmi {
@@ -15,6 +32,7 @@ pub struct Fmi {
 
 impl Fmi {
     pub fn new(path: &str) -> Fmi {
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
         let reader = BufReader::new(File::open(path).unwrap());
         let mut lines = reader.lines();
 
@@ -54,6 +72,57 @@ impl Fmi {
         Fmi { points, arcs }
     }
 
+<<<<<<< HEAD
+    pub fn to_file(&self, path: &str) {
+        println!("enumerating points");
+        let mut point_id_map = HashMap::new();
+        for (i, point) in self.points.iter().enumerate().progress() {
+            point_id_map.insert(point, i);
+        }
+
+        let mut writer = BufWriter::new(File::create(path).unwrap());
+        writeln!(writer, "{}", self.points.len()).unwrap();
+        writeln!(writer, "{}", self.arcs.len()).unwrap();
+        println!("writing {} points to file", self.points.len());
+        self.points.iter().progress().for_each(|point| {
+            writeln!(
+                writer,
+                "{} {} {}",
+                point_id_map.get(point).unwrap(),
+                point.latitude(),
+                point.longitude()
+            )
+            .unwrap();
+        });
+        writer.flush().unwrap();
+
+        println!("writing {} arcs to file", self.arcs.len());
+        self.arcs.iter().progress().for_each(|arc| {
+            writeln!(
+                writer,
+                "{} {} {}",
+                point_id_map.get(arc.from()).unwrap(),
+                point_id_map.get(arc.to()).unwrap(),
+                (radians_to_meter(arc.central_angle()) * 1.0) as u32
+            )
+            .unwrap();
+        });
+        writer.flush().unwrap();
+    }
+
+    pub fn to_planet(&self) -> Planet {
+        let mut planet = Planet::new();
+        planet.arcs = self
+            .arcs
+            .iter()
+            .map(|arc| arc._make_good_line())
+            .flatten()
+            .collect();
+        planet
+    }
+
+=======
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     pub fn nearest(&self, lon: f64, lat: f64) -> u32 {
         let point = Point::from_coordinate(lat, lon);
         self.points
@@ -81,6 +150,8 @@ impl Fmi {
             .map(|&id| self.points[id as usize].clone())
             .collect()
     }
+<<<<<<< HEAD
+=======
 
     pub fn read_paths(&self, in_path: &str) -> Vec<Vec<Point>> {
         let reader = BufReader::new(File::open(in_path).unwrap());
@@ -94,4 +165,5 @@ impl Fmi {
 
         paths
     }
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 }

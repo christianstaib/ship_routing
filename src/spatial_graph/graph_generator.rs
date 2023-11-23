@@ -1,4 +1,14 @@
 use std::io::Write;
+<<<<<<< HEAD
+
+use std::{collections::HashMap, f64::consts::PI, fs::File, io::BufWriter};
+
+use indicatif::{ProgressBar, ProgressIterator};
+use rayon::prelude::*;
+
+use crate::geometry::{
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point, PointGenerator,
+=======
 use std::sync::Mutex;
 use std::time::Instant;
 use std::{collections::HashMap, f64::consts::PI, fs::File, io::BufWriter};
@@ -8,10 +18,24 @@ use rayon::prelude::{ParallelBridge, ParallelIterator};
 
 use crate::geometry::{
     meters_to_radians, radians_to_meter, Arc, CollisionDetection, Contains, Planet, Point, Polygon,
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 };
 use crate::spatial_partition::ConvecQuadrilateral;
 use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
 
+<<<<<<< HEAD
+use super::Fmi;
+
+pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
+    let planet_grid = generate_planet_grid(planet);
+    let points = generate_points(num_nodes, &planet_grid);
+    let point_grid = generate_point_grid(&points);
+    let arcs = generate_arcs(&points, &point_grid, &planet_grid, 30_000.0);
+
+    let fmi = Fmi { points, arcs };
+    fmi.to_file(network_path);
+    fmi.to_planet().to_geojson_file(planet_path);
+=======
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
     let radius = (4_000_000.0 * ((30_000.0 as f64).powi(2)) / num_nodes as f64).sqrt() * 1.0;
     println!("radius is {}", radius);
@@ -38,10 +62,20 @@ fn write_arcs_to_geojson(arcs: &Vec<Arc>, planet_path: &str) {
         .flatten()
         .collect();
     out_planet.to_geojson_file(planet_path);
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 }
 
 fn generate_points(how_many: u32, planet_grid: &PolygonSpatialPartition) -> Vec<Point> {
     println!("generating points");
+<<<<<<< HEAD
+
+    PointGenerator::new()
+        .filter(|point| point.latitude() >= -82.0)
+        .filter(|point| !planet_grid.is_on_polygon(point))
+        .take(how_many as usize)
+        .progress_count(how_many as u64)
+        .collect()
+=======
     let mut points = Vec::new();
 
     let pb = ProgressBar::new(how_many as u64);
@@ -58,21 +92,32 @@ fn generate_points(how_many: u32, planet_grid: &PolygonSpatialPartition) -> Vec<
     // points.retain(|p| filter.polygons[0].contains(p));
 
     points
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 }
 
 fn generate_point_grid(points: &Vec<Point>) -> PointSpatialPartition {
     println!("generating point grid");
     let mut point_grid = PointSpatialPartition::new_root(10);
+<<<<<<< HEAD
+    point_grid.add_points(points);
+=======
     points
         .iter()
         .progress()
         .for_each(|point| point_grid.add_point(point));
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     point_grid
 }
 
 fn generate_planet_grid(planet: &Planet) -> PolygonSpatialPartition {
     println!("generating planet grid");
     let mut planet_grid = PolygonSpatialPartition::new(50);
+<<<<<<< HEAD
+    planet_grid.add_polygons(&planet.polygons);
+    planet_grid
+}
+
+=======
     planet
         .polygons
         .iter()
@@ -119,6 +164,7 @@ fn arcs_to_file(arcs: &Vec<Arc>, points: &Vec<Point>, path: &str) {
     writer.flush().unwrap();
 }
 
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 fn generate_arcs(
     points: &Vec<Point>,
     point_grid: &PointSpatialPartition,
@@ -126,17 +172,28 @@ fn generate_arcs(
     radius: f64,
 ) -> Vec<Arc> {
     println!("generating arcs");
+<<<<<<< HEAD
+    points
+=======
     let lone_points = std::sync::Arc::new(Mutex::new(Planet::new()));
     let arcs: Vec<_> = points
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
         .iter()
         .progress()
         .par_bridge()
         .map(|point| {
             vec![
+<<<<<<< HEAD
+                ur(point, radius, 2.0),
+                ur(point, radius, 4.0),
+                ur(point, radius, 6.0),
+                ur(point, radius, 8.0),
+=======
                 create_quadrilateral(point, radius, Quadrant::UR),
                 create_quadrilateral(point, radius, Quadrant::LR),
                 create_quadrilateral(point, radius, Quadrant::LL),
                 create_quadrilateral(point, radius, Quadrant::UL),
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
             ]
             .iter()
             .filter_map(|polygon| {
@@ -148,18 +205,31 @@ fn generate_arcs(
                         .total_cmp(&Arc::new(point, y).central_angle())
                 });
 
+<<<<<<< HEAD
+                // if first point is point, take second
+                let mut idx = 0;
+                if let Some(first_point) = local_points.get(idx) {
+                    if first_point == point {
+                        idx += 1;
+                    }
+                }
+                if let Some(target) = local_points.get(idx) {
+=======
                 if let Some(maybe_point) = local_points.get(0) {
                     if maybe_point == point {
                         local_points.remove(0);
                     }
                 }
                 if let Some(target) = local_points.get(0) {
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
                     let arc = Arc::new(point, &target);
                     if radians_to_meter(arc.central_angle()) <= radius {
                         return Some(arc);
                     }
                 }
 
+<<<<<<< HEAD
+=======
                 lone_points
                     .lock()
                     .unwrap()
@@ -171,12 +241,29 @@ fn generate_arcs(
                     .polygons
                     .push(Polygon::new(polygon.outline.clone()));
                 lone_points.lock().unwrap().points.push(point.clone());
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
                 None
             })
             .filter(|arc| !planet_grid.intersects_polygon(arc))
             .collect::<Vec<_>>()
         })
         .flatten()
+<<<<<<< HEAD
+        .collect()
+}
+
+fn ur(point: &Point, radius: f64, start: f64) -> ConvecQuadrilateral {
+    let cloned_point = point.clone();
+    ConvecQuadrilateral::new(&vec![
+        cloned_point,
+        Point::destination_point(&point, (start) / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(
+            &point,
+            (start - 1.0) / 4.0 * PI,
+            meters_to_radians((radius.powi(2) + radius.powi(2)).sqrt()),
+        ),
+        Point::destination_point(&point, (start - 2.0) / 4.0 * PI, meters_to_radians(radius)),
+=======
         .collect();
 
     arcs
@@ -223,6 +310,7 @@ fn create_quadrilateral(point: &Point, radius: f64, quadrant: Quadrant) -> Conve
             start_angle + 2.0 / 4.0 * PI,
             meters_to_radians(radius),
         ),
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
         cloned_point,
     ])
 }

@@ -4,7 +4,10 @@ use crate::{
 };
 
 pub trait CollisionDetection {
+<<<<<<< HEAD
+=======
     fn add_polygon(&mut self, polygon: &Polygon);
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     fn is_on_polygon(&self, point: &Point) -> bool;
     fn intersects_polygon(&self, arc: &Arc) -> bool;
 }

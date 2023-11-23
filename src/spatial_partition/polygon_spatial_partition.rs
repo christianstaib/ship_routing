@@ -1,3 +1,12 @@
+<<<<<<< HEAD
+
+
+use indicatif::ProgressIterator;
+use log::{warn};
+use rayon::prelude::*;
+
+=======
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
 use crate::geometry::{
     meters_to_radians, Arc, Collides, CollisionDetection, Contains, Point, Polygon,
 };
@@ -35,10 +44,13 @@ impl PointStatus {
 }
 
 impl CollisionDetection for PolygonSpatialPartition {
+<<<<<<< HEAD
+=======
     fn add_polygon(&mut self, polygon: &Polygon) {
         self.add_polygon(polygon)
     }
 
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     fn is_on_polygon(&self, point: &Point) -> bool {
         self.is_on_polygon(point)
     }
@@ -84,6 +96,27 @@ impl PolygonSpatialPartition {
         }
     }
 
+<<<<<<< HEAD
+    pub fn add_polygons(&mut self, polygons: &Vec<Polygon>) {
+        warn!("xxxxxxxxx adding polgons");
+        polygons
+            .iter()
+            .filter(|polygon| polygon.contains(&self.midpoint))
+            .for_each(|_| self.midpoint_flag = self.midpoint_flag.other());
+
+        let number_of_arcs: u32 = polygons
+            .iter()
+            .map(|polygon| polygon.outline.len().checked_sub(1).unwrap_or(0) as u32)
+            .sum();
+
+        polygons
+            .iter()
+            .flat_map(|polygon| polygon.arcs())
+            .progress_count(number_of_arcs as u64)
+            .for_each(|arc| self.add_arc(&arc));
+
+        self.update_midpoints();
+=======
     pub fn add_polygon(&mut self, polygon: &Polygon) {
         polygon
             .outline
@@ -99,6 +132,7 @@ impl PolygonSpatialPartition {
                 PointStatus::Outside => self.midpoint_flag = PointStatus::Outside,
             }
         }
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
     }
 
     fn split(&mut self) {
@@ -176,7 +210,11 @@ impl PolygonSpatialPartition {
         }
     }
 
+<<<<<<< HEAD
+    fn update_midpoints(&mut self) {
+=======
     pub fn update_midpoints(&mut self) {
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
         let mut stack = Vec::new();
         stack.push(self);
 

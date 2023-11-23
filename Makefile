@@ -31,3 +31,9 @@ merge:
 
 leaflet:
 	docker run -dit --name leaflet -p 8080:80 -v ./public-html:/usr/local/apache2/htdocs/ httpd:2.4
+<<<<<<< HEAD
+
+network:
+	cargo run --release --bin preprocessor -- --input tests/data/geojson/planet.geojson --num-nodes 4000000 --output-network tests/data/fmi/network.fmi --output-geojson tests/data/test_geojson/network.geojson
+=======
+>>>>>>> 2955f64335bf35c4052004516c0c1078874dcb11
