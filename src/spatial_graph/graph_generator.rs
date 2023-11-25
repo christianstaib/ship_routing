@@ -7,7 +7,8 @@ use indicatif::{ProgressBar, ProgressIterator};
 use rayon::prelude::*;
 
 use crate::geometry::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point, PointGenerator,
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Contains, Planet, Point,
+    PointGenerator,
 };
 use crate::spatial_partition::ConvecQuadrilateral;
 use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
@@ -17,7 +18,11 @@ use super::Fmi;
 pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
     let start = Instant::now();
     let planet_grid = generate_planet_grid(planet);
-    let points = generate_points(num_nodes, &planet_grid);
+    let mut points = generate_points(num_nodes, &planet_grid);
+
+    // let filter = Planet::from_geojson_file("filter.geojson").unwrap();
+    // points.retain(|p| filter.polygons[0].contains(p));
+
     println!("took {:?}", start.elapsed());
     let point_grid = generate_point_grid(&points);
     let arcs = generate_arcs(&points, &point_grid, &planet_grid, 30_000.0);

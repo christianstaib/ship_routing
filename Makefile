@@ -2,7 +2,7 @@ GEOJSON_DIR := tests/data/test_geojson
 MBTILES_DIR := tests/data/mbtiles
 DOCKER_IMG := metacollin/tippecanoe
 
-generate_mbtiles:
+mbtiles:
 	mkdir -p $(GEOJSON_DIR)
 	mkdir -p $(MBTILES_DIR)
 	
@@ -16,9 +16,8 @@ generate_mbtiles:
       $(DOCKER_IMG) \
       tippecanoe \
         --read-parallel \
-        -zg \
+        -z10 \
         -o $$OUT_FILE \
-        --drop-densest-as-needed \
         $$IN_FILE \
 				--force; \
   done
@@ -34,3 +33,9 @@ leaflet:
 
 network:
 	cargo run --release --bin preprocessor -- --input tests/data/geojson/planet.geojson --num-nodes 4000000 --output-network tests/data/fmi/network.fmi --output-geojson tests/data/test_geojson/network.geojson
+
+convert:
+	cargo run --release --bin osm_geojson_converter -- --input tests/data/osm/planet-coastlines.osm.pbf --output tests/data/test_geojson/planet.geosjon
+
+server:
+	
