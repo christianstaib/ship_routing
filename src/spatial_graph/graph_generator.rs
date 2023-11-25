@@ -1,13 +1,13 @@
-use std::io::Write;
+
 
 use std::time::Instant;
-use std::{collections::HashMap, f64::consts::PI, fs::File, io::BufWriter};
+use std::{f64::consts::PI};
 
-use indicatif::{ProgressBar, ProgressIterator};
+use indicatif::{ProgressIterator};
 use rayon::prelude::*;
 
 use crate::geometry::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Contains, Planet, Point,
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point,
     PointGenerator,
 };
 use crate::spatial_partition::ConvecQuadrilateral;
@@ -15,13 +15,18 @@ use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
 
 use super::Fmi;
 
-pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
+pub fn generate_network(
+    num_nodes: u32,
+    planet: &Planet,
+    filter: &Planet,
+    network_path: &str,
+    planet_path: &str,
+) {
     let start = Instant::now();
     let planet_grid = generate_planet_grid(planet);
     let mut points = generate_points(num_nodes, &planet_grid);
 
-    // let filter = Planet::from_geojson_file("filter.geojson").unwrap();
-    // points.retain(|p| filter.polygons[0].contains(p));
+    points.retain(|p| filter.is_on_polygon(p));
 
     println!("took {:?}", start.elapsed());
     let point_grid = generate_point_grid(&points);
