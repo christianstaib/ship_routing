@@ -32,7 +32,8 @@ RUN ./preprocessor -i /tmp/planet.geojson -n 4000000 --output-network network.fm
 FROM debian:bookworm-slim AS prod
 WORKDIR /ship_routing
 COPY --from=preprocess /ship_routing /ship_routing
+COPY public-html/ public-html/
 
 ENTRYPOINT ["./server"]
-CMD ["-f", "network.fmi", "-a", "0.0.0.0:3030"]
+CMD ["-f", "network.fmi", "-b", "0.0.0.0:3030"]
 EXPOSE 3030
