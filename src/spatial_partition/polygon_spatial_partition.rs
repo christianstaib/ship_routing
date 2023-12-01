@@ -1,8 +1,4 @@
-
-
 use indicatif::ProgressIterator;
-use log::{warn};
-use rayon::prelude::*;
 
 use crate::geometry::{
     meters_to_radians, Arc, Collides, CollisionDetection, Contains, Point, Polygon,
@@ -87,11 +83,13 @@ impl PolygonSpatialPartition {
     }
 
     pub fn add_polygons(&mut self, polygons: &Vec<Polygon>) {
-        warn!("xxxxxxxxx adding polgons");
         polygons
             .iter()
             .filter(|polygon| polygon.contains(&self.midpoint))
-            .for_each(|_| self.midpoint_flag = self.midpoint_flag.other());
+            .for_each(|_| {
+                println!("{}", self.midpoint);
+                self.midpoint_flag = self.midpoint_flag.other()
+            });
 
         let number_of_arcs: u32 = polygons
             .iter()

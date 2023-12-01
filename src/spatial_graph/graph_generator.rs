@@ -1,32 +1,21 @@
-
-
+use std::f64::consts::PI;
 use std::time::Instant;
-use std::{f64::consts::PI};
 
-use indicatif::{ProgressIterator};
+use indicatif::ProgressIterator;
 use rayon::prelude::*;
 
 use crate::geometry::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point,
-    PointGenerator,
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point, PointGenerator,
 };
 use crate::spatial_partition::ConvecQuadrilateral;
 use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
 
 use super::Fmi;
 
-pub fn generate_network(
-    num_nodes: u32,
-    planet: &Planet,
-    filter: &Planet,
-    network_path: &str,
-    planet_path: &str,
-) {
+pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
     let start = Instant::now();
     let planet_grid = generate_planet_grid(planet);
-    let mut points = generate_points(num_nodes, &planet_grid);
-
-    points.retain(|p| filter.is_on_polygon(p));
+    let points = generate_points(num_nodes, &planet_grid);
 
     println!("took {:?}", start.elapsed());
     let point_grid = generate_point_grid(&points);

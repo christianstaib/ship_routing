@@ -1,13 +1,19 @@
 use std::{
     error::Error,
     fs::File,
-    io::{BufReader, BufWriter, Read, Write},
+    io::{BufRead, BufReader, BufWriter, Read, Write},
     str::FromStr,
 };
 
-use geojson::{FeatureCollection, Value};
+use geojson::{feature, Feature, FeatureCollection, Geometry, Value};
+use indicatif::ProgressIterator;
 
-use crate::{geometry::Arc, geometry::Linestring, geometry::Point, geometry::Polygon};
+use crate::{
+    geometry::Arc,
+    geometry::Linestring,
+    geometry::Polygon,
+    geometry::{self, Point},
+};
 
 use super::{collision_detection::CollisionDetection, Contains, OsmData};
 
@@ -62,12 +68,19 @@ impl Planet {
         raw_osm_data.to_planet()
     }
 
-    pub fn from_geojson_str(json: &str) -> Result<Planet, Box<dyn Error>> {
-        let feature_collection = FeatureCollection::from_str(json)?;
+    pub fn from_geojson_file(path: &str) -> Result<Planet, Box<dyn Error>> {
+        let reader = BufReader::new(File::open(path).unwrap());
         let mut planet = Planet::new();
-        feature_collection
-            .into_iter()
-            .filter_map(|feature| feature.geometry)
+
+        reader
+            .lines()
+            .filter_map(|line| {
+                let mut line = line.unwrap();
+                if line.chars().last() == Some(',') {
+                    line.pop();
+                }
+                Feature::from_str(line.as_str()).ok()?.geometry
+            })
             .for_each(|geometry| match geometry.value {
                 Value::Point(point) => planet.points.push(Point::from_geojson_vec(point)),
                 Value::Polygon(polygon) => planet
@@ -78,13 +91,6 @@ impl Planet {
             });
 
         Ok(planet)
-    }
-
-    pub fn from_geojson_file(path: &str) -> Result<Planet, Box<dyn Error>> {
-        let mut reader = BufReader::new(File::open(path).unwrap());
-        let mut json = String::new();
-        reader.read_to_string(&mut json)?;
-        Planet::from_geojson_str(json.as_str())
     }
 
     pub fn to_geojson_str(&self) -> String {

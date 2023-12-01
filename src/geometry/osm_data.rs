@@ -1,4 +1,4 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use indicatif::ProgressBar;
 use osmpbf::{Element, ElementReader};
@@ -35,15 +35,7 @@ impl OsmData {
 
         let reader = ElementReader::from_path(path).unwrap();
         let elements = reader
-            .par_map_reduce(
-                |element| match element {
-                    Element::Way(_) => 1,
-                    Element::DenseNode(_) => 1,
-                    _ => 0,
-                },
-                || 0_u64,     // Zero is the identity value for addition
-                |a, b| a + b, // Sum the partial results
-            )
+            .par_map_reduce(|_| 1, || 0_u64, |a, b| a + b)
             .unwrap();
         println!("there are {}", elements);
 
@@ -59,7 +51,7 @@ impl OsmData {
                     Element::Way(way) => {
                         if way
                             .tags()
-                            .find(|(key, value)| *key == "natural" && (*value == "coastline"))
+                            .find(|&(key, value)| key == "natural" && value == "coastline")
                             .is_some()
                         {
                             coastlines.push(way.refs().collect());
@@ -98,11 +90,9 @@ impl OsmData {
                 last = coastline.last().unwrap().clone();
             }
             coastline.dedup();
-            assert_eq!(coastline.first(), coastline.last());
             closed_coastlines.push(coastline);
         }
         pb.finish();
-        assert!(open_coastlines.is_empty());
         self.coastlines = closed_coastlines;
     }
 }
