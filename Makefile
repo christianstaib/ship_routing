@@ -42,4 +42,4 @@ convert: tests/data/osm tests/data/test_geojson
 	cargo run --release --bin osm_geojson_converter -- --input tests/data/osm/planet-coastlines.osm.pbf --output tests/data/test_geojson/planet.geojson
 
 server:
-	
+	cargo run --release --bin server -- -f tests/data/fmi/network.fmi
