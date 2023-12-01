@@ -34,5 +34,5 @@ WORKDIR /ship_routing
 COPY --from=preprocess /ship_routing /ship_routing
 
 ENTRYPOINT ["./server"]
-CMD ["-f", "network.fmi"]
+CMD ["-f", "network.fmi", "-a", "0.0.0.0:3030"]
 EXPOSE 3030

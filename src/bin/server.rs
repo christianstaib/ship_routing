@@ -19,6 +19,9 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     fmi_path: String,
+    /// The address to bind to
+    #[arg(short, long, default_value_t = String::from("127.0.0.1:3030"))]
+    bind: String,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -36,10 +39,14 @@ async fn main() {
         .allow_headers(vec!["Content-Type"]) // Specify allowed headers
         .allow_methods(vec!["GET", "POST", "OPTIONS"]); // Specify allowed methods
 
+    println!("Loading graph from file");
+    let time = Instant::now();
     let graph = Graph::from_file(args.fmi_path.as_str());
     let graph = Arc::new(graph);
     let fmi = Arc::new(Fmi::from_file(args.fmi_path.as_str()));
+    println!("Finished loading graph, took {:?}.", time.elapsed());
 
+    let frontend = warp::path::end().and(warp::fs::dir("public-html"));
     let promote = warp::post()
         .and(warp::path("route"))
         .and(warp::body::json())
@@ -76,5 +83,7 @@ async fn main() {
         })
         .with(cors);
 
-    warp::serve(promote).run(([127, 0, 0, 1], 3030)).await
+    let routes = frontend.or(promote);
+    let address = args.bind.parse::<std::net::SocketAddr>().unwrap();
+    warp::serve(routes).run(address).await
 }
