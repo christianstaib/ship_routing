@@ -20,17 +20,19 @@ RUN --mount=type=bind,source=src,target=/app/src \
 FROM debian:bookworm-slim AS preprocess
 WORKDIR /ship_routing
 COPY --from=build /ship_routing /ship_routing
+COPY filter.geojson ./
 # retrieve coastline file and verify checksum
 RUN apt-get update && apt-get install -y wget
 RUN wget https://cloud.p-fruck.de/s/pf9JfNabwDjrNL8/download/planet-coastlinespbf-cleaned.osm.pbf -O /tmp/coastlines.pbf \
   && echo "e4f6df0f21b4273ebe07286e0995ef4afc9df7f11f061ffcafdf0ece4f2670f0 /tmp/coastlines.pbf" | sha256sum --check
 RUN ./osm_geojson_converter -i /tmp/coastlines.pbf -o /tmp/planet.geojson
-RUN ./preprocessor -i /tmp/planet.geojson -n 4000000 --output-network ./network.fmi --output-geojson /tmp/network.geojson
+RUN ./preprocessor -i /tmp/planet.geojson -n 4000000 --output-network network.fmi --output-geojson /tmp/network.geojson
 
 # final stage - run the webserver
 FROM debian:bookworm-slim AS prod
 WORKDIR /ship_routing
 COPY --from=preprocess /ship_routing /ship_routing
 
-RUN ./server -f network.fmi
+ENTRYPOINT ["./server"]
+CMD ["-f", "network.fmi"]
 EXPOSE 3030
