@@ -94,12 +94,7 @@ impl Fmi {
 
     pub fn to_planet(&self) -> Planet {
         let mut planet = Planet::new();
-        planet.arcs = self
-            .arcs
-            .iter()
-            .map(|arc| arc._make_good_line())
-            .flatten()
-            .collect();
+        planet.arcs = self.arcs.clone();
         planet
     }
 

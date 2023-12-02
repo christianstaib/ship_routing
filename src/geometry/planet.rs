@@ -1,19 +1,13 @@
 use std::{
     error::Error,
     fs::File,
-    io::{BufRead, BufReader, BufWriter, Read, Write},
+    io::{BufRead, BufReader, BufWriter, Write},
     str::FromStr,
 };
 
-use geojson::{feature, Feature, FeatureCollection, Geometry, Value};
-use indicatif::ProgressIterator;
+use geojson::{Feature, Value};
 
-use crate::{
-    geometry::Arc,
-    geometry::Linestring,
-    geometry::Polygon,
-    geometry::{self, Point},
-};
+use crate::{geometry::Arc, geometry::Linestring, geometry::Point, geometry::Polygon};
 
 use super::{collision_detection::CollisionDetection, Contains, OsmData};
 
@@ -48,10 +42,6 @@ impl Planet {
             arcs: Vec::new(),
             linestrings: Vec::new(),
         }
-    }
-
-    fn add_polygon(&mut self, polygon: &Polygon) {
-        self.polygons.push(polygon.clone());
     }
 
     /// Returns the intersection points between all polygons and the arc.

@@ -28,7 +28,6 @@ fn main() {
     println!("{}x{}", x_pix, y_pix);
 
     let planet = Planet::from_geojson_file("tests/data/test_geojson/network.geojson").unwrap();
-    println!("xx");
     for arc in planet.arcs.iter().progress() {
         // Define the points
         let start = arc.from().to_geojson_vec();
