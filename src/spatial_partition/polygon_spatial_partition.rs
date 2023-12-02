@@ -87,7 +87,7 @@ impl PolygonSpatialPartition {
             .iter()
             .filter(|polygon| polygon.contains(&self.midpoint))
             .for_each(|_| {
-                println!("{}", self.midpoint);
+                println!("inside");
                 self.midpoint_flag = self.midpoint_flag.other()
             });
 

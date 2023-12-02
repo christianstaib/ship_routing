@@ -1,4 +1,4 @@
-use std::{f64::consts::PI, vec};
+use std::vec;
 
 use geojson::{Feature, Geometry, Value};
 
@@ -15,18 +15,11 @@ impl EverythingPolygon {
 #[derive(Clone)]
 pub struct Polygon {
     pub outline: Vec<Point>,
-    pub inside_point: Point,
 }
 
 impl Polygon {
     pub fn new(outline: Vec<Point>) -> Polygon {
-        let mut polygon = Polygon {
-            outline,
-            inside_point: Point::random(),
-        };
-
-        polygon.inside_point = polygon.get_inside_point();
-        polygon
+        Polygon { outline }
     }
 
     pub fn arcs(&self) -> Vec<Arc> {
@@ -34,33 +27,6 @@ impl Polygon {
             .windows(2)
             .map(|outline| Arc::new(&outline[0], &outline[1]))
             .collect()
-    }
-
-    pub fn get_inside_point(&self) -> Point {
-        let outline = Arc::new(&self.outline[0], &self.outline[1]);
-        let middle = outline.middle();
-        let destination =
-            Point::destination_point(&middle, outline.initial_bearing() + (PI / 2.0), -0.01);
-        let md = Arc::new(&middle, &destination);
-        let mut intersections = self.intersections(&md);
-        intersections.sort_by(|&a, &b| {
-            let a_dist = Arc::new(&middle, &a).central_angle();
-            let b_dist = Arc::new(&middle, &b).central_angle();
-            a_dist.partial_cmp(&b_dist).unwrap()
-        });
-
-        // make sure middle is in list
-        if let Some(first) = intersections.first() {
-            if !middle.is_approximately_equal(first) {
-                intersections.insert(0, middle);
-            }
-        } else {
-            intersections.insert(0, middle);
-        }
-
-        intersections.push(destination);
-
-        Arc::new(&intersections[0], &intersections[1]).middle()
     }
 
     pub fn intersections(&self, line: &Arc) -> Vec<Point> {

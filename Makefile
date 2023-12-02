@@ -39,4 +39,7 @@ convert:
 
 download:
 	curl https://cloud.p-fruck.de/s/pf9JfNabwDjrNL8/download/planet-coastlinespbf-cleaned.osm.pbf -o tests/data/osm/planet-coastlines.osm.pbf
+
+server:
+	cargo run --bin server --release  -- --fmi-path tests/data/fmi/network.fmi
 	
