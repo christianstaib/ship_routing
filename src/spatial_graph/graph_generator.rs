@@ -88,13 +88,12 @@ fn generate_arcs(
                 });
 
                 // if first point is point, take second
-                let mut idx = 0;
-                if let Some(first_point) = local_points.get(idx) {
+                if let Some(first_point) = local_points.last() {
                     if first_point == point {
-                        idx += 1;
+                        local_points.pop();
                     }
                 }
-                if let Some(target) = local_points.get(idx) {
+                if let Some(target) = local_points.pop() {
                     let arc = Arc::new(point, &target);
                     if radians_to_meter(arc.central_angle()) <= radius {
                         return Some(arc);
