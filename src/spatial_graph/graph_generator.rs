@@ -54,7 +54,7 @@ fn generate_point_grid(points: &Vec<Point>) -> PointSpatialPartition {
 
 fn generate_planet_grid(planet: &Planet) -> PolygonSpatialPartition {
     println!("generating planet grid");
-    let mut planet_grid = PolygonSpatialPartition::new(50);
+    let mut planet_grid = PolygonSpatialPartition::new(500);
     planet_grid.add_polygons(&planet.polygons);
     planet_grid
 }
@@ -87,9 +87,9 @@ fn generate_arcs(
                         .total_cmp(&Arc::new(point, x).central_angle())
                 });
 
-                // if first point is point, take second
-                if let Some(first_point) = local_points.last() {
-                    if first_point == point {
+                // if last point is point, take second
+                if let Some(last_point) = local_points.last() {
+                    if last_point == point {
                         local_points.pop();
                     }
                 }

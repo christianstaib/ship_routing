@@ -34,6 +34,6 @@ fn main() {
         &planet,
         args.output_network.as_str(),
         args.output_geojson.as_str(),
-        args.output_geojson.as_str(),
+        args.output_image.as_str(),
     );
 }
