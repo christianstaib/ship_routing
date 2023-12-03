@@ -12,7 +12,13 @@ use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
 
 use super::Fmi;
 
-pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, planet_path: &str) {
+pub fn generate_network(
+    num_nodes: u32,
+    planet: &Planet,
+    network_path: &str,
+    planet_path: &str,
+    image_path: &str,
+) {
     let start = Instant::now();
     let planet_grid = generate_planet_grid(planet);
     let points = generate_points(num_nodes, &planet_grid);
@@ -23,7 +29,10 @@ pub fn generate_network(num_nodes: u32, planet: &Planet, network_path: &str, pla
 
     let fmi = Fmi { points, arcs };
     fmi.to_file(network_path);
-    fmi.to_planet().to_geojson_file(planet_path);
+    let fmi_planet = fmi.to_planet();
+
+    fmi_planet.to_image(image_path);
+    fmi_planet.to_geojson_file(planet_path);
 }
 
 fn generate_points(how_many: u32, planet_grid: &PolygonSpatialPartition) -> Vec<Point> {
@@ -73,9 +82,9 @@ fn generate_arcs(
                 let mut local_points = point_grid.get_points(&polygon);
 
                 local_points.sort_unstable_by(|x, y| {
-                    Arc::new(point, x)
+                    Arc::new(point, y)
                         .central_angle()
-                        .total_cmp(&Arc::new(point, y).central_angle())
+                        .total_cmp(&Arc::new(point, x).central_angle())
                 });
 
                 // if first point is point, take second
@@ -94,7 +103,7 @@ fn generate_arcs(
 
                 None
             })
-            .filter(|arc| !planet_grid.intersects_polygon(arc))
+            .filter(|arc| !planet_grid.check_collision(arc))
             .collect::<Vec<_>>()
         })
         .flatten()

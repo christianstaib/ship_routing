@@ -40,10 +40,6 @@ impl CollisionDetection for PolygonSpatialPartition {
     fn is_on_polygon(&self, point: &Point) -> bool {
         self.is_on_polygon(point)
     }
-
-    fn intersects_polygon(&self, arc: &Arc) -> bool {
-        self.check_collision(arc)
-    }
 }
 
 impl PolygonSpatialPartition {
@@ -86,10 +82,7 @@ impl PolygonSpatialPartition {
         polygons
             .iter()
             .filter(|polygon| polygon.contains(&self.midpoint))
-            .for_each(|_| {
-                println!("inside");
-                self.midpoint_flag = self.midpoint_flag.other()
-            });
+            .for_each(|_| self.midpoint_flag = self.midpoint_flag.other());
 
         let number_of_arcs: u32 = polygons
             .iter()
@@ -121,7 +114,7 @@ impl PolygonSpatialPartition {
         arcs.iter().for_each(|arc| self.add_arc(arc));
     }
 
-    fn check_collision(&self, arc: &Arc) -> bool {
+    pub fn check_collision(&self, arc: &Arc) -> bool {
         let mut internals = vec![self];
         while let Some(parent) = internals.pop() {
             if let NodeType::Leaf(arcs) = &parent.node_type {
@@ -221,7 +214,6 @@ impl PolygonSpatialPartition {
             NodeType::Leaf(arcs) => arcs
                 .iter()
                 .filter_map(|arc| ray.intersection(arc))
-                //.filter(|p| self.boundary.contains(p))
                 .collect(),
         };
         intersections.sort_by(|x, y| x.longitude().partial_cmp(&y.longitude()).unwrap());

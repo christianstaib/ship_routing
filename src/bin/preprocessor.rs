@@ -19,6 +19,9 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     output_geojson: String,
+    /// Path of .png file
+    #[arg(short, long)]
+    output_image: String,
 }
 
 fn main() {
@@ -30,6 +33,7 @@ fn main() {
         args.num_nodes,
         &planet,
         args.output_network.as_str(),
+        args.output_geojson.as_str(),
         args.output_geojson.as_str(),
     );
 }
