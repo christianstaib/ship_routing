@@ -54,7 +54,7 @@ fn generate_point_grid(points: &Vec<Point>) -> PointSpatialPartition {
 
 fn generate_planet_grid(planet: &Planet) -> PolygonSpatialPartition {
     println!("generating planet grid");
-    let mut planet_grid = PolygonSpatialPartition::new(500);
+    let mut planet_grid = PolygonSpatialPartition::new(50);
     planet_grid.add_polygons(&planet.polygons);
     planet_grid
 }

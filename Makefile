@@ -1,6 +1,8 @@
 dirs:
-	mkdir /tests/data/test_geojson/
-	mkdir /tests/data/image/
+	mkdir tests/data/test_geojson/
+	mkdir tests/data/image/
+	mkdir tests/data/osm/
+	mkdir tests/data/image/
 
 download:
 	curl https://cloud.p-fruck.de/s/pf9JfNabwDjrNL8/download/planet-coastlinespbf-cleaned.osm.pbf -o tests/data/osm/planet-coastlines.osm.pbf
