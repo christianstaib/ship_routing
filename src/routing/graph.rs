@@ -127,39 +127,3 @@ impl Graph {
         }
     }
 }
-
-pub struct Route {
-    pub start: u32,
-    pub end: u32,
-    pub cost: u32,
-    pub edges: Vec<Edge>,
-}
-
-pub fn get_route(
-    graph: &Graph,
-    start: u32,
-    end: u32,
-    used_edges: Vec<Option<u32>>,
-) -> Option<Route> {
-    let mut edges: Vec<Edge> = Vec::new();
-    let mut current: u32 = end;
-
-    while let Some(edge_index) = used_edges[current as usize] {
-        current = graph.edges[edge_index as usize].source_id;
-        edges.push(graph.edges[edge_index as usize].clone());
-        if current == start {
-            break;
-        }
-    }
-
-    if current != start {
-        return None;
-    }
-
-    Some(Route {
-        start,
-        end,
-        cost: edges.iter().map(|edge| edge.cost).sum(),
-        edges,
-    })
-}

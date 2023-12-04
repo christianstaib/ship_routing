@@ -2,7 +2,11 @@ use std::time::{Duration, Instant};
 
 use clap::Parser;
 use indicatif::ProgressIterator;
-use osm_test::routing::{Dijkstra, Graph};
+use osm_test::routing::{
+    dijkstra::fast_dijkstra::Dijkstra,
+    route::{RouteRequest, Routing},
+    Graph,
+};
 use rand::Rng;
 
 /// Starts a routing service on localhost:3030/route
@@ -26,12 +30,14 @@ fn main() {
     let mut times = Vec::new();
 
     for _ in (0..1_000).progress() {
-        let source = rng.gen_range(0..number_nodes) as u32;
-        let target = rng.gen_range(0..number_nodes) as u32;
+        let route_request = RouteRequest {
+            source: rng.gen_range(0..number_nodes) as u32,
+            target: rng.gen_range(0..number_nodes) as u32,
+        };
         let before = Instant::now();
-        let (_, cost) = dijkstra.dijkstra(source, target);
+        let route_response = dijkstra.get_route(&route_request);
         times.push(before.elapsed());
-        if cost == u32::MAX {
+        if route_response.is_none() {
             println!("no route found");
         }
     }

@@ -3,8 +3,9 @@ use std::time::Instant;
 
 use osm_test::geometry::Linestring;
 use osm_test::geometry::Planet;
-use osm_test::routing::get_route;
-use osm_test::routing::Dijkstra;
+use osm_test::routing::dijkstra::fast_dijkstra::Dijkstra;
+use osm_test::routing::route::RouteRequest;
+use osm_test::routing::route::Routing;
 use osm_test::routing::Graph;
 use osm_test::spatial_graph::Fmi;
 use serde_derive::{Deserialize, Serialize};
@@ -25,7 +26,7 @@ struct Args {
 }
 
 #[derive(Deserialize, Serialize)]
-struct RouteRequest {
+struct RouteRequestLatLon {
     from: (f64, f64), // lon, lat
     to: (f64, f64),   // lon, lat
 }
@@ -50,36 +51,34 @@ async fn main() {
     let promote = warp::post()
         .and(warp::path("route"))
         .and(warp::body::json())
-        .map(move |route_request: RouteRequest| {
-            let from = fmi.nearest(route_request.from.0, route_request.from.1);
-            let to = fmi.nearest(route_request.to.0, route_request.to.1);
+        .map(move |route_request_lat_lon: RouteRequestLatLon| {
+            let source = fmi.nearest(route_request_lat_lon.from.0, route_request_lat_lon.from.1);
+            let target = fmi.nearest(route_request_lat_lon.to.0, route_request_lat_lon.to.1);
+            let route_request = RouteRequest { source, target };
 
             let dijkstra = Dijkstra::new(&graph);
             let start = Instant::now();
-            let (used_edges, cost) = dijkstra.dijkstra(from, to);
+            let route_response = dijkstra.get_route(&route_request);
             let time = start.elapsed();
-            let route = get_route(&graph, from, to, used_edges);
 
-            let mut ids = Vec::new();
-            if let Some(route) = route {
-                ids.extend(route.edges.iter().map(|edge| edge.source_id));
-                if let Some(last) = route.edges.last() {
-                    ids.push(last.target_id);
-                }
+            if let Some(route) = route_response {
+                let ids = route.nodes;
+                let path = fmi.convert_path(&ids);
+                let linesstring = Linestring::new(path);
+                let mut planet = Planet::new();
+                planet.linestrings.push(linesstring);
+
+                println!(
+                    "route_request: {:>7} -> {:>7}, cost: {:>9}, took: {:>3}ms",
+                    source,
+                    target,
+                    route.cost,
+                    time.as_millis()
+                );
+                return Response::builder().body(format!("{}", planet.to_geojson_str()));
             }
-            let path = fmi.convert_path(&ids);
-            let linesstring = Linestring::new(path);
-            let mut planet = Planet::new();
-            planet.linestrings.push(linesstring);
 
-            println!(
-                "route_request: {:>7} -> {:>7}, cost: {:>9}, took: {:>3}ms",
-                from,
-                to,
-                cost,
-                time.as_millis()
-            );
-            Response::builder().body(format!("{}", planet.to_geojson_str()))
+            Response::builder().body("".into())
         })
         .with(cors);
 
