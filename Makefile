@@ -4,6 +4,7 @@ dirs:
 	mkdir tests/data/osm/
 	mkdir tests/data/fmi/
 
+
 download:
 	curl https://cloud.p-fruck.de/s/pf9JfNabwDjrNL8/download/planet-coastlinespbf-cleaned.osm.pbf -o tests/data/osm/planet-coastlines.osm.pbf
 
@@ -21,5 +22,3 @@ server:
 
 test:
 	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi
-	
-

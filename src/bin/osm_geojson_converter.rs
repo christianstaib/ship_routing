@@ -1,14 +1,14 @@
 use clap::Parser;
 use osm_test::geometry::Planet;
 
-/// Starts a routing service on localhost:3030/route
+/// Parse parameters for OSM converter
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Path of .fmi file
+    /// Path of the .pbf input file
     #[arg(short, long)]
     input: String,
-    /// Path of .fmi file
+    /// Path of the geojson output file
     #[arg(short, long)]
     output: String,
 }
