@@ -1,31 +1,30 @@
-use std::sync::Mutex;
+use indicatif::ProgressIterator;
 
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-
-use crate::{
-    meters_to_radians, Arc, Collides, CollisionDetection, Contains, ConvecQuadrilateral, Planet,
-    Point, Polygon, Tiling,
+use crate::geometry::{
+    meters_to_radians, Arc, Collides, CollisionDetection, Contains, Point, Polygon,
 };
 
+use super::{tiling::Tiling, ConvecQuadrilateral};
+
 #[derive(Clone)]
-pub struct SpatialPartition {
-    pub boundary: ConvecQuadrilateral,
-    pub node_type: NodeType,
-    pub max_size: usize,
-    pub midpoint: Point,
-    pub midpoint_flag: PointStatus,
+pub struct PolygonSpatialPartition {
+    boundary: ConvecQuadrilateral,
+    node_type: NodeType,
+    max_size: usize,
+    midpoint: Point,
+    midpoint_flag: PointStatus,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum PointStatus {
+enum PointStatus {
     Inside,
     Outside,
 }
 
 #[derive(Clone)]
-pub enum NodeType {
-    Internal(Vec<SpatialPartition>), // four children
-    Leaf(Vec<Arc>),                  // a bucket of points
+enum NodeType {
+    Internal(Vec<PolygonSpatialPartition>), // four children
+    Leaf(Vec<Arc>),                         // a bucket of points
 }
 
 impl PointStatus {
@@ -37,65 +36,14 @@ impl PointStatus {
     }
 }
 
-pub struct PlanetGrid {
-    pub spatial_partition: SpatialPartition,
-    reference_point: Point,
-    reference_point_status: PointStatus,
-}
-
-impl CollisionDetection for PlanetGrid {
-    fn add_polygon(&mut self, polygon: &Polygon) {
-        polygon
-            .outline
-            .windows(2)
-            .map(|arc| Arc::new(&arc[0], &arc[1]))
-            .for_each(|arc| {
-                self.spatial_partition.add_arc(&arc);
-            });
-
-        if polygon.contains(&self.reference_point) {
-            match self.reference_point_status {
-                PointStatus::Inside => self.reference_point_status = PointStatus::Outside,
-                PointStatus::Outside => self.reference_point_status = PointStatus::Outside,
-            }
-        }
-
-        // TODO update midpoints
-    }
-
+impl CollisionDetection for PolygonSpatialPartition {
     fn is_on_polygon(&self, point: &Point) -> bool {
-        self.spatial_partition.is_on_polygon(point)
-    }
-
-    fn intersects_polygon(&self, _arc: &Arc) -> bool {
-        todo!()
+        self.is_on_polygon(point)
     }
 }
 
-impl PlanetGrid {
-    pub fn new(max_size: usize) -> PlanetGrid {
-        let polygons = Tiling::base_tiling();
-        PlanetGrid {
-            spatial_partition: SpatialPartition::new_root(&polygons, max_size),
-            reference_point: Point::random(),
-            reference_point_status: PointStatus::Outside,
-        }
-    }
-
-    pub fn intersections(&self, ray: &Arc) -> Vec<Point> {
-        let mut intersections = self.spatial_partition.intersections(ray);
-        intersections.sort_by(|x, y| x.longitude().partial_cmp(&y.longitude()).unwrap());
-        intersections.dedup(); // i dont know exactly why this is necesary, but it is :(
-        intersections
-    }
-
-    pub fn update_midpoints(&mut self) {
-        self.spatial_partition.propagate_status();
-    }
-}
-
-impl SpatialPartition {
-    pub fn new_root(polygons: &Vec<ConvecQuadrilateral>, max_size: usize) -> SpatialPartition {
+impl PolygonSpatialPartition {
+    pub fn new(max_size: usize) -> PolygonSpatialPartition {
         let boundary = ConvecQuadrilateral::new(&vec![
             Point::from_coordinate(0.0, 0.0),
             Point::from_coordinate(1.0, 1.0),
@@ -104,13 +52,13 @@ impl SpatialPartition {
             Point::from_coordinate(0.0, 0.0),
         ]);
         let midpoint = boundary.get_midpoint();
-        SpatialPartition {
+        PolygonSpatialPartition {
             boundary,
             node_type: NodeType::Internal(
-                polygons
+                Tiling::base_tiling()
                     .iter()
                     .cloned()
-                    .map(|p| SpatialPartition::new_leaf(p, max_size))
+                    .map(|p| PolygonSpatialPartition::new_leaf(p, max_size))
                     .collect(),
             ),
             max_size,
@@ -119,9 +67,9 @@ impl SpatialPartition {
         }
     }
 
-    pub fn new_leaf(boundary: ConvecQuadrilateral, max_size: usize) -> SpatialPartition {
+    fn new_leaf(boundary: ConvecQuadrilateral, max_size: usize) -> PolygonSpatialPartition {
         let midpoint = boundary.get_midpoint();
-        SpatialPartition {
+        PolygonSpatialPartition {
             boundary,
             node_type: NodeType::Leaf(Vec::with_capacity(max_size + 1)),
             max_size,
@@ -130,20 +78,64 @@ impl SpatialPartition {
         }
     }
 
+    pub fn add_polygons(&mut self, polygons: &Vec<Polygon>) {
+        polygons
+            .iter()
+            .filter(|polygon| polygon.contains(&self.midpoint))
+            .for_each(|_| self.midpoint_flag = self.midpoint_flag.other());
+
+        let number_of_arcs: u32 = polygons
+            .iter()
+            .map(|polygon| polygon.outline.len().checked_sub(1).unwrap_or(0) as u32)
+            .sum();
+
+        polygons
+            .iter()
+            .flat_map(|polygon| polygon.arcs())
+            .progress_count(number_of_arcs as u64)
+            .for_each(|arc| self.add_arc(&arc));
+
+        self.update_midpoints();
+    }
+
     fn split(&mut self) {
         let mut arcs: Vec<Arc> = Vec::new();
-        if let NodeType::Leaf(old_arcs) = &self.node_type {
-            arcs.extend(old_arcs);
+        if let NodeType::Leaf(old_arcs) = &mut self.node_type {
+            arcs.extend(old_arcs.drain(0..));
         }
         self.node_type = NodeType::Internal(
             self.boundary
                 .split()
                 .into_iter()
-                .map(|rectangle| SpatialPartition::new_leaf(rectangle, self.max_size))
+                .map(|rectangle| PolygonSpatialPartition::new_leaf(rectangle, self.max_size))
                 .collect(),
         );
 
         arcs.iter().for_each(|arc| self.add_arc(arc));
+    }
+
+    pub fn check_collision(&self, arc: &Arc) -> bool {
+        let mut internals = vec![self];
+        while let Some(parent) = internals.pop() {
+            if let NodeType::Leaf(arcs) = &parent.node_type {
+                if arcs.iter().any(|other| other.collides(arc)) {
+                    return true;
+                }
+            } else if let NodeType::Internal(childs) = &parent.node_type {
+                for child in childs.iter() {
+                    let contrains_from = child.boundary.contains(arc.from());
+                    let contrains_to = child.boundary.contains(arc.to());
+                    if contrains_from && contrains_to {
+                        internals.push(child);
+                        break;
+                    } else if child.boundary.collides(arc) {
+                        // expensive check
+                        internals.push(child);
+                    }
+                }
+            }
+        }
+        false
     }
 
     fn add_arc(&mut self, arc: &Arc) {
@@ -181,7 +173,7 @@ impl SpatialPartition {
         }
     }
 
-    pub fn propagate_status(&mut self) {
+    fn update_midpoints(&mut self) {
         let mut stack = Vec::new();
         stack.push(self);
 
@@ -207,54 +199,7 @@ impl SpatialPartition {
         }
     }
 
-    pub fn get_leaf_polygons(&self) -> Vec<Arc> {
-        match &self.node_type {
-            NodeType::Internal(q) => q.iter().flat_map(|q| q.get_leaf_polygons()).collect(),
-            NodeType::Leaf(_) => self
-                .boundary
-                .outline
-                .windows(2)
-                .map(|arc| Arc::new(&arc[0], &arc[1])._make_good_line())
-                .flatten()
-                .collect(),
-        }
-    }
-
-    pub fn propagte_status_test(&self, planet: &Planet, out_planet: std::sync::Arc<Mutex<Planet>>) {
-        if let NodeType::Internal(quadtrees) = &self.node_type {
-            for quadtree in quadtrees {
-                let ray = Arc::new(&self.midpoint, &quadtree.midpoint);
-                let intersections = self.intersections(&ray);
-                //assert_eq!(planet.intersections(&ray).len(), intersections.len());
-                if intersections.len() % 2 == 0 {
-                    if self.midpoint_flag != quadtree.midpoint_flag {
-                        println!("error in propgation");
-                        out_planet
-                            .lock()
-                            .unwrap()
-                            .arcs
-                            .extend(ray._make_good_line());
-                        out_planet.lock().unwrap().points.extend(intersections);
-                    }
-                } else {
-                    if self.midpoint_flag != quadtree.midpoint_flag.other() {
-                        println!("error in propgation");
-                        out_planet
-                            .lock()
-                            .unwrap()
-                            .arcs
-                            .extend(ray._make_good_line());
-                        out_planet.lock().unwrap().points.extend(intersections);
-                    }
-                }
-            }
-            quadtrees
-                .par_iter()
-                .for_each(|quadtree| quadtree.propagte_status_test(planet, out_planet.clone()));
-        }
-    }
-
-    pub fn intersections(&self, ray: &Arc) -> Vec<Point> {
+    fn intersections(&self, ray: &Arc) -> Vec<Point> {
         let mut intersections: Vec<Point> = match &self.node_type {
             NodeType::Internal(quadtrees) => quadtrees
                 .iter()
@@ -269,7 +214,6 @@ impl SpatialPartition {
             NodeType::Leaf(arcs) => arcs
                 .iter()
                 .filter_map(|arc| ray.intersection(arc))
-                //.filter(|p| self.boundary.contains(p))
                 .collect(),
         };
         intersections.sort_by(|x, y| x.longitude().partial_cmp(&y.longitude()).unwrap());

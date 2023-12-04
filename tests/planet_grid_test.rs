@@ -1,5 +1,4 @@
-use indicatif::ProgressIterator;
-use osm_test::{CollisionDetection, Planet, PlanetGrid};
+use osm_test::{geometry::Planet, spatial_partition::PolygonSpatialPartition};
 use rayon::prelude::*;
 
 #[test]
@@ -8,16 +7,11 @@ fn planet_grid() {
     let planet = Planet::from_geojson_file(PLANET_PATH).unwrap();
 
     // generating grid
-    let mut planet_grid = PlanetGrid::new(50);
-    planet
-        .polygons
-        .iter()
-        .progress()
-        .for_each(|polygon| planet_grid.add_polygon(polygon));
+    let mut planet_grid = PolygonSpatialPartition::new(50);
+    planet_grid.add_polygons(&planet.polygons);
 
     // updating midpoints
     println!("updating midpoints");
-    planet_grid.update_midpoints();
 
     // test if points known to be on land are correctly categorized
     const ON_LAND_PATH: &str = "tests/data/geojson/points_on_land.geojson";

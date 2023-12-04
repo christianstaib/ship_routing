@@ -1,9 +1,10 @@
-use crate::{meters_to_radians, Arc, ConvecQuadrilateral, Point, Polygon};
+use crate::{
+    geometry::{meters_to_radians, Arc, Point, Polygon},
+    spatial_partition::ConvecQuadrilateral,
+};
 
 pub trait CollisionDetection {
-    fn add_polygon(&mut self, polygon: &Polygon);
     fn is_on_polygon(&self, point: &Point) -> bool;
-    fn intersects_polygon(&self, arc: &Arc) -> bool;
 }
 
 //
@@ -107,6 +108,17 @@ impl Collides<Point> for ConvecQuadrilateral {
     }
 }
 
+impl Collides<ConvecQuadrilateral> for ConvecQuadrilateral {
+    fn collides(&self, rhs: &ConvecQuadrilateral) -> bool {
+        !self.outline.windows(2).any(|arc| {
+            let arc = Arc::new(&arc[0], &arc[1]);
+            rhs.outline
+                .iter()
+                .all(|point| !arc.is_on_righthand_side(point))
+        })
+    }
+}
+
 impl Collides<Arc> for ConvecQuadrilateral {
     fn collides(&self, rhs: &Arc) -> bool {
         self.outline.windows(2).any(|outline| {
@@ -124,19 +136,24 @@ pub trait Contains<Rhs = Self> {
     fn contains(&self, rhs: &Rhs) -> bool;
 }
 
+// Polygon
+
 impl Contains<Point> for Polygon {
     fn contains(&self, rhs: &Point) -> bool {
-        let ray = Arc::new(rhs, &self.inside_point);
+        let north_pole = Point::north_pole();
+        let ray = Arc::new(rhs, &north_pole);
         let intersections = self.intersections(&ray).len();
-        intersections % 2 == 0
+        intersections % 2 == 1
     }
 }
 
 impl Contains<Arc> for Polygon {
-    fn contains(&self, rhs: &Arc) -> bool {
+    fn contains(&self, _rhs: &Arc) -> bool {
         todo!()
     }
 }
+
+// ConvecQuadrilateral
 
 impl Contains<Point> for ConvecQuadrilateral {
     fn contains(&self, rhs: &Point) -> bool {

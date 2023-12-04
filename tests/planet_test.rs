@@ -1,4 +1,4 @@
-use osm_test::{CollisionDetection, Planet};
+use osm_test::geometry::{CollisionDetection, Planet};
 use rayon::prelude::*;
 
 #[test]

@@ -1,30 +1,25 @@
-GEOJSON_DIR := data/geojson
-MBTILES_DIR := data/mbtiles
-DOCKER_IMG := metacollin/tippecanoe
+dirs:
+	mkdir tests/data/test_geojson/
+	mkdir tests/data/image/
+	mkdir tests/data/osm/
+	mkdir tests/data/fmi/
 
-generate_mbtiles:
-	mkdir -p $(GEOJSON_DIR)
-	mkdir -p $(MBTILES_DIR)
-	
-	for file in $(GEOJSON_DIR)/*.geojson; do \
-    echo "generating mbtiles for $$file"; \
-    IN_FILE=/mnt/data/$$file; \
-    OUT_FILE=/mnt/data/$(MBTILES_DIR)/$$(basename $$file .geojson).mbtiles; \
-    docker run \
-      --rm \
-      -v $$(pwd):/mnt/data \
-      $(DOCKER_IMG) \
-      tippecanoe \
-        --read-parallel \
-        -zg \
-        -o $$OUT_FILE \
-        --drop-densest-as-needed \
-        $$IN_FILE \
-				--force; \
-  done
+download:
+	curl https://cloud.p-fruck.de/s/pf9JfNabwDjrNL8/download/planet-coastlinespbf-cleaned.osm.pbf -o tests/data/osm/planet-coastlines.osm.pbf
 
-start_tileserver:
-	docker run --rm -it -v ./data:/data -p 8080:8080 maptiler/tileserver-gl-light --config /data/config.json
+convert:
+	cargo run --release --bin osm_geojson_converter -- --input tests/data/osm/planet-coastlines.osm.pbf --output tests/data/test_geojson/planet.geojson
+
+network:
+	cargo run --release --bin preprocessor -- --input tests/data/test_geojson/planet.geojson --num-nodes 4000000 --output-network tests/data/fmi/network.fmi --output-geojson tests/data/test_geojson/network.geojson --output-image tests/data/test_geojson/network.png
+
+leaflet:
+	docker run -dit --name leaflet -p 8080:80 -v ./public-html:/usr/local/apache2/htdocs/ httpd:2.4
+
+server:
+	cargo run --bin server --release  -- --fmi-path tests/data/fmi/network.fmi
+
+test:
+	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi
 	
-merge:
-	tile-join -o mbtiles/merged.mbtiles mbtiles/planet.mbtiles mbtiles/points.mbtiles --force
+

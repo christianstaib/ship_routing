@@ -4,10 +4,10 @@ use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 use rand::Rng;
 
-use crate::{meters_to_radians, Collides, Point};
+use crate::geometry::Point;
 
 /// Represents a minor arc, e.g. the shortest path between to points, called 'from' and 'to'.
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Arc {
     from: Point,
     to: Point,
@@ -136,9 +136,6 @@ impl Arc {
         let a1 = point.n_vector().dot(&self.to_normal());
 
         a0 >= 0.0 && a1 <= 0.0
-        // || (a0 >= 0.0 && point.is_approximately_equal(&self.from)) // TODO can this be
-        // removed?
-        // || (a1 <= 0.0 && point.is_approximately_equal(&self.to))
     }
 
     /// Returns the central angle of the arc in radians.
@@ -161,26 +158,6 @@ impl Arc {
         vec![self.from.to_geojson_vec(), self.to.to_geojson_vec()]
     }
 
-    // This function iteratively subdivides each arc in the `arcs` vector into smaller arcs until all arcs have a
-    // central angle less than a specified threshold (corresponding to 1000 meters). It then
-    // filters out subarcs that cross the dateline. It then filters out subarcs that cross the
-    // dateline.
-    pub fn _make_good_line(&self) -> Vec<Arc> {
-        let mut arcs = vec![self.clone()];
-        while arcs[0].central_angle() > meters_to_radians(5000.0) {
-            arcs = arcs
-                .iter()
-                .map(|arc| {
-                    let middle = arc.middle();
-                    vec![Arc::new(&arc.from(), &middle), Arc::new(&middle, &arc.to())]
-                })
-                .flatten()
-                .collect();
-        }
-        arcs.retain(|arc| (arc.from().longitude() - arc.to().longitude()).abs() < 10.0);
-        arcs
-    }
-
     pub fn to_feature(&self) -> Feature {
         let point = Geometry::new(Value::LineString(vec![
             self.from.to_geojson_vec(),
@@ -200,14 +177,33 @@ impl Arc {
 mod tests {
     use std::f64::consts::PI;
 
-    use crate::{Arc, Point};
+    use crate::geometry::{Arc, Point};
 
     #[test]
-    fn test_central_angle() {
+    fn test_central_angle1() {
         let from = Point::from_coordinate(90.0, 0.0);
         let to = Point::from_coordinate(0.0, 0.0);
         let arc = Arc::new(&from, &to);
-        assert!((arc.central_angle() - (PI / 2.0)).abs() < 1e-10);
+        let angle = arc.central_angle();
+        assert!((angle - (PI / 2.0)).abs() < 1e-10, "angle was {}", angle);
+    }
+
+    #[test]
+    fn test_central_angle2() {
+        let from = Point::from_coordinate(0.0, 135.0);
+        let to = Point::from_coordinate(0.0, -135.0);
+        let arc = Arc::new(&from, &to);
+        let angle = arc.central_angle();
+        assert!((angle - (PI / 2.0)).abs() < 1e-10, "angle was {}", angle);
+    }
+
+    #[test]
+    fn test_central_angle3() {
+        let from = Point::from_coordinate(0.0, 135.0);
+        let to = Point::from_coordinate(0.0, -135.0);
+        let arc = Arc::new(&from, &to);
+        let angle = arc.central_angle();
+        assert!((angle - (PI / 2.0)).abs() < 1e-10, "angle was {}", angle);
     }
 
     #[test]
