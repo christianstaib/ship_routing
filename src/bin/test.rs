@@ -16,6 +16,9 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     fmi_path: String,
+    /// Number of tests to be run
+    #[arg(short, long)]
+    number_of_tests: u32,
 }
 
 fn main() {
@@ -29,7 +32,7 @@ fn main() {
 
     let mut times = Vec::new();
 
-    for _ in (0..1_000).progress() {
+    for _ in (0..args.number_of_tests).progress() {
         let route_request = RouteRequest {
             source: rng.gen_range(0..number_nodes) as u32,
             target: rng.gen_range(0..number_nodes) as u32,
