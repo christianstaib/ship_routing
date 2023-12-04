@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y wget
 RUN wget https://cloud.p-fruck.de/s/pf9JfNabwDjrNL8/download/planet-coastlinespbf-cleaned.osm.pbf -O /tmp/coastlines.pbf \
   && echo "e4f6df0f21b4273ebe07286e0995ef4afc9df7f11f061ffcafdf0ece4f2670f0 /tmp/coastlines.pbf" | sha256sum --check
 RUN ./osm_geojson_converter -i /tmp/coastlines.pbf -o /tmp/planet.geojson
-RUN ./preprocessor -i /tmp/planet.geojson -n 4000000 --output-network network.fmi --output-geojson /tmp/network.geojson
+RUN ./preprocessor -i /tmp/planet.geojson -n 4000000 --output-network network.fmi --output-geojson /tmp/network.geojson --output-image /tmp/network.png
 
 # final stage - run the webserver
 FROM debian:bookworm-slim AS prod

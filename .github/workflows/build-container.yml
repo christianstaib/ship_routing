@@ -102,6 +102,7 @@ jobs:
           # data
           docker cp artifacts:/tmp/planet.geojson artifacts/
           docker cp artifacts:/tmp/network.geojson artifacts/
+          docker cp artifacts:/tmp/network.png artifacts/
           docker cp artifacts:/ship_routing/network.fmi artifacts/
 
       - name: Upload binaries and generated files to GitHub artifacts
