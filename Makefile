@@ -1,45 +1,24 @@
-GEOJSON_DIR := tests/data/test_geojson
-MBTILES_DIR := tests/data/mbtiles
-DOCKER_IMG := metacollin/tippecanoe
+dirs:
+	mkdir tests/data/test_geojson/
+	mkdir tests/data/image/
+	mkdir tests/data/osm/
+	mkdir tests/data/fmi/
 
-mbtiles:
-	mkdir -p $(GEOJSON_DIR)
-	mkdir -p $(MBTILES_DIR)
-	
-	for file in $(GEOJSON_DIR)/*.geojson; do \
-    echo "generating mbtiles for $$file"; \
-    IN_FILE=/mnt/data/$$file; \
-    OUT_FILE=/mnt/data/$(MBTILES_DIR)/$$(basename $$file .geojson).mbtiles; \
-    docker run \
-      --rm \
-      -v $$(pwd):/mnt/data \
-      $(DOCKER_IMG) \
-      tippecanoe \
-        --read-parallel \
-        -z10 \
-        -o $$OUT_FILE \
-        $$IN_FILE \
-				--force; \
-  done
 
-# create data directories if they do not exist yet
-tests/data/%:
-	mkdir $@
+download:
+	curl https://cloud.p-fruck.de/s/pf9JfNabwDjrNL8/download/planet-coastlinespbf-cleaned.osm.pbf -o tests/data/osm/planet-coastlines.osm.pbf
 
-start_tileserver:
-	docker run --rm -it -v ./tests/data:/data -p 8080:8080 maptiler/tileserver-gl --config /data/config.json
-	
-merge:
-	tile-join -o mbtiles/merged.mbtiles mbtiles/planet.mbtiles mbtiles/points.mbtiles --force
+convert:
+	cargo run --release --bin osm_geojson_converter -- --input tests/data/osm/planet-coastlines.osm.pbf --output tests/data/test_geojson/planet.geojson
+
+network:
+	cargo run --release --bin preprocessor -- --input tests/data/test_geojson/planet.geojson --num-nodes 4000000 --output-network tests/data/fmi/network.fmi --output-geojson tests/data/test_geojson/network.geojson --output-image tests/data/test_geojson/network.png
 
 leaflet:
 	docker run -dit --name leaflet -p 8080:80 -v ./public-html:/usr/local/apache2/htdocs/ httpd:2.4
 
-network: tests/data/fmi
-	cargo run --release --bin preprocessor -- --input tests/data/test_geojson/planet.geojson --num-nodes 4000000 --output-network tests/data/fmi/network.fmi --output-geojson tests/data/test_geojson/network.geojson
-
-convert: tests/data/osm tests/data/test_geojson
-	cargo run --release --bin osm_geojson_converter -- --input tests/data/osm/planet-coastlines.osm.pbf --output tests/data/test_geojson/planet.geojson
-
 server:
-	cargo run --release --bin server -- -f tests/data/fmi/network.fmi
+	cargo run --bin server --release  -- --fmi-path tests/data/fmi/network.fmi
+
+test:
+	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi

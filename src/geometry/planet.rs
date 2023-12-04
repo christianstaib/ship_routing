@@ -1,11 +1,14 @@
 use std::{
     error::Error,
     fs::File,
-    io::{BufReader, BufWriter, Read, Write},
+    io::{BufRead, BufReader, BufWriter, Write},
     str::FromStr,
 };
 
-use geojson::{FeatureCollection, Value};
+use geojson::{Feature, Value};
+use image::{GrayImage, Luma};
+use imageproc::{drawing::draw_antialiased_line_segment_mut, pixelops::interpolate};
+use indicatif::ProgressIterator;
 
 use crate::{geometry::Arc, geometry::Linestring, geometry::Point, geometry::Polygon};
 
@@ -27,10 +30,6 @@ impl CollisionDetection for Planet {
             .next()
             .is_some()
     }
-
-    fn intersects_polygon(&self, _arc: &Arc) -> bool {
-        todo!()
-    }
 }
 
 impl Planet {
@@ -42,10 +41,6 @@ impl Planet {
             arcs: Vec::new(),
             linestrings: Vec::new(),
         }
-    }
-
-    fn add_polygon(&mut self, polygon: &Polygon) {
-        self.polygons.push(polygon.clone());
     }
 
     /// Returns the intersection points between all polygons and the arc.
@@ -62,12 +57,57 @@ impl Planet {
         raw_osm_data.to_planet()
     }
 
-    pub fn from_geojson_str(json: &str) -> Result<Planet, Box<dyn Error>> {
-        let feature_collection = FeatureCollection::from_str(json)?;
+    pub fn to_image(&self, path: &str) {
+        let white = Luma([255u8]);
+
+        // lon, lat
+        let min: (f64, f64) = (-180.0, -90.0);
+        let max: (f64, f64) = (180.0, 90.0);
+
+        let pix_per_unit = 100.0;
+        let x_pix = ((max.0 - min.0) * pix_per_unit) as u32;
+        let y_pix = ((max.1 - min.1) * pix_per_unit) as u32;
+        let mut image = GrayImage::new(x_pix, y_pix);
+
+        for arc in self.arcs.iter().progress() {
+            let start = arc.from().to_geojson_vec();
+            let mut end = arc.to().to_geojson_vec();
+
+            if start[0] < -170.0 && end[0] > 170.0 {
+                end[0] -= 360.0;
+            } else if start[0] > 170.0 && end[0] < -170.0 {
+                end[0] += 360.0;
+            }
+
+            let start = (
+                scale(start[0], min.0, max.0, 0, x_pix),
+                scale(-start[1], min.1, max.1, 0, y_pix),
+            );
+            let end = (
+                scale(end[0], min.0, max.0, 0, x_pix),
+                scale(-end[1], min.1, max.1, 0, y_pix),
+            );
+
+            draw_antialiased_line_segment_mut(&mut image, start, end, white, interpolate);
+        }
+
+        // Save the image
+        image.save(path).unwrap();
+    }
+
+    pub fn from_geojson_file(path: &str) -> Result<Planet, Box<dyn Error>> {
+        let reader = BufReader::new(File::open(path).unwrap());
         let mut planet = Planet::new();
-        feature_collection
-            .into_iter()
-            .filter_map(|feature| feature.geometry)
+
+        reader
+            .lines()
+            .filter_map(|line| {
+                let mut line = line.unwrap();
+                if line.chars().last() == Some(',') {
+                    line.pop();
+                }
+                Feature::from_str(line.as_str()).ok()?.geometry
+            })
             .for_each(|geometry| match geometry.value {
                 Value::Point(point) => planet.points.push(Point::from_geojson_vec(point)),
                 Value::Polygon(polygon) => planet
@@ -78,13 +118,6 @@ impl Planet {
             });
 
         Ok(planet)
-    }
-
-    pub fn from_geojson_file(path: &str) -> Result<Planet, Box<dyn Error>> {
-        let mut reader = BufReader::new(File::open(path).unwrap());
-        let mut json = String::new();
-        reader.read_to_string(&mut json)?;
-        Planet::from_geojson_str(json.as_str())
     }
 
     pub fn to_geojson_str(&self) -> String {
@@ -139,4 +172,11 @@ impl Planet {
         writeln!(writer, r#"]}}"#,).unwrap();
         writer.flush().unwrap();
     }
+}
+
+pub fn scale(input: f64, input_min: f64, input_max: f64, output_min: u32, output_max: u32) -> i32 {
+    let input_range = input_max - input_min;
+    let output_range = output_max as f64 - output_min as f64;
+    let scaled_value = ((input - input_min) / input_range) * output_range;
+    (scaled_value + output_min as f64).round() as i32
 }

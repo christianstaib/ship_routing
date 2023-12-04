@@ -5,7 +5,6 @@ use crate::{
 
 pub trait CollisionDetection {
     fn is_on_polygon(&self, point: &Point) -> bool;
-    fn intersects_polygon(&self, arc: &Arc) -> bool;
 }
 
 //
@@ -141,9 +140,10 @@ pub trait Contains<Rhs = Self> {
 
 impl Contains<Point> for Polygon {
     fn contains(&self, rhs: &Point) -> bool {
-        let ray = Arc::new(rhs, &self.inside_point);
+        let north_pole = Point::north_pole();
+        let ray = Arc::new(rhs, &north_pole);
         let intersections = self.intersections(&ray).len();
-        intersections % 2 == 0
+        intersections % 2 == 1
     }
 }
 

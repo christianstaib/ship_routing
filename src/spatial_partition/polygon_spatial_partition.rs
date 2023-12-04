@@ -1,8 +1,4 @@
-
-
 use indicatif::ProgressIterator;
-use log::{warn};
-use rayon::prelude::*;
 
 use crate::geometry::{
     meters_to_radians, Arc, Collides, CollisionDetection, Contains, Point, Polygon,
@@ -44,10 +40,6 @@ impl CollisionDetection for PolygonSpatialPartition {
     fn is_on_polygon(&self, point: &Point) -> bool {
         self.is_on_polygon(point)
     }
-
-    fn intersects_polygon(&self, arc: &Arc) -> bool {
-        self.check_collision(arc)
-    }
 }
 
 impl PolygonSpatialPartition {
@@ -87,7 +79,6 @@ impl PolygonSpatialPartition {
     }
 
     pub fn add_polygons(&mut self, polygons: &Vec<Polygon>) {
-        warn!("xxxxxxxxx adding polgons");
         polygons
             .iter()
             .filter(|polygon| polygon.contains(&self.midpoint))
@@ -123,7 +114,7 @@ impl PolygonSpatialPartition {
         arcs.iter().for_each(|arc| self.add_arc(arc));
     }
 
-    fn check_collision(&self, arc: &Arc) -> bool {
+    pub fn check_collision(&self, arc: &Arc) -> bool {
         let mut internals = vec![self];
         while let Some(parent) = internals.pop() {
             if let NodeType::Leaf(arcs) = &parent.node_type {
@@ -223,7 +214,6 @@ impl PolygonSpatialPartition {
             NodeType::Leaf(arcs) => arcs
                 .iter()
                 .filter_map(|arc| ray.intersection(arc))
-                //.filter(|p| self.boundary.contains(p))
                 .collect(),
         };
         intersections.sort_by(|x, y| x.longitude().partial_cmp(&y.longitude()).unwrap());

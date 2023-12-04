@@ -4,7 +4,7 @@ use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 use rand::Rng;
 
-use crate::geometry::{meters_to_radians, Point};
+use crate::geometry::Point;
 
 /// Represents a minor arc, e.g. the shortest path between to points, called 'from' and 'to'.
 #[derive(Clone, PartialEq)]
@@ -136,9 +136,6 @@ impl Arc {
         let a1 = point.n_vector().dot(&self.to_normal());
 
         a0 >= 0.0 && a1 <= 0.0
-        // || (a0 >= 0.0 && point.is_approximately_equal(&self.from)) // TODO can this be
-        // removed?
-        // || (a1 <= 0.0 && point.is_approximately_equal(&self.to))
     }
 
     /// Returns the central angle of the arc in radians.
@@ -159,58 +156,6 @@ impl Arc {
     /// Creates a GeoJSON-compatible vector representing the arc. Note the GeoJSON order, which is longitude first.
     pub fn to_geojson_vec(&self) -> Vec<Vec<f64>> {
         vec![self.from.to_geojson_vec(), self.to.to_geojson_vec()]
-    }
-
-    // This function iteratively subdivides each arc in the `arcs` vector into smaller arcs until all arcs have a
-    // central angle less than a specified threshold (corresponding to 1000 meters). It then
-    // filters out subarcs that cross the dateline. It then filters out subarcs that cross the
-    // dateline.
-    pub fn _make_good_line(&self) -> Vec<Arc> {
-        let mut arcs = vec![self.clone()];
-        while arcs[0].central_angle() > meters_to_radians(100_000.0) {
-            arcs = arcs
-                .iter()
-                .map(|arc| {
-                    let middle = arc.middle();
-                    vec![Arc::new(&arc.from(), &middle), Arc::new(&middle, &arc.to())]
-                })
-                .flatten()
-                .collect();
-        }
-        arcs = arcs
-            .iter()
-            .map(|arc| {
-                if (arc.from().longitude() > 170.0 && arc.to().longitude() < -170.0)
-                    || (arc.from().longitude() < -170.0 && arc.to().longitude() > 170.0)
-                {
-                    return arc.fix_dateline();
-                }
-                vec![arc.clone()]
-            })
-            .flatten()
-            .collect();
-
-        arcs
-    }
-
-    pub fn fix_dateline(&self) -> Vec<Arc> {
-        let p0 = Point::from_coordinate(90.0, 180.0);
-        let p1 = Point::from_coordinate(0.0, 180.0);
-        let p2 = Point::from_coordinate(-90.0, 180.0);
-        let a0 = Arc::new(&p0, &p1);
-        let a1 = Arc::new(&p1, &p2);
-        for a in vec![a0, a1] {
-            if let Some(intersection) = a.intersection(self) {
-                let intersection = Point::from_coordinate(intersection.latitude(), 180.0);
-                return vec![
-                    Arc::new(self.from(), &intersection),
-                    Arc::new(&intersection, self.to()),
-                ];
-            }
-        }
-
-        // vec![self.clone()]
-        vec![]
     }
 
     pub fn to_feature(&self) -> Feature {

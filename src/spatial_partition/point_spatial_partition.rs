@@ -1,6 +1,6 @@
 use indicatif::ProgressIterator;
 
-use crate::geometry::{Arc, Collides, Contains, Point};
+use crate::geometry::{Collides, Contains, Point};
 
 use super::{tiling::Tiling, ConvecQuadrilateral};
 
@@ -110,19 +110,5 @@ impl PointSpatialPartition {
         }
 
         points
-    }
-
-    // TODO remove
-    pub fn get_leaf_polygons(&self) -> Vec<Arc> {
-        match &self.node_type {
-            PointNodeType::Internal(q) => q.iter().flat_map(|q| q.get_leaf_polygons()).collect(),
-            PointNodeType::Leaf(_) => self
-                .boundary
-                .outline
-                .windows(2)
-                .map(|arc| Arc::new(&arc[0], &arc[1])._make_good_line())
-                .flatten()
-                .collect(),
-        }
     }
 }

@@ -19,19 +19,21 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     output_geojson: String,
+    /// Path of .png file
+    #[arg(short, long)]
+    output_image: String,
 }
 
 fn main() {
     let args = Args::parse();
 
     let planet = Planet::from_geojson_file(args.input.as_str()).unwrap();
-    let filter = Planet::from_geojson_file("filter.geojson").unwrap();
 
     generate_network(
         args.num_nodes,
         &planet,
-        &filter,
         args.output_network.as_str(),
         args.output_geojson.as_str(),
+        args.output_image.as_str(),
     );
 }

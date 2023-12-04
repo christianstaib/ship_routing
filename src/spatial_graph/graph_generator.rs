@@ -1,14 +1,11 @@
-
-
+use std::f64::consts::PI;
 use std::time::Instant;
-use std::{f64::consts::PI};
 
-use indicatif::{ProgressIterator};
+use indicatif::ProgressIterator;
 use rayon::prelude::*;
 
 use crate::geometry::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point,
-    PointGenerator,
+    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point, PointGenerator,
 };
 use crate::spatial_partition::ConvecQuadrilateral;
 use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
@@ -18,15 +15,13 @@ use super::Fmi;
 pub fn generate_network(
     num_nodes: u32,
     planet: &Planet,
-    filter: &Planet,
     network_path: &str,
     planet_path: &str,
+    image_path: &str,
 ) {
     let start = Instant::now();
     let planet_grid = generate_planet_grid(planet);
-    let mut points = generate_points(num_nodes, &planet_grid);
-
-    points.retain(|p| filter.is_on_polygon(p));
+    let points = generate_points(num_nodes, &planet_grid);
 
     println!("took {:?}", start.elapsed());
     let point_grid = generate_point_grid(&points);
@@ -34,7 +29,10 @@ pub fn generate_network(
 
     let fmi = Fmi { points, arcs };
     fmi.to_file(network_path);
-    fmi.to_planet().to_geojson_file(planet_path);
+    let fmi_planet = fmi.to_planet();
+
+    fmi_planet.to_image(image_path);
+    fmi_planet.to_geojson_file(planet_path);
 }
 
 fn generate_points(how_many: u32, planet_grid: &PolygonSpatialPartition) -> Vec<Point> {
@@ -84,19 +82,18 @@ fn generate_arcs(
                 let mut local_points = point_grid.get_points(&polygon);
 
                 local_points.sort_unstable_by(|x, y| {
-                    Arc::new(point, x)
+                    Arc::new(point, y)
                         .central_angle()
-                        .total_cmp(&Arc::new(point, y).central_angle())
+                        .total_cmp(&Arc::new(point, x).central_angle())
                 });
 
-                // if first point is point, take second
-                let mut idx = 0;
-                if let Some(first_point) = local_points.get(idx) {
-                    if first_point == point {
-                        idx += 1;
+                // if last point is point, take second
+                if let Some(last_point) = local_points.last() {
+                    if last_point == point {
+                        local_points.pop();
                     }
                 }
-                if let Some(target) = local_points.get(idx) {
+                if let Some(target) = local_points.pop() {
                     let arc = Arc::new(point, &target);
                     if radians_to_meter(arc.central_angle()) <= radius {
                         return Some(arc);
@@ -105,7 +102,7 @@ fn generate_arcs(
 
                 None
             })
-            .filter(|arc| !planet_grid.intersects_polygon(arc))
+            .filter(|arc| !planet_grid.check_collision(arc))
             .collect::<Vec<_>>()
         })
         .flatten()
