@@ -81,13 +81,13 @@ impl Graph {
             {
                 edge_map.insert((edge.source_id, edge.target_id), edge.cost);
             }
-            // if edge.cost
-            //     < *edge_map
-            //         .get(&(edge.target_id, edge.source_id))
-            //         .unwrap_or(&u32::MAX)
-            // {
-            //     edge_map.insert((edge.target_id, edge.source_id), edge.cost);
-            // }
+            if edge.cost
+                < *edge_map
+                    .get(&(edge.target_id, edge.source_id))
+                    .unwrap_or(&u32::MAX)
+            {
+                edge_map.insert((edge.target_id, edge.source_id), edge.cost);
+            }
         });
         let mut edges: Vec<_> = edge_map
             .iter()
@@ -97,6 +97,7 @@ impl Graph {
                 cost: *v,
             })
             .collect();
+        println!("there are {} edges", edges.len());
 
         let mut edges_start_for_node: Vec<u32> = vec![0; edges.len() + 1];
 
