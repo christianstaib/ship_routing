@@ -28,14 +28,13 @@ impl<'a> Dijkstra<'a> {
     fn dijkstra(&self, route_request: &RouteRequest) -> Option<Route> {
         let mut queue = BucketQueue::new(self.max_edge_cost + 1);
 
-        let mut predecessor = vec![u32::MAX; self.graph.nodes.len()];
-        let mut node_cost: Vec<u32> = vec![u32::MAX; self.graph.nodes.len()];
-        predecessor.shrink_to_fit();
-        node_cost.shrink_to_fit();
+        // (predecessor, cost)
+        let mut predecessor_and_cost = vec![(u32::MAX, u32::MAX); self.graph.nodes.len()];
+        predecessor_and_cost.shrink_to_fit();
         // let mut is_expanded: Vec<bool> = vec![false; self.graph.nodes.len()];
         // is_expanded.shrink_to_fit();
 
-        node_cost[route_request.source as usize] = 0;
+        predecessor_and_cost[route_request.source as usize].1 = 0;
         queue.insert(0, route_request.source);
 
         while let Some(node_id) = queue.pop() {
@@ -51,25 +50,25 @@ impl<'a> Dijkstra<'a> {
                 ..self.graph.edges_start_at[node_id as usize + 1])
                 .for_each(|edge_id| {
                     let edge = &self.graph.edges[edge_id as usize];
-                    let alternative_cost = node_cost[node_id as usize] + edge.cost;
-                    if alternative_cost < node_cost[edge.target_id as usize] {
-                        predecessor[edge.target_id as usize] = edge.source_id;
-                        node_cost[edge.target_id as usize] = alternative_cost;
+                    let alternative_cost = predecessor_and_cost[node_id as usize].1 + edge.cost;
+                    if alternative_cost < predecessor_and_cost[edge.target_id as usize].1 {
+                        predecessor_and_cost[edge.target_id as usize] =
+                            (edge.source_id, alternative_cost);
                         queue.insert(alternative_cost, edge.target_id);
                     }
                 });
         }
 
-        if node_cost[route_request.target as usize] != (u32::MAX) {
+        if predecessor_and_cost[route_request.target as usize].1 != u32::MAX {
             let mut nodes = vec![route_request.target];
             let mut current = route_request.target;
-            while predecessor[current as usize] != u32::MAX {
-                current = predecessor[current as usize];
+            while predecessor_and_cost[current as usize].0 != u32::MAX {
+                current = predecessor_and_cost[current as usize].0;
                 nodes.push(current);
             }
             nodes.reverse();
             return Some(Route {
-                cost: node_cost[route_request.target as usize],
+                cost: predecessor_and_cost[route_request.target as usize].1,
                 nodes,
             });
         }

@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    dijkstra::fast_dijkstra::Dijkstra,
+    dijkstra::no_option_and_no_expanded_dijkstra::Dijkstra,
     route::{RouteRequest, Routing},
     Graph,
 };
