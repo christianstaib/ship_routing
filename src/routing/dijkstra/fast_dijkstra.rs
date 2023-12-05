@@ -52,25 +52,25 @@ impl<'a> Dijkstra<'a> {
                 .for_each(|edge_id| {
                     let edge = &self.graph.edges[edge_id as usize];
                     let alternative_cost = node_cost[node_id as usize] + edge.cost;
-                    if alternative_cost < node_cost[edge.target_id as usize] {
-                        predecessor[edge.target_id as usize] = edge.source_id;
-                        node_cost[edge.target_id as usize] = alternative_cost;
-                        queue.insert(alternative_cost, edge.target_id);
+                    if alternative_cost < node_cost[edge.target as usize] {
+                        predecessor[edge.target as usize] = node_id;
+                        node_cost[edge.target as usize] = alternative_cost;
+                        queue.insert(alternative_cost, edge.target);
                     }
                 });
         }
 
         if node_cost[route_request.target as usize] != (u32::MAX) {
-            let mut nodes = vec![route_request.target];
+            let mut route = vec![route_request.target];
             let mut current = route_request.target;
             while predecessor[current as usize] != u32::MAX {
                 current = predecessor[current as usize];
-                nodes.push(current);
+                route.push(current);
             }
-            nodes.reverse();
+            route.reverse();
             return Some(Route {
                 cost: node_cost[route_request.target as usize],
-                nodes,
+                nodes: route,
             });
         }
         None

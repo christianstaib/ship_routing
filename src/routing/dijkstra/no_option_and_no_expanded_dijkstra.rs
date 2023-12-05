@@ -16,6 +16,25 @@ impl<'a> Routing for Dijkstra<'a> {
     }
 }
 
+#[derive(Clone)]
+struct DijsktraEntry {
+    pub predecessor: u32,
+    pub cost: u32,
+}
+
+impl DijsktraEntry {
+    fn new() -> DijsktraEntry {
+        DijsktraEntry {
+            predecessor: u32::MAX,
+            cost: u32::MAX,
+        }
+    }
+
+    fn from(predecessor: u32, cost: u32) -> DijsktraEntry {
+        DijsktraEntry { predecessor, cost }
+    }
+}
+
 impl<'a> Dijkstra<'a> {
     pub fn new(graph: &'a Graph) -> Dijkstra {
         let max_edge_cost = graph.edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
@@ -28,48 +47,44 @@ impl<'a> Dijkstra<'a> {
     fn dijkstra(&self, route_request: &RouteRequest) -> Option<Route> {
         let mut queue = BucketQueue::new(self.max_edge_cost + 1);
 
-        // (predecessor, cost)
-        let mut predecessor_and_cost = vec![(u32::MAX, u32::MAX); self.graph.nodes.len()];
-        predecessor_and_cost.shrink_to_fit();
-        // let mut is_expanded: Vec<bool> = vec![false; self.graph.nodes.len()];
-        // is_expanded.shrink_to_fit();
+        let mut nodes = vec![DijsktraEntry::new(); self.graph.nodes.len()];
+        let mut is_expanded: Vec<bool> = vec![false; self.graph.nodes.len()];
 
-        predecessor_and_cost[route_request.source as usize].1 = 0;
+        nodes[route_request.source as usize].cost = 0;
         queue.insert(0, route_request.source);
 
-        while let Some(node_id) = queue.pop() {
-            // if is_expanded[node_id as usize] {
-            //     continue;
-            // }
-            // is_expanded[node_id as usize] = true;
-            if node_id == route_request.target as u32 {
+        while let Some(source) = queue.pop() {
+            if is_expanded[source as usize] {
+                continue;
+            }
+            is_expanded[source as usize] = true;
+            if source == route_request.target as u32 {
                 break;
             }
 
-            (self.graph.edges_start_at[node_id as usize]
-                ..self.graph.edges_start_at[node_id as usize + 1])
+            (self.graph.edges_start_at[source as usize]
+                ..self.graph.edges_start_at[source as usize + 1])
                 .for_each(|edge_id| {
                     let edge = &self.graph.edges[edge_id as usize];
-                    let alternative_cost = predecessor_and_cost[node_id as usize].1 + edge.cost;
-                    if alternative_cost < predecessor_and_cost[edge.target_id as usize].1 {
-                        predecessor_and_cost[edge.target_id as usize] =
-                            (edge.source_id, alternative_cost);
-                        queue.insert(alternative_cost, edge.target_id);
+                    let alternative_cost = nodes[source as usize].cost + edge.cost;
+                    if alternative_cost < nodes[edge.target as usize].cost {
+                        nodes[edge.target as usize] = DijsktraEntry::from(source, alternative_cost);
+                        queue.insert(alternative_cost, edge.target);
                     }
                 });
         }
 
-        if predecessor_and_cost[route_request.target as usize].1 != u32::MAX {
-            let mut nodes = vec![route_request.target];
+        if nodes[route_request.target as usize].cost != u32::MAX {
+            let mut route = vec![route_request.target];
             let mut current = route_request.target;
-            while predecessor_and_cost[current as usize].0 != u32::MAX {
-                current = predecessor_and_cost[current as usize].0;
-                nodes.push(current);
+            while nodes[current as usize].predecessor != u32::MAX {
+                current = nodes[current as usize].predecessor;
+                route.push(current);
             }
-            nodes.reverse();
+            route.reverse();
             return Some(Route {
-                cost: predecessor_and_cost[route_request.target as usize].1,
-                nodes,
+                cost: nodes[route_request.target as usize].cost,
+                nodes: route,
             });
         }
         None

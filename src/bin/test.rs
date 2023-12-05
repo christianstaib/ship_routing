@@ -1,4 +1,8 @@
-use std::time::{Duration, Instant};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    time::{Duration, Instant},
+};
 
 use clap::Parser;
 use indicatif::ProgressIterator;
@@ -7,7 +11,6 @@ use osm_test::routing::{
     route::{RouteRequest, Routing},
     Graph,
 };
-use rand::Rng;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -25,22 +28,35 @@ fn main() {
     let args = Args::parse();
 
     let graph = Graph::from_file(args.fmi_path.as_str());
-    let number_nodes = graph.nodes.len();
     let dijkstra = Dijkstra::new(&graph);
-
-    let mut rng = rand::thread_rng();
 
     let mut times = Vec::new();
 
-    for _ in (0..args.number_of_tests).progress() {
-        let route_request = RouteRequest {
-            source: rng.gen_range(0..number_nodes) as u32,
-            target: rng.gen_range(0..number_nodes) as u32,
-        };
-        let before = Instant::now();
-        let _ = dijkstra.get_route(&route_request);
-        times.push(before.elapsed());
-    }
+    let reader = BufReader::new(File::open("tests/data/fmi/test_cases.csv").unwrap());
+    reader
+        .lines()
+        .take(args.number_of_tests as usize)
+        .progress_count(args.number_of_tests as u64)
+        .filter_map(|line| line.ok())
+        .for_each(|line| {
+            let line: Vec<_> = line.split(',').collect();
+            let route_request = RouteRequest {
+                source: line[0].parse().unwrap(),
+                target: line[1].parse().unwrap(),
+            };
+            let before = Instant::now();
+            let route_response = dijkstra.get_route(&route_request);
+            times.push(before.elapsed());
+            if let Some(route) = route_response {
+                if let Some(true_cost) = line[2].parse::<u32>().ok() {
+                    assert_eq!(route.cost, true_cost, "wrong route cost");
+                } else {
+                    panic!("couldn't parse cost");
+                };
+            } else {
+                assert_eq!(line[2], "-");
+            }
+        });
 
     println!("sum of time is {:?}", times.iter().sum::<Duration>());
     println!(

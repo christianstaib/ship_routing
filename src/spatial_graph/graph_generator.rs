@@ -4,9 +4,7 @@ use std::time::Instant;
 use indicatif::ProgressIterator;
 use rayon::prelude::*;
 
-use crate::geometry::{
-    meters_to_radians, radians_to_meter, Arc, CollisionDetection, Planet, Point, PointGenerator,
-};
+use crate::geometry::{meters_to_radians, radians_to_meter, Arc, Planet, Point, PointGenerator};
 use crate::spatial_partition::ConvecQuadrilateral;
 use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
 

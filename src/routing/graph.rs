@@ -4,8 +4,14 @@ use std::io::{self, BufRead};
 
 #[derive(Clone)]
 pub struct Edge {
-    pub source_id: u32,
-    pub target_id: u32,
+    pub source: u32,
+    pub target: u32,
+    pub cost: u32,
+}
+
+#[derive(Clone)]
+pub struct FastEdge {
+    pub target: u32,
     pub cost: u32,
 }
 
@@ -18,7 +24,7 @@ pub struct Node {
 
 pub struct Graph {
     pub nodes: Vec<Node>,
-    pub edges: Vec<Edge>,
+    pub edges: Vec<FastEdge>,
     pub edges_start_at: Vec<u32>,
 }
 
@@ -64,8 +70,8 @@ impl Graph {
                 // let _maxspeed: usize = values.next().unwrap().parse().unwrap();
 
                 Edge {
-                    source_id,
-                    target_id,
+                    source: source_id,
+                    target: target_id,
                     cost,
                 }
             })
@@ -76,25 +82,25 @@ impl Graph {
         edges.iter().for_each(|edge| {
             if edge.cost
                 < *edge_map
-                    .get(&(edge.source_id, edge.target_id))
+                    .get(&(edge.source, edge.target))
                     .unwrap_or(&u32::MAX)
             {
-                edge_map.insert((edge.source_id, edge.target_id), edge.cost);
+                edge_map.insert((edge.source, edge.target), edge.cost);
             }
             if edge.cost
                 < *edge_map
-                    .get(&(edge.target_id, edge.source_id))
+                    .get(&(edge.target, edge.source))
                     .unwrap_or(&u32::MAX)
             {
-                edge_map.insert((edge.target_id, edge.source_id), edge.cost);
+                edge_map.insert((edge.target, edge.source), edge.cost);
             }
         });
         let mut edges: Vec<_> = edge_map
             .iter()
-            .map(|(k, v)| Edge {
-                source_id: k.0,
-                target_id: k.1,
-                cost: *v,
+            .map(|(edge_tuple, cost)| Edge {
+                source: edge_tuple.0,
+                target: edge_tuple.1,
+                cost: *cost,
             })
             .collect();
         println!("there are {} edges", edges.len());
@@ -103,26 +109,32 @@ impl Graph {
 
         // temporarrly adding a node in order to generate the list
         edges.push(Edge {
-            source_id: edges.len() as u32,
-            target_id: 0,
+            source: edges.len() as u32,
+            target: 0,
             cost: 0,
         });
-        edges.sort_unstable_by_key(|edge| edge.source_id);
+        edges.sort_unstable_by_key(|edge| edge.source);
 
         let mut current = 0;
         for (i, edge) in edges.iter().enumerate() {
-            if edge.source_id != current {
-                for index in (current + 1)..=edge.source_id {
+            if edge.source != current {
+                for index in (current + 1)..=edge.source {
                     edges_start_for_node[index as usize] = i as u32;
                 }
-                current = edge.source_id;
+                current = edge.source;
             }
         }
         edges.pop();
 
         Graph {
             nodes: nodes.clone(),
-            edges: edges.clone(),
+            edges: edges
+                .iter()
+                .map(|edge| FastEdge {
+                    target: edge.target,
+                    cost: edge.cost,
+                })
+                .collect(),
             edges_start_at: edges_start_for_node.clone(),
         }
     }

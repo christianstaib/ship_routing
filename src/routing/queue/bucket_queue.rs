@@ -5,9 +5,10 @@ pub struct BucketQueue {
 
 impl BucketQueue {
     pub fn new(max_diff: u32) -> BucketQueue {
+        let buckets = vec![Vec::new(); max_diff as usize];
         BucketQueue {
             current_index: 0,
-            buckets: vec![Vec::new(); max_diff as usize],
+            buckets,
         }
     }
 
