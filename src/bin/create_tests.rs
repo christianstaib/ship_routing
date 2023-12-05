@@ -54,6 +54,6 @@ fn main() {
 
     routes
         .iter()
-        .for_each(|route| write!(writer, "{}", route).unwrap());
+        .for_each(|route| writeln!(writer, "{}", route).unwrap());
     writer.flush().unwrap();
 }
