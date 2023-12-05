@@ -38,11 +38,8 @@ fn main() {
             target: rng.gen_range(0..number_nodes) as u32,
         };
         let before = Instant::now();
-        let route_response = dijkstra.get_route(&route_request);
+        let _ = dijkstra.get_route(&route_request);
         times.push(before.elapsed());
-        if route_response.is_none() {
-            println!("no route found");
-        }
     }
 
     println!("sum of time is {:?}", times.iter().sum::<Duration>());
