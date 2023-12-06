@@ -3,8 +3,8 @@ use std::{fs::File, io::BufWriter, io::Write};
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    dijkstra::no_option_and_no_expanded_dijkstra::Dijkstra,
     route::{RouteRequest, Routing},
+    simple_algorithms::dijkstra::Dijkstra,
     Graph,
 };
 use rand::Rng;

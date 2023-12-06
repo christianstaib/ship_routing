@@ -7,8 +7,8 @@ use std::{
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    dijkstra::{fast_dijkstra, no_option_and_no_expanded_dijkstra},
     route::{RouteRequest, Routing},
+    simple_algorithms::{bidirectional_dijkstra, dijkstra},
     Graph,
 };
 
@@ -28,8 +28,8 @@ fn main() {
     let args = Args::parse();
 
     let graph = Graph::from_file(args.fmi_path.as_str());
-    let dijkstra1 = fast_dijkstra::Dijkstra::new(&graph);
-    let dijkstra2 = no_option_and_no_expanded_dijkstra::Dijkstra::new(&graph);
+    let dijkstra1 = dijkstra::Dijkstra::new(&graph);
+    let dijkstra2 = bidirectional_dijkstra::Dijkstra::new(&graph);
 
     let mut times1 = Vec::new();
     let mut times2 = Vec::new();

@@ -3,9 +3,9 @@ use std::time::Instant;
 
 use osm_test::geometry::Linestring;
 use osm_test::geometry::Planet;
-use osm_test::routing::dijkstra::fast_dijkstra::Dijkstra;
 use osm_test::routing::route::RouteRequest;
 use osm_test::routing::route::Routing;
+use osm_test::routing::simple_algorithms::dijkstra::Dijkstra;
 use osm_test::routing::Graph;
 use osm_test::spatial_graph::Fmi;
 use serde_derive::{Deserialize, Serialize};
