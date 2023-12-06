@@ -7,7 +7,7 @@ use std::{
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    dijkstra::no_option_and_no_expanded_dijkstra::Dijkstra,
+    dijkstra::{fast_dijkstra, no_option_and_no_expanded_dijkstra},
     route::{RouteRequest, Routing},
     Graph,
 };
@@ -28,9 +28,11 @@ fn main() {
     let args = Args::parse();
 
     let graph = Graph::from_file(args.fmi_path.as_str());
-    let dijkstra = Dijkstra::new(&graph);
+    let dijkstra1 = fast_dijkstra::Dijkstra::new(&graph);
+    let dijkstra2 = no_option_and_no_expanded_dijkstra::Dijkstra::new(&graph);
 
-    let mut times = Vec::new();
+    let mut times1 = Vec::new();
+    let mut times2 = Vec::new();
 
     let reader = BufReader::new(File::open("tests/data/fmi/test_cases.csv").unwrap());
     reader
@@ -45,11 +47,16 @@ fn main() {
                 target: line[1].parse().unwrap(),
             };
             let before = Instant::now();
-            let route_response = dijkstra.get_route(&route_request);
-            times.push(before.elapsed());
-            if let Some(route) = route_response {
+            let route_response1 = dijkstra1.get_route(&route_request);
+            times1.push(before.elapsed());
+            let before = Instant::now();
+            let route_response2 = dijkstra2.get_route(&route_request);
+            times2.push(before.elapsed());
+            if let Some(route) = route_response1 {
                 if let Some(true_cost) = line[2].parse::<u32>().ok() {
                     assert_eq!(route.cost, true_cost, "wrong route cost");
+                    let route2 = route_response2.unwrap();
+                    assert_eq!(route.cost, route2.cost);
                 } else {
                     panic!("couldn't parse cost");
                 };
@@ -58,9 +65,12 @@ fn main() {
             }
         });
 
-    println!("sum of time is {:?}", times.iter().sum::<Duration>());
     println!(
-        "average time was {:?}",
-        times.iter().sum::<Duration>() / times.len() as u32
+        "average time for Dijkstra1 is {:?}",
+        times1.iter().sum::<Duration>() / times1.len() as u32
+    );
+    println!(
+        "average time for Dijkstra2 is {:?}",
+        times2.iter().sum::<Duration>() / times2.len() as u32
     );
 }
