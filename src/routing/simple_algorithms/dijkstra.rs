@@ -1,7 +1,7 @@
 use crate::routing::{
     queue::BucketQueue,
     route::{Route, RouteRequest, Routing},
-    Graph,
+    FastEdge, Graph,
 };
 
 #[derive(Clone)]
@@ -33,6 +33,57 @@ impl DijsktraEntry {
     }
 }
 
+struct DijkstraData {
+    pub queue: BucketQueue,
+    pub nodes: Vec<DijsktraEntry>,
+}
+
+impl DijkstraData {
+    pub fn new(max_edge_cost: u32, num_nodes: usize, source: u32) -> DijkstraData {
+        let mut queue = BucketQueue::new(max_edge_cost + 1);
+        let mut nodes = vec![DijsktraEntry::new(); num_nodes];
+        nodes[source as usize].cost = 0;
+        queue.insert(0, source);
+        DijkstraData { queue, nodes }
+    }
+
+    pub fn pop(&mut self) -> Option<u32> {
+        while let Some(source) = self.queue.pop() {
+            if !self.nodes[source as usize].is_expanded {
+                self.nodes[source as usize].is_expanded = true;
+                return Some(source);
+            }
+        }
+
+        None
+    }
+
+    pub fn update(&mut self, source: u32, edge: &FastEdge) {
+        let alternative_cost = self.nodes[source as usize].cost + edge.cost;
+        if alternative_cost < self.nodes[edge.target as usize].cost {
+            self.nodes[edge.target as usize].predecessor = source;
+            self.nodes[edge.target as usize].cost = alternative_cost;
+            self.queue.insert(alternative_cost, edge.target);
+        }
+    }
+
+    pub fn get_route(&self, target: u32) -> Option<Route> {
+        if self.nodes[target as usize].cost != u32::MAX {
+            let mut route = vec![target];
+            let mut current = target;
+            while self.nodes[current as usize].predecessor != u32::MAX {
+                current = self.nodes[current as usize].predecessor;
+                route.insert(0, current);
+            }
+            return Some(Route {
+                cost: self.nodes[target as usize].cost,
+                nodes: route,
+            });
+        }
+        None
+    }
+}
+
 impl<'a> Dijkstra<'a> {
     pub fn new(graph: &'a Graph) -> Dijkstra {
         let max_edge_cost = graph.edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
@@ -42,48 +93,21 @@ impl<'a> Dijkstra<'a> {
         }
     }
 
-    fn dijkstra(&self, route_request: &RouteRequest) -> Option<Route> {
-        let mut queue = BucketQueue::new(self.max_edge_cost + 1);
-        let mut nodes = vec![DijsktraEntry::new(); self.graph.nodes.len()];
-        nodes[route_request.source as usize].cost = 0;
-        queue.insert(0, route_request.source);
+    fn dijkstra(&self, request: &RouteRequest) -> Option<Route> {
+        let mut data =
+            DijkstraData::new(self.max_edge_cost, self.graph.nodes.len(), request.source);
 
-        while let Some(source) = queue.pop() {
-            if nodes[source as usize].is_expanded {
-                continue;
-            }
-            nodes[source as usize].is_expanded = true;
-            if source == route_request.target {
+        while let Some(source) = data.pop() {
+            if source == request.target {
                 break;
             }
 
-            (self.graph.edges_start_at[source as usize]
-                ..self.graph.edges_start_at[source as usize + 1])
-                .for_each(|edge_id| {
-                    let edge = &self.graph.edges[edge_id as usize];
-                    let alternative_cost = nodes[source as usize].cost + edge.cost;
-                    if alternative_cost < nodes[edge.target as usize].cost {
-                        nodes[edge.target as usize].predecessor = source;
-                        nodes[edge.target as usize].cost = alternative_cost;
-                        queue.insert(alternative_cost, edge.target);
-                    }
-                });
+            self.graph
+                .outgoing_edges(source)
+                .iter()
+                .for_each(|edge| data.update(source, edge));
         }
 
-        if nodes[route_request.target as usize].cost != u32::MAX {
-            let mut route = vec![route_request.target];
-            let mut current = route_request.target;
-            while nodes[current as usize].predecessor != u32::MAX {
-                current = nodes[current as usize].predecessor;
-                route.push(current);
-            }
-            route.reverse();
-            return Some(Route {
-                cost: nodes[route_request.target as usize].cost,
-                nodes: route,
-            });
-        }
-        None
+        data.get_route(request.target)
     }
 }
-

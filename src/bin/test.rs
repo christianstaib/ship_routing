@@ -28,11 +28,17 @@ fn main() {
     let args = Args::parse();
 
     let graph = Graph::from_file(args.fmi_path.as_str());
-    let dijkstra1 = dijkstra::Dijkstra::new(&graph);
-    let dijkstra2 = bidirectional_dijkstra::Dijkstra::new(&graph);
-
-    let mut times1 = Vec::new();
-    let mut times2 = Vec::new();
+    let mut algorithms: Vec<(String, Box<dyn Routing>, Vec<Duration>)> = Vec::new();
+    algorithms.push((
+        "dijkstra".to_string(),
+        Box::new(dijkstra::Dijkstra::new(&graph)),
+        Vec::new(),
+    ));
+    algorithms.push((
+        "bidirectional dijkstra".to_string(),
+        Box::new(bidirectional_dijkstra::Dijkstra::new(&graph)),
+        Vec::new(),
+    ));
 
     let reader = BufReader::new(File::open("tests/data/fmi/test_cases.csv").unwrap());
     reader
@@ -46,31 +52,24 @@ fn main() {
                 source: line[0].parse().unwrap(),
                 target: line[1].parse().unwrap(),
             };
-            let before = Instant::now();
-            let route_response1 = dijkstra1.get_route(&route_request);
-            times1.push(before.elapsed());
-            let before = Instant::now();
-            let route_response2 = dijkstra2.get_route(&route_request);
-            times2.push(before.elapsed());
-            if let Some(route) = route_response1 {
-                if let Ok(true_cost) = line[2].parse::<u32>() {
+            for (_, routing_algorithm, times) in algorithms.iter_mut() {
+                let before = Instant::now();
+                let route_response = routing_algorithm.get_route(&route_request);
+                times.push(before.elapsed());
+                if let Some(route) = route_response {
+                    let true_cost = line[2].parse::<u32>().unwrap();
                     assert_eq!(route.cost, true_cost, "wrong route cost");
-                    let route2 = route_response2.unwrap();
-                    assert_eq!(route.cost, route2.cost);
                 } else {
-                    panic!("couldn't parse cost");
-                };
-            } else {
-                assert_eq!(line[2], "-");
+                    assert_eq!(line[2], "-");
+                }
             }
         });
 
-    println!(
-        "average time for Dijkstra1 is {:?}",
-        times1.iter().sum::<Duration>() / times1.len() as u32
-    );
-    println!(
-        "average time for Dijkstra2 is {:?}",
-        times2.iter().sum::<Duration>() / times2.len() as u32
-    );
+    for (name, _, times) in algorithms.iter() {
+        println!(
+            "average time for {:?} is {:?}",
+            name,
+            times.iter().sum::<Duration>() / times.len() as u32
+        );
+    }
 }

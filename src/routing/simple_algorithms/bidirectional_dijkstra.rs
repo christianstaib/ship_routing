@@ -34,22 +34,17 @@ impl DijsktraEntry {
 }
 
 struct DijkstraData {
-    pub route_request: RouteRequest,
     pub queue: BucketQueue,
     pub nodes: Vec<DijsktraEntry>,
 }
 
 impl DijkstraData {
-    pub fn new(max_edge_cost: u32, num_nodes: usize, route_request: &RouteRequest) -> DijkstraData {
+    pub fn new(max_edge_cost: u32, num_nodes: usize, source: u32) -> DijkstraData {
         let mut queue = BucketQueue::new(max_edge_cost + 1);
         let mut nodes = vec![DijsktraEntry::new(); num_nodes];
-        nodes[route_request.source as usize].cost = 0;
-        queue.insert(0, route_request.source);
-        DijkstraData {
-            queue,
-            nodes,
-            route_request: route_request.clone(),
-        }
+        nodes[source as usize].cost = 0;
+        queue.insert(0, source);
+        DijkstraData { queue, nodes }
     }
 
     pub fn pop(&mut self) -> Option<u32> {
@@ -72,17 +67,17 @@ impl DijkstraData {
         }
     }
 
-    pub fn to_route(self) -> Option<Route> {
-        if self.nodes[self.route_request.target as usize].cost != u32::MAX {
-            let mut route = vec![self.route_request.target];
-            let mut current = self.route_request.target;
+    pub fn get_route(&self, target: u32) -> Option<Route> {
+        if self.nodes[target as usize].cost != u32::MAX {
+            let mut route = vec![target];
+            let mut current = target;
             while self.nodes[current as usize].predecessor != u32::MAX {
                 current = self.nodes[current as usize].predecessor;
                 route.push(current);
             }
             route.reverse();
             return Some(Route {
-                cost: self.nodes[self.route_request.target as usize].cost,
+                cost: self.nodes[target as usize].cost,
                 nodes: route,
             });
         }
@@ -100,7 +95,8 @@ impl<'a> Dijkstra<'a> {
     }
 
     fn dijkstra(&self, request: &RouteRequest) -> Option<Route> {
-        let mut data = DijkstraData::new(self.max_edge_cost, self.graph.nodes.len(), request);
+        let mut data =
+            DijkstraData::new(self.max_edge_cost, self.graph.nodes.len(), request.source);
 
         while let Some(source) = data.pop() {
             if source == request.target {
@@ -113,6 +109,6 @@ impl<'a> Dijkstra<'a> {
                 .for_each(|edge| data.update(source, edge));
         }
 
-        data.to_route()
+        data.get_route(request.target)
     }
 }
