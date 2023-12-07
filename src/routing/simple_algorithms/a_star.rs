@@ -1,5 +1,3 @@
-use rayon::iter::{ParallelBridge, ParallelIterator};
-
 use crate::{
     geometry::{radians_to_meter, Arc},
     routing::{
@@ -8,8 +6,6 @@ use crate::{
         Graph,
     },
 };
-
-use super::dijkstra::{self};
 
 #[derive(Clone)]
 pub struct Dijkstra<'a> {
@@ -34,32 +30,19 @@ impl<'a> Dijkstra<'a> {
             if state.value == request.target {
                 break;
             }
-            self.graph
-                .outgoing_edges(state.value)
-                .iter()
-                .par_bridge()
-                .for_each(|edge| {
-                    let h = radians_to_meter(
-                        Arc::new(
-                            &self.graph.nodes[edge.target as usize],
-                            &self.graph.nodes[request.target as usize],
-                        )
-                        .central_angle(),
-                    ) as u32;
-                    let dijkstra = dijkstra::Dijkstra::new(self.graph);
-                    if let Some(route) = dijkstra.get_route(&RouteRequest {
-                        source: edge.target,
-                        target: request.target,
-                    }) {
-                        assert!(h <= route.cost);
-                    }
-                });
 
             self.graph
                 .outgoing_edges(state.value)
                 .iter()
                 .for_each(|edge| {
-                    data.update_with_h(state.value, edge, 0);
+                    let h = (radians_to_meter(
+                        Arc::new(
+                            &self.graph.nodes[edge.target as usize],
+                            &self.graph.nodes[request.target as usize],
+                        )
+                        .central_angle(),
+                    ) * 0.75) as u32;
+                    data.update_with_h(state.value, edge, h);
                 })
         }
 

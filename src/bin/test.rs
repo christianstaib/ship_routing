@@ -7,13 +7,10 @@ use std::{
 
 use clap::Parser;
 use indicatif::ProgressIterator;
-use osm_test::{
-    geometry::{radians_to_meter, Arc},
-    routing::{
-        route::{RouteRequest, Routing},
-        simple_algorithms::{a_star, bidirectional_dijkstra, dijkstra},
-        Graph, NaiveGraph,
-    },
+use osm_test::routing::{
+    route::{RouteRequest, Routing},
+    simple_algorithms::{a_star, bidirectional_a_star, bidirectional_dijkstra, dijkstra},
+    Graph, NaiveGraph,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -42,13 +39,18 @@ fn main() {
         Vec::new(),
     ));
     // algorithms.push((
-    //     "bidirectional dijkstra".to_string(),
-    //     Box::new(bidirectional_dijkstra::Dijkstra::new(&graph)),
+    //     "bidirectional a start".to_string(),
+    //     Box::new(bidirectional_a_star::Dijkstra::new(&graph)),
     //     Vec::new(),
     // ));
     algorithms.push((
-        "a star".to_string(),
-        Box::new(a_star::Dijkstra::new(&graph)),
+        "dijkstra".to_string(),
+        Box::new(dijkstra::Dijkstra::new(&graph)),
+        Vec::new(),
+    ));
+    algorithms.push((
+        "bidirectional dijkstra".to_string(),
+        Box::new(bidirectional_dijkstra::Dijkstra::new(&graph)),
         Vec::new(),
     ));
 
@@ -71,14 +73,14 @@ fn main() {
                 times.push(before.elapsed());
                 if let Some(route) = route_response {
                     route.is_valid(&graph, &request);
-                    // assert_eq!(route.nodes.first().unwrap(), &request.source);
-                    // assert_eq!(route.nodes.last().unwrap(), &request.target);
-                    // let true_cost = line[2].parse::<u32>().unwrap();
-                    // assert_eq!(
-                    //     true_cost, route.cost,
-                    //     "true cost is {} but \"{}\" got {}",
-                    //     true_cost, name, route.cost
-                    // );
+                    assert_eq!(route.nodes.first().unwrap(), &request.source);
+                    assert_eq!(route.nodes.last().unwrap(), &request.target);
+                    let true_cost = line[2].parse::<u32>().unwrap();
+                    assert_eq!(
+                        true_cost, route.cost,
+                        "true cost is {} but \"{}\" got {}",
+                        true_cost, name, route.cost
+                    );
                 } else {
                     assert_eq!(line[2], "-");
                 }
