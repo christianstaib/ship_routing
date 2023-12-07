@@ -68,7 +68,6 @@ impl<'a> Dijkstra<'a> {
             }
         }
 
-        let start = Instant::now();
         let contact_node = forward_data
             .nodes
             .iter()

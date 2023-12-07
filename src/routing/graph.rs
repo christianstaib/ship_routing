@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead};
 
+use crate::geometry::Point;
+
 #[derive(Clone)]
 pub struct Edge {
     pub source: u32,
@@ -61,13 +63,13 @@ impl Node {
 
 #[derive(Clone)]
 pub struct NaiveGraph {
-    pub nodes: Vec<Node>,
+    pub nodes: Vec<Point>,
     pub edges: Vec<Edge>,
 }
 
 #[derive(Clone)]
 pub struct Graph {
-    pub nodes: Vec<Node>,
+    pub nodes: Vec<Point>,
     pub forward_edges: FastEdgeAccess,
     pub backward_edges: FastEdgeAccess,
 }
@@ -134,10 +136,10 @@ impl NaiveGraph {
             .map(|node_line| {
                 let node_line = node_line.unwrap();
                 let mut values = node_line.split_whitespace();
-                let id: u32 = values.next().unwrap().parse().unwrap();
+                let _: u32 = values.next().unwrap().parse().unwrap();
                 let latitude: f64 = values.next().unwrap().parse().unwrap();
                 let longitude: f64 = values.next().unwrap().parse().unwrap();
-                Node::new(id, latitude, longitude)
+                Point::from_coordinate(latitude, longitude)
             })
             .collect();
 

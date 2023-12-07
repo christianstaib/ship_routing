@@ -85,7 +85,7 @@ impl Fmi {
                 "{} {} {}",
                 point_id_map.get(arc.from()).unwrap(),
                 point_id_map.get(arc.to()).unwrap(),
-                (radians_to_meter(arc.central_angle()) * 1.0) as u32
+                radians_to_meter(arc.central_angle()).round() as u32
             )
             .unwrap();
         });
@@ -115,14 +115,10 @@ impl Fmi {
     }
 
     pub fn id_to_point(&self, id: u32) -> Point {
-        
-
         self.points[id as usize]
     }
 
     pub fn convert_path(&self, path: &Vec<u32>) -> Vec<Point> {
-        path.iter()
-            .map(|&id| self.points[id as usize])
-            .collect()
+        path.iter().map(|&id| self.points[id as usize]).collect()
     }
 }

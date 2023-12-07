@@ -7,7 +7,6 @@ use crate::routing::{
 #[derive(Clone)]
 pub struct Dijkstra<'a> {
     graph: &'a Graph,
-    max_edge_cost: u32,
 }
 
 impl<'a> Routing for Dijkstra<'a> {
@@ -18,17 +17,7 @@ impl<'a> Routing for Dijkstra<'a> {
 
 impl<'a> Dijkstra<'a> {
     pub fn new(graph: &'a Graph) -> Dijkstra {
-        let max_edge_cost = graph
-            .forward_edges
-            .edges
-            .iter()
-            .map(|edge| edge.cost)
-            .max()
-            .unwrap_or(0);
-        Dijkstra {
-            graph,
-            max_edge_cost,
-        }
+        Dijkstra { graph }
     }
 
     fn dijkstra(&self, request: &RouteRequest) -> Option<Route> {
