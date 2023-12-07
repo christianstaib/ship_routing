@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct RouteRequest {
     pub source: u32,
     pub target: u32,
