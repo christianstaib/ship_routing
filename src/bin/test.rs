@@ -38,11 +38,11 @@ fn main() {
 
     let graph = Graph::new(naive_graph);
     let mut algorithms: Vec<(String, Box<dyn Routing>, Vec<Duration>)> = Vec::new();
-    // algorithms.push((
-    //     "dijkstra".to_string(),
-    //     Box::new(dijkstra::Dijkstra::new(&graph)),
-    //     Vec::new(),
-    // ));
+    algorithms.push((
+        "dijkstra".to_string(),
+        Box::new(dijkstra::Dijkstra::new(&graph)),
+        Vec::new(),
+    ));
     algorithms.push((
         "bidirectional dijkstra".to_string(),
         Box::new(bidirectional_dijkstra::Dijkstra::new(&graph)),

@@ -1,10 +1,7 @@
 use std::usize;
 
 use super::{
-    queue::{
-        heap_queue::{HeapQueue, State},
-        BucketQueue,
-    },
+    queue::{heap_queue::State, BucketQueue},
     route::Route,
     FastEdge,
 };
@@ -27,13 +24,13 @@ impl DijsktraEntry {
 }
 
 pub struct DijkstraData {
-    pub queue: HeapQueue,
+    pub queue: BucketQueue,
     pub nodes: Vec<DijsktraEntry>,
 }
 
 impl DijkstraData {
     pub fn new(num_nodes: usize, source: u32) -> DijkstraData {
-        let mut queue = HeapQueue::new();
+        let mut queue = BucketQueue::new();
         let mut nodes = vec![DijsktraEntry::new(); num_nodes];
         nodes[source as usize].cost = 0;
         queue.insert(0, source);

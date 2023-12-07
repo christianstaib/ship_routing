@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use crate::routing::{
     dijkstra_data::DijkstraData,
     route::{Route, RouteRequest, Routing},
@@ -35,43 +37,38 @@ impl<'a> Dijkstra<'a> {
         let mut backward_data = DijkstraData::new(self.graph.nodes.len(), request.target);
 
         let mut minmal_cost = u32::MAX;
-        let mut contact_nodes = Vec::new();
 
         loop {
-            if let Some(forward_state) = forward_data.pop() {
-                if backward_data.nodes[forward_state.value as usize].is_expanded {
-                    contact_nodes.push(forward_state.value);
-                    minmal_cost = minmal_cost.min(
-                        forward_data.nodes[forward_state.value as usize].cost
-                            + backward_data.nodes[forward_state.value as usize].cost,
-                    );
-                }
-                self.graph
-                    .outgoing_edges(forward_state.value)
-                    .iter()
-                    .for_each(|edge| forward_data.update(forward_state.value, edge));
-            } else {
-                break;
+            let forward_state = forward_data.pop()?;
+            if backward_data.nodes[forward_state.value as usize].is_expanded {
+                minmal_cost = minmal_cost.min(
+                    forward_data.nodes[forward_state.value as usize].cost
+                        + backward_data.nodes[forward_state.value as usize].cost,
+                );
             }
+            self.graph
+                .outgoing_edges(forward_state.value)
+                .iter()
+                .for_each(|edge| forward_data.update(forward_state.value, edge));
 
-            if let Some(backward_state) = backward_data.pop() {
-                if forward_data.nodes[backward_state.value as usize].is_expanded {
-                    contact_nodes.push(backward_state.value);
-                    minmal_cost = minmal_cost.min(
-                        forward_data.nodes[backward_state.value as usize].cost
-                            + backward_data.nodes[backward_state.value as usize].cost,
-                    );
-                }
-                self.graph
-                    .incoming_edges(backward_state.value)
-                    .iter()
-                    .for_each(|edge| backward_data.update(backward_state.value, edge));
+            let backward_state = backward_data.pop()?;
+            if forward_data.nodes[backward_state.value as usize].is_expanded {
+                minmal_cost = minmal_cost.min(
+                    forward_data.nodes[backward_state.value as usize].cost
+                        + backward_data.nodes[backward_state.value as usize].cost,
+                );
             }
+            self.graph
+                .incoming_edges(backward_state.value)
+                .iter()
+                .for_each(|edge| backward_data.update(backward_state.value, edge));
 
-            if forward_state.value + backward_state.value > minmal_cost {
+            if forward_state.key + backward_state.key >= minmal_cost {
                 break;
             }
         }
+
+        let start = Instant::now();
         let contact_node = forward_data
             .nodes
             .iter()
@@ -82,6 +79,7 @@ impl<'a> Dijkstra<'a> {
             })
             .unwrap()
             .0 as u32;
+
         let mut forward_route = forward_data.get_route(contact_node)?;
         let mut backward_route = backward_data.get_route(contact_node)?;
         backward_route.nodes.pop();
