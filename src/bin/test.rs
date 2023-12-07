@@ -53,7 +53,7 @@ fn main() {
             let route_response2 = dijkstra2.get_route(&route_request);
             times2.push(before.elapsed());
             if let Some(route) = route_response1 {
-                if let Some(true_cost) = line[2].parse::<u32>().ok() {
+                if let Ok(true_cost) = line[2].parse::<u32>() {
                     assert_eq!(route.cost, true_cost, "wrong route cost");
                     let route2 = route_response2.unwrap();
                     assert_eq!(route.cost, route2.cost);

@@ -104,8 +104,8 @@ impl Fmi {
             .iter()
             .enumerate()
             .min_by(|(_, a), (_, b)| {
-                let a = Arc::new(&a, &point);
-                let b = Arc::new(&b, &point);
+                let a = Arc::new(a, &point);
+                let b = Arc::new(b, &point);
                 a.central_angle().partial_cmp(&b.central_angle()).unwrap()
             })
             .map(|(i, _)| i)
@@ -115,14 +115,14 @@ impl Fmi {
     }
 
     pub fn id_to_point(&self, id: u32) -> Point {
-        let point = self.points[id as usize];
+        
 
-        point
+        self.points[id as usize]
     }
 
     pub fn convert_path(&self, path: &Vec<u32>) -> Vec<Point> {
         path.iter()
-            .map(|&id| self.points[id as usize].clone())
+            .map(|&id| self.points[id as usize])
             .collect()
     }
 }

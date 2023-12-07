@@ -53,7 +53,7 @@ impl<'a> Dijkstra<'a> {
                 continue;
             }
             nodes[source as usize].is_expanded = true;
-            if source == route_request.target as u32 {
+            if source == route_request.target {
                 break;
             }
 

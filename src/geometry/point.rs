@@ -38,6 +38,12 @@ impl Iterator for PointGenerator {
     }
 }
 
+impl Default for PointGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PointGenerator {
     pub fn new() -> PointGenerator {
         PointGenerator {}
@@ -49,12 +55,12 @@ impl Point {
     /// (-90.0 <= latitude <= 90, -180.0 <= longitude <= 180.0).
     pub fn from_coordinate(latitude: f64, longitude: f64) -> Point {
         assert!(
-            -90.0 <= latitude && latitude <= 90.0,
+            (-90.0..=90.0).contains(&latitude),
             "illegal lat: {}",
             latitude
         );
         assert!(
-            -180.0 <= longitude && longitude <= 180.0,
+            (-180.0..=180.0).contains(&longitude),
             "illegal lon: {}",
             longitude
         );
@@ -73,13 +79,13 @@ impl Point {
     /// Constructs a point from a n-vector.
     pub fn from_n_vector(n_vector: &Vector3<f64>) -> Point {
         let point = Point {
-            n_vector: n_vector.clone(),
+            n_vector: *n_vector,
         };
 
         let lat = point.latitude();
         let lon = point.longitude();
-        assert!(-90.0 <= lat && lat <= 90.0, "illegal vec: {}", n_vector);
-        assert!(-180.0 <= lon && lon <= 180.0, "illegal vec: {}", n_vector);
+        assert!((-90.0..=90.0).contains(&lat), "illegal vec: {}", n_vector);
+        assert!((-180.0..=180.0).contains(&lon), "illegal vec: {}", n_vector);
 
         point
     }
@@ -104,7 +110,7 @@ impl Point {
     }
 
     pub fn random_generator() -> impl Iterator<Item = Point> {
-        std::iter::repeat_with(|| Point::random())
+        std::iter::repeat_with(Point::random)
     }
 
     /// Calculates the destination point given a start point, bearing, and distance on a sphere.

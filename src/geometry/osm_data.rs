@@ -19,11 +19,11 @@ impl OsmData {
                 .iter()
                 .map(|coastline| {
                     coastline
-                        .into_iter()
+                        .iter()
                         .map(|node_id| self.nodes[&node_id])
                         .collect()
                 })
-                .map(|coastline| Polygon::new(coastline)),
+                .map(Polygon::new),
         );
 
         planet
@@ -51,8 +51,7 @@ impl OsmData {
                     Element::Way(way) => {
                         if way
                             .tags()
-                            .find(|&(key, value)| key == "natural" && value == "coastline")
-                            .is_some()
+                            .any(|(key, value)| key == "natural" && value == "coastline")
                         {
                             coastlines.push(way.refs().collect());
                         }
@@ -81,13 +80,13 @@ impl OsmData {
         let pb = ProgressBar::new(open_coastlines.len() as u64);
         while let Some(mut coastline) = open_coastlines.pop() {
             pb.inc(1);
-            let mut last = coastline.last().unwrap().clone();
+            let mut last = *coastline.last().unwrap();
             while let Ok(to_append) = open_coastlines
                 .binary_search_by_key(&last, |other_coastline| *other_coastline.first().unwrap())
             {
                 let mut to_append = open_coastlines.remove(to_append);
                 coastline.append(&mut to_append);
-                last = coastline.last().unwrap().clone();
+                last = *coastline.last().unwrap();
             }
             coastline.dedup();
             closed_coastlines.push(coastline);

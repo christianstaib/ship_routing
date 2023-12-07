@@ -25,10 +25,13 @@ pub struct Planet {
 impl CollisionDetection for Planet {
     fn is_on_polygon(&self, point: &Point) -> bool {
         self.polygons
-            .iter()
-            .filter(|polygon| polygon.contains(point))
-            .next()
-            .is_some()
+            .iter().any(|polygon| polygon.contains(point))
+    }
+}
+
+impl Default for Planet {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -47,8 +50,7 @@ impl Planet {
     pub fn intersections(&self, arc: &Arc) -> Vec<Point> {
         self.polygons
             .iter()
-            .map(|polygon| polygon.intersections(arc))
-            .flatten()
+            .flat_map(|polygon| polygon.intersections(arc))
             .collect()
     }
 
@@ -103,7 +105,7 @@ impl Planet {
             .lines()
             .filter_map(|line| {
                 let mut line = line.unwrap();
-                if line.chars().last() == Some(',') {
+                if line.ends_with(',') {
                     line.pop();
                 }
                 Feature::from_str(line.as_str()).ok()?.geometry
@@ -137,9 +139,9 @@ impl Planet {
         let mut features = features.into_iter().peekable();
         while let Some(feature) = features.next() {
             if features.peek().is_some() {
-                writer += &format!("{},", feature.to_string());
+                writer += &format!("{},", feature);
             } else {
-                writer += &format!("{}", feature.to_string());
+                writer += &format!("{}", feature);
             }
         }
         writer += r#"]}"#;
@@ -164,9 +166,9 @@ impl Planet {
         let mut features = features.into_iter().peekable();
         while let Some(feature) = features.next() {
             if features.peek().is_some() {
-                writeln!(writer, "{},", feature.to_string()).unwrap();
+                writeln!(writer, "{},", feature).unwrap();
             } else {
-                writeln!(writer, "{}", feature.to_string()).unwrap();
+                writeln!(writer, "{}", feature).unwrap();
             }
         }
         writeln!(writer, r#"]}}"#,).unwrap();

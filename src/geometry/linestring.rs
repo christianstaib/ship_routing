@@ -14,9 +14,9 @@ impl Linestring {
             .map(|arc| Arc::new(&arc[0], &arc[1]))
             // .flatten()
             .collect();
-        let mut points: Vec<Point> = arcs.iter().map(|arc| arc.from().clone()).collect();
+        let mut points: Vec<Point> = arcs.iter().map(|arc| *arc.from()).collect();
         if !points.is_empty() {
-            points.push(points.last().unwrap().clone());
+            points.push(*points.last().unwrap());
         }
 
         Linestring { points }
@@ -29,7 +29,7 @@ impl Linestring {
             let mut factor = 0.0;
             let mut factors = vec![0.0; points.len()];
             factors[0] = 0.0;
-            if points.len() > 0 {
+            if !points.is_empty() {
                 let mut i = 0;
                 while i + 1 < points.len() {
                     let pi = &points[i];

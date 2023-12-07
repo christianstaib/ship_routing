@@ -100,10 +100,10 @@ impl<'a> Dijkstra<'a> {
     }
 
     fn dijkstra(&self, request: &RouteRequest) -> Option<Route> {
-        let mut data = DijkstraData::new(self.max_edge_cost, self.graph.nodes.len(), &request);
+        let mut data = DijkstraData::new(self.max_edge_cost, self.graph.nodes.len(), request);
 
         while let Some(source) = data.pop() {
-            if source == request.target as u32 {
+            if source == request.target {
                 break;
             }
 

@@ -24,38 +24,38 @@ impl ConvecQuadrilateral {
 
         let mut subs = Vec::new();
         let p0 = ConvecQuadrilateral::new(&vec![
-            m[3].clone(),
-            middle.clone(),
-            m[2].clone(),
-            o[3].clone(),
-            m[3].clone(),
+            m[3],
+            middle,
+            m[2],
+            o[3],
+            m[3],
         ]);
         subs.push(p0);
 
         let p1 = ConvecQuadrilateral::new(&vec![
-            middle.clone(),
-            m[1].clone(),
-            o[2].clone(),
-            m[2].clone(),
-            middle.clone(),
+            middle,
+            m[1],
+            o[2],
+            m[2],
+            middle,
         ]);
         subs.push(p1);
 
         let p2 = ConvecQuadrilateral::new(&vec![
-            m[0].clone(),
-            o[1].clone(),
-            m[1].clone(),
-            middle.clone(),
-            m[0].clone(),
+            m[0],
+            o[1],
+            m[1],
+            middle,
+            m[0],
         ]);
         subs.push(p2);
 
         let p3 = ConvecQuadrilateral::new(&vec![
-            o[0].clone(),
-            m[0].clone(),
-            middle.clone(),
-            m[3].clone(),
-            o[0].clone(),
+            o[0],
+            m[0],
+            middle,
+            m[3],
+            o[0],
         ]);
         subs.push(p3);
 
@@ -109,11 +109,11 @@ impl Tiling {
             .collect();
         let upper_ring: Vec<Point> = mid_ring
             .iter()
-            .map(|mid| Arc::new(&mid, &np).middle())
+            .map(|mid| Arc::new(mid, &np).middle())
             .collect();
         let lower_ring: Vec<Point> = mid_ring
             .iter()
-            .map(|mid| Arc::new(&mid, &sp).middle())
+            .map(|mid| Arc::new(mid, &sp).middle())
             .collect();
         let mid_ring: Vec<f64> = vec![-135.0, -45.0, 45.0, 135.0, -135.0];
         let mid_ring: Vec<Point> = mid_ring
@@ -125,29 +125,29 @@ impl Tiling {
 
         for i in 0..4 {
             let polygon = ConvecQuadrilateral::new(&vec![
-                upper_ring[i].clone(),
-                mid_ring[i].clone(),
-                upper_ring[i + 1].clone(),
-                np.clone(),
-                upper_ring[i].clone(),
+                upper_ring[i],
+                mid_ring[i],
+                upper_ring[i + 1],
+                np,
+                upper_ring[i],
             ]);
             base_pixels.push(polygon);
 
             let polygon = ConvecQuadrilateral::new(&vec![
-                lower_ring[i].clone(),
-                sp.clone(),
-                lower_ring[i + 1].clone(),
-                mid_ring[i].clone(),
-                lower_ring[i].clone(),
+                lower_ring[i],
+                sp,
+                lower_ring[i + 1],
+                mid_ring[i],
+                lower_ring[i],
             ]);
             base_pixels.push(polygon);
 
             let polygon = ConvecQuadrilateral::new(&vec![
-                mid_ring[i].clone(),
-                lower_ring[i + 1].clone(),
-                mid_ring[i + 1].clone(),
-                upper_ring[i + 1].clone(),
-                mid_ring[i].clone(),
+                mid_ring[i],
+                lower_ring[i + 1],
+                mid_ring[i + 1],
+                upper_ring[i + 1],
+                mid_ring[i],
             ]);
             base_pixels.push(polygon);
         }

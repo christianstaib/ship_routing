@@ -19,7 +19,7 @@ pub trait Collides<Rhs = Self> {
 /// Define a standalone function that contains the shared logic.
 fn arc_point_collision(arc: &Arc, point: &Point) -> bool {
     let summed_angle =
-        Arc::new(&arc.from(), point).central_angle() + Arc::new(point, &arc.to()).central_angle();
+        Arc::new(arc.from(), point).central_angle() + Arc::new(point, arc.to()).central_angle();
     (summed_angle - arc.central_angle()).abs() < meters_to_radians(1.0)
 }
 
@@ -42,7 +42,7 @@ impl Collides<Point> for Arc {
 /// could also be really close to another.
 impl Collides<Arc> for Arc {
     fn collides(&self, rhs: &Arc) -> bool {
-        self.intersects(&rhs)
+        self.intersects(rhs)
             || self.collides(rhs.from())
             || self.collides(rhs.to())
             || rhs.collides(self.from())

@@ -77,7 +77,7 @@ impl PointSpatialPartition {
             // needs to be done before the match block, as the match block pushes a mutable
             // reference to internals.
             if let PointNodeType::Leaf(points) = &mut parent.node_type {
-                points.push(point.clone());
+                points.push(*point);
                 if points.len() >= parent.max_size {
                     parent.split();
                 }

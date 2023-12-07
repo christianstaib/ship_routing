@@ -43,7 +43,7 @@ fn main() {
         .progress()
         .par_bridge()
         .map(|route_request| {
-            let route_response = dijkstra.get_route(&route_request);
+            let route_response = dijkstra.get_route(route_request);
             let mut cost = "-".to_string();
             if let Some(route) = route_response {
                 cost = route.cost.to_string();

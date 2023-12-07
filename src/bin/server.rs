@@ -75,7 +75,7 @@ async fn main() {
                     route.cost,
                     time.as_millis()
                 );
-                return Response::builder().body(format!("{}", planet.to_geojson_str()));
+                return Response::builder().body(planet.to_geojson_str().to_string());
             }
 
             Response::builder().body("".into())

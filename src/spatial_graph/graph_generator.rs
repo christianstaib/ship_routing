@@ -69,15 +69,13 @@ fn generate_arcs(
         .progress()
         .par_bridge()
         .map(|point| {
-            vec![
-                ur(point, radius, 2.0),
+            [ur(point, radius, 2.0),
                 ur(point, radius, 4.0),
                 ur(point, radius, 6.0),
-                ur(point, radius, 8.0),
-            ]
+                ur(point, radius, 8.0)]
             .iter()
             .filter_map(|polygon| {
-                let mut local_points = point_grid.get_points(&polygon);
+                let mut local_points = point_grid.get_points(polygon);
 
                 local_points.sort_unstable_by(|x, y| {
                     Arc::new(point, y)
@@ -108,16 +106,16 @@ fn generate_arcs(
 }
 
 fn ur(point: &Point, radius: f64, start: f64) -> ConvecQuadrilateral {
-    let cloned_point = point.clone();
+    let cloned_point = *point;
     ConvecQuadrilateral::new(&vec![
         cloned_point,
-        Point::destination_point(&point, (start) / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(point, (start) / 4.0 * PI, meters_to_radians(radius)),
         Point::destination_point(
-            &point,
+            point,
             (start - 1.0) / 4.0 * PI,
             meters_to_radians((radius.powi(2) + radius.powi(2)).sqrt()),
         ),
-        Point::destination_point(&point, (start - 2.0) / 4.0 * PI, meters_to_radians(radius)),
+        Point::destination_point(point, (start - 2.0) / 4.0 * PI, meters_to_radians(radius)),
         cloned_point,
     ])
 }

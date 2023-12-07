@@ -86,7 +86,7 @@ impl PolygonSpatialPartition {
 
         let number_of_arcs: u32 = polygons
             .iter()
-            .map(|polygon| polygon.outline.len().checked_sub(1).unwrap_or(0) as u32)
+            .map(|polygon| polygon.outline.len().saturating_sub(1) as u32)
             .sum();
 
         polygons
@@ -208,8 +208,7 @@ impl PolygonSpatialPartition {
                         || quadtree.boundary.contains(ray.to())
                         || quadtree.boundary.collides(ray)
                 })
-                .map(|quadtree| quadtree.intersections(ray))
-                .flatten()
+                .flat_map(|quadtree| quadtree.intersections(ray))
                 .collect(),
             NodeType::Leaf(arcs) => arcs
                 .iter()

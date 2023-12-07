@@ -34,7 +34,7 @@ impl Polygon {
     pub fn from_geojson_vec(vec: Vec<Vec<f64>>) -> Polygon {
         let outline = vec
             .into_iter()
-            .map(|point| Point::from_geojson_vec(point))
+            .map(Point::from_geojson_vec)
             .collect();
         Polygon::new(outline)
     }

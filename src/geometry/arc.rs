@@ -16,8 +16,8 @@ pub struct Arc {
 impl Arc {
     pub fn new(start: &Point, end: &Point) -> Arc {
         Arc {
-            from: start.clone(),
-            to: end.clone(),
+            from: *start,
+            to: *end,
         }
     }
 
@@ -25,13 +25,13 @@ impl Arc {
     pub fn initial_bearing(&self) -> f64 {
         let north_pole = Point::north_pole();
 
-        let from_to_normal = self.from.n_vector().cross(&self.to.n_vector());
-        let from_north_pole_normal = self.from.n_vector().cross(&north_pole.n_vector());
+        let from_to_normal = self.from.n_vector().cross(self.to.n_vector());
+        let from_north_pole_normal = self.from.n_vector().cross(north_pole.n_vector());
 
         let mut sign = 1.0;
         if from_to_normal
             .cross(&from_north_pole_normal)
-            .dot(&self.from.n_vector())
+            .dot(self.from.n_vector())
             < 0.0
         {
             sign = -1.0;
@@ -40,9 +40,9 @@ impl Arc {
         let sine_theta = from_to_normal.cross(&from_north_pole_normal).magnitude() * sign;
         let cosine_theta = from_to_normal.dot(&from_north_pole_normal);
 
-        let initial_bearing = sine_theta.atan2(cosine_theta).rem_euclid(2.0 * PI);
+        
 
-        initial_bearing
+        sine_theta.atan2(cosine_theta).rem_euclid(2.0 * PI)
     }
 
     /// Returns true if point is on the right hand side, looking from 'from' to 'to'.
@@ -88,16 +88,12 @@ impl Arc {
         let candidate = self.normal().cross(&other.normal()).normalize();
         if !candidate.x.is_nan() && !candidate.y.is_nan() && !candidate.z.is_nan() {
             let candidate = Point::from_n_vector(&candidate);
-            if self.between_normals(&candidate) && other.between_normals(&candidate) {
-                if !candidate.is_approximately_equal(self.from()) {
-                    return Some(candidate);
-                }
+            if self.between_normals(&candidate) && other.between_normals(&candidate) && !candidate.is_approximately_equal(self.from()) {
+                return Some(candidate);
             }
             let candidate = candidate.antipode();
-            if self.between_normals(&candidate) && other.between_normals(&candidate) {
-                if !candidate.is_approximately_equal(self.from()) {
-                    return Some(candidate);
-                }
+            if self.between_normals(&candidate) && other.between_normals(&candidate) && !candidate.is_approximately_equal(self.from()) {
+                return Some(candidate);
             }
         }
 
@@ -117,17 +113,17 @@ impl Arc {
     /// Calculates the normal vector of the the arc. The normal vector defines a plane thrugh zero,
     /// 'from' and 'to'.
     pub fn normal(&self) -> Vector3<f64> {
-        self.from.n_vector().cross(&self.to.n_vector()).normalize()
+        self.from.n_vector().cross(self.to.n_vector()).normalize()
     }
 
     /// Calculates an vector that is perpendicular to the normal and 'from'.
     fn from_normal(&self) -> Vector3<f64> {
-        self.normal().cross(&self.from.n_vector()).normalize()
+        self.normal().cross(self.from.n_vector()).normalize()
     }
 
     /// Calculates an vector that is perpendicular to the normal and 'to'.
     fn to_normal(&self) -> Vector3<f64> {
-        self.normal().cross(&self.to.n_vector()).normalize()
+        self.normal().cross(self.to.n_vector()).normalize()
     }
 
     /// Returns true if point lies between from_normal and to_normal.
@@ -142,7 +138,7 @@ impl Arc {
     pub fn central_angle(&self) -> f64 {
         let from = self.from.n_vector();
         let to = self.to.n_vector();
-        from.angle(&to)
+        from.angle(to)
     }
 
     /// Creates an arc from a GeoJSON-compatible vector. Note the GeoJSON order, which is longitude first.
@@ -222,11 +218,9 @@ mod tests {
 
     #[test]
     fn test_edge_intersection() {
-        let outline = vec![
-            Point::from_coordinate(-1.0, 0.0),
+        let outline = [Point::from_coordinate(-1.0, 0.0),
             Point::from_coordinate(0.0, 0.0),
-            Point::from_coordinate(1.0, 0.0),
-        ];
+            Point::from_coordinate(1.0, 0.0)];
 
         let ray = Arc::new(
             &Point::from_coordinate(0.0, 1.0),
