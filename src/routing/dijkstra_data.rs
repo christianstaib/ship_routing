@@ -1,6 +1,13 @@
 use std::usize;
 
-use super::{queue::BucketQueue, route::Route, FastEdge};
+use super::{
+    queue::{
+        heap_queue::{HeapQueue, State},
+        BucketQueue,
+    },
+    route::Route,
+    FastEdge,
+};
 
 #[derive(Clone)]
 pub struct DijsktraEntry {
@@ -20,24 +27,24 @@ impl DijsktraEntry {
 }
 
 pub struct DijkstraData {
-    pub queue: BucketQueue,
+    pub queue: HeapQueue,
     pub nodes: Vec<DijsktraEntry>,
 }
 
 impl DijkstraData {
     pub fn new(num_nodes: usize, source: u32) -> DijkstraData {
-        let mut queue = BucketQueue::new();
+        let mut queue = HeapQueue::new();
         let mut nodes = vec![DijsktraEntry::new(); num_nodes];
         nodes[source as usize].cost = 0;
         queue.insert(0, source);
         DijkstraData { queue, nodes }
     }
 
-    pub fn pop(&mut self) -> Option<u32> {
-        while let Some(source) = self.queue.pop() {
-            if !self.nodes[source as usize].is_expanded {
-                self.nodes[source as usize].is_expanded = true;
-                return Some(source);
+    pub fn pop(&mut self) -> Option<State> {
+        while let Some(state) = self.queue.pop() {
+            if !self.nodes[state.value as usize].is_expanded {
+                self.nodes[state.value as usize].is_expanded = true;
+                return Some(state);
             }
         }
 

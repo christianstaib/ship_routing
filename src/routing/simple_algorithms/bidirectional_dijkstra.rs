@@ -7,7 +7,7 @@ use crate::routing::{
 #[derive(Clone)]
 pub struct Dijkstra<'a> {
     graph: &'a Graph,
-    max_edge_cost: u32,
+    max_edge_diff: u32,
 }
 
 impl<'a> Routing for Dijkstra<'a> {
@@ -18,54 +18,74 @@ impl<'a> Routing for Dijkstra<'a> {
 
 impl<'a> Dijkstra<'a> {
     pub fn new(graph: &'a Graph) -> Dijkstra {
-        let max_edge_cost = graph
-            .forward_edges
-            .edges
-            .iter()
-            .map(|edge| edge.cost)
-            .max()
-            .unwrap_or(0);
         Dijkstra {
             graph,
-            max_edge_cost,
+            max_edge_diff: graph
+                .forward_edges
+                .edges
+                .iter()
+                .max_by_key(|edge| edge.cost)
+                .unwrap()
+                .cost,
         }
     }
 
     fn dijkstra(&self, request: &RouteRequest) -> Option<Route> {
-        let mut forward_data =
-            DijkstraData::new(self.max_edge_cost, self.graph.nodes.len(), request.source);
-        let mut backward_data =
-            DijkstraData::new(self.max_edge_cost, self.graph.nodes.len(), request.target);
+        let mut forward_data = DijkstraData::new(self.graph.nodes.len(), request.source);
+        let mut backward_data = DijkstraData::new(self.graph.nodes.len(), request.target);
 
-        let contact_node;
+        let mut minmal_cost = u32::MAX;
+        let mut contact_nodes = Vec::new();
+
         loop {
-            let forward_source = forward_data.pop()?;
-            if backward_data.nodes[forward_source as usize].is_expanded {
-                contact_node = forward_source;
+            if let Some(forward_state) = forward_data.pop() {
+                if backward_data.nodes[forward_state.value as usize].is_expanded {
+                    contact_nodes.push(forward_state.value);
+                    minmal_cost = minmal_cost.min(
+                        forward_data.nodes[forward_state.value as usize].cost
+                            + backward_data.nodes[forward_state.value as usize].cost,
+                    );
+                }
+                self.graph
+                    .outgoing_edges(forward_state.value)
+                    .iter()
+                    .for_each(|edge| forward_data.update(forward_state.value, edge));
+            } else {
                 break;
             }
-            self.graph
-                .outgoing_edges(forward_source)
-                .iter()
-                .for_each(|edge| forward_data.update(forward_source, edge));
 
-            let backward_source = backward_data.pop()?;
-            if forward_data.nodes[backward_source as usize].is_expanded {
-                contact_node = backward_source;
+            if let Some(backward_state) = backward_data.pop() {
+                if forward_data.nodes[backward_state.value as usize].is_expanded {
+                    contact_nodes.push(backward_state.value);
+                    minmal_cost = minmal_cost.min(
+                        forward_data.nodes[backward_state.value as usize].cost
+                            + backward_data.nodes[backward_state.value as usize].cost,
+                    );
+                }
+                self.graph
+                    .incoming_edges(backward_state.value)
+                    .iter()
+                    .for_each(|edge| backward_data.update(backward_state.value, edge));
+            }
+
+            if forward_state.value + backward_state.value > minmal_cost {
                 break;
             }
-            self.graph
-                .incoming_edges(backward_source)
-                .iter()
-                .for_each(|edge| backward_data.update(backward_source, edge));
         }
-        println!("contact node is {}", contact_node);
-
+        let contact_node = forward_data
+            .nodes
+            .iter()
+            .zip(backward_data.nodes.iter())
+            .enumerate()
+            .min_by_key(|(_, (forward, backward))| {
+                forward.cost.checked_add(backward.cost).unwrap_or(u32::MAX)
+            })
+            .unwrap()
+            .0 as u32;
         let mut forward_route = forward_data.get_route(contact_node)?;
         let mut backward_route = backward_data.get_route(contact_node)?;
         backward_route.nodes.pop();
         backward_route.nodes.reverse();
-        // assert_eq!(forward_route.nodes.last(), backward_route.nodes.first());
         forward_route.nodes.extend(backward_route.nodes);
         forward_route.cost += backward_route.cost;
 

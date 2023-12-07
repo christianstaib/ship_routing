@@ -32,18 +32,17 @@ impl<'a> Dijkstra<'a> {
     }
 
     fn dijkstra(&self, request: &RouteRequest) -> Option<Route> {
-        let mut data =
-            DijkstraData::new(self.max_edge_cost, self.graph.nodes.len(), request.source);
+        let mut data = DijkstraData::new(self.graph.nodes.len(), request.source);
 
-        while let Some(source) = data.pop() {
-            if source == request.target {
+        while let Some(state) = data.pop() {
+            if state.value == request.target {
                 break;
             }
 
             self.graph
-                .outgoing_edges(source)
+                .outgoing_edges(state.value)
                 .iter()
-                .for_each(|edge| data.update(source, edge));
+                .for_each(|edge| data.update(state.value, edge));
         }
 
         data.get_route(request.target)
