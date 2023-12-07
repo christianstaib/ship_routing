@@ -20,6 +20,7 @@ impl<'a> Routing for Dijkstra<'a> {
 struct DijsktraEntry {
     pub predecessor: u32,
     pub cost: u32,
+    pub is_expanded: bool,
 }
 
 impl DijsktraEntry {
@@ -27,11 +28,8 @@ impl DijsktraEntry {
         DijsktraEntry {
             predecessor: u32::MAX,
             cost: u32::MAX,
+            is_expanded: false,
         }
-    }
-
-    fn from(predecessor: u32, cost: u32) -> DijsktraEntry {
-        DijsktraEntry { predecessor, cost }
     }
 }
 
@@ -46,18 +44,15 @@ impl<'a> Dijkstra<'a> {
 
     fn dijkstra(&self, route_request: &RouteRequest) -> Option<Route> {
         let mut queue = BucketQueue::new(self.max_edge_cost + 1);
-
         let mut nodes = vec![DijsktraEntry::new(); self.graph.nodes.len()];
-        let mut is_expanded: Vec<bool> = vec![false; self.graph.nodes.len()];
-
         nodes[route_request.source as usize].cost = 0;
         queue.insert(0, route_request.source);
 
         while let Some(source) = queue.pop() {
-            if is_expanded[source as usize] {
+            if nodes[source as usize].is_expanded {
                 continue;
             }
-            is_expanded[source as usize] = true;
+            nodes[source as usize].is_expanded = true;
             if source == route_request.target as u32 {
                 break;
             }
@@ -68,7 +63,8 @@ impl<'a> Dijkstra<'a> {
                     let edge = &self.graph.edges[edge_id as usize];
                     let alternative_cost = nodes[source as usize].cost + edge.cost;
                     if alternative_cost < nodes[edge.target as usize].cost {
-                        nodes[edge.target as usize] = DijsktraEntry::from(source, alternative_cost);
+                        nodes[edge.target as usize].predecessor = source;
+                        nodes[edge.target as usize].cost = alternative_cost;
                         queue.insert(alternative_cost, edge.target);
                     }
                 });
@@ -90,3 +86,4 @@ impl<'a> Dijkstra<'a> {
         None
     }
 }
+
