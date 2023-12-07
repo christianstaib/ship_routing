@@ -18,7 +18,13 @@ impl<'a> Routing for Dijkstra<'a> {
 
 impl<'a> Dijkstra<'a> {
     pub fn new(graph: &'a Graph) -> Dijkstra {
-        let max_edge_cost = graph.edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
+        let max_edge_cost = graph
+            .forward_edges
+            .edges
+            .iter()
+            .map(|edge| edge.cost)
+            .max()
+            .unwrap_or(0);
         Dijkstra {
             graph,
             max_edge_cost,

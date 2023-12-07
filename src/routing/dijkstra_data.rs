@@ -1,3 +1,5 @@
+use std::usize;
+
 use super::{queue::BucketQueue, route::Route, FastEdge};
 
 #[derive(Clone)]
@@ -23,8 +25,8 @@ pub struct DijkstraData {
 }
 
 impl DijkstraData {
-    pub fn new(max_edge_cost: u32, num_nodes: usize, source: u32) -> DijkstraData {
-        let mut queue = BucketQueue::new(max_edge_cost + 1);
+    pub fn new(num_nodes: usize, source: u32) -> DijkstraData {
+        let mut queue = BucketQueue::new();
         let mut nodes = vec![DijsktraEntry::new(); num_nodes];
         nodes[source as usize].cost = 0;
         queue.insert(0, source);

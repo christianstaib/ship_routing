@@ -5,7 +5,7 @@ use indicatif::ProgressIterator;
 use osm_test::routing::{
     route::{RouteRequest, Routing},
     simple_algorithms::dijkstra::Dijkstra,
-    Graph,
+    Graph, NaiveGraph,
 };
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
@@ -25,7 +25,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = Graph::from_file(args.fmi_path.as_str());
+    let graph = Graph::new(NaiveGraph::from_file(args.fmi_path.as_str()));
     let dijkstra = Dijkstra::new(&graph);
 
     let mut writer = BufWriter::new(File::create("tests/data/fmi/test_cases.csv").unwrap());

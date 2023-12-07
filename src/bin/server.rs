@@ -5,8 +5,10 @@ use osm_test::geometry::Linestring;
 use osm_test::geometry::Planet;
 use osm_test::routing::route::RouteRequest;
 use osm_test::routing::route::Routing;
+use osm_test::routing::simple_algorithms::bidirectional_dijkstra;
 use osm_test::routing::simple_algorithms::dijkstra::Dijkstra;
 use osm_test::routing::Graph;
+use osm_test::routing::NaiveGraph;
 use osm_test::spatial_graph::Fmi;
 use serde_derive::{Deserialize, Serialize};
 use warp::{http::Response, Filter};
@@ -42,7 +44,7 @@ async fn main() {
 
     println!("Loading graph from file");
     let time = Instant::now();
-    let graph = Graph::from_file(args.fmi_path.as_str());
+    let graph = Graph::new(NaiveGraph::from_file(args.fmi_path.as_str()));
     let graph = Arc::new(graph);
     let fmi = Arc::new(Fmi::from_file(args.fmi_path.as_str()));
     println!("Finished loading graph, took {:?}.", time.elapsed());
@@ -54,17 +56,25 @@ async fn main() {
         .map(move |route_request_lat_lon: RouteRequestLatLon| {
             let source = fmi.nearest(route_request_lat_lon.from.0, route_request_lat_lon.from.1);
             let target = fmi.nearest(route_request_lat_lon.to.0, route_request_lat_lon.to.1);
-            let route_request = RouteRequest { source, target };
+            let request = RouteRequest { source, target };
 
             let dijkstra = Dijkstra::new(&graph);
+            let dijkstra2 = bidirectional_dijkstra::Dijkstra::new(&graph);
             let start = Instant::now();
-            let route_response = dijkstra.get_route(&route_request);
+            let route_response = dijkstra.get_route(&request);
             let time = start.elapsed();
 
             if let Some(route) = route_response {
-                let ids = route.nodes;
+                let ids = &route.nodes;
                 let path = fmi.convert_path(&ids);
                 let linesstring = Linestring::new(path);
+                // println!("{}", linesstring.to_feature().to_string());
+
+                let route2 = dijkstra2.get_route(&request).unwrap();
+                assert!(&route.is_valid(&graph, &request));
+                assert!(&route2.is_valid(&graph, &request));
+                println!("norm {:?} {:?}", &route.nodes.len(), &route.cost);
+                println!("bidi {:?} {:?}", &route2.nodes.len(), &route2.cost);
                 let mut planet = Planet::new();
                 planet.linestrings.push(linesstring);
 

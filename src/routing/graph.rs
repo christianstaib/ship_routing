@@ -36,8 +36,8 @@ pub struct FastEdge {
 #[derive(Clone)]
 pub struct Node {
     pub id: u32,
-    pub longitude: f32,
-    pub latitude: f32,
+    pub longitude: f64,
+    pub latitude: f64,
 }
 
 impl Edge {
@@ -50,7 +50,7 @@ impl Edge {
 }
 
 impl Node {
-    pub fn new(id: u32, longitude: f32, latitude: f32) -> Node {
+    pub fn new(id: u32, longitude: f64, latitude: f64) -> Node {
         Node {
             id,
             longitude,
@@ -59,15 +59,64 @@ impl Node {
     }
 }
 
+#[derive(Clone)]
 pub struct NaiveGraph {
     pub nodes: Vec<Node>,
     pub edges: Vec<Edge>,
 }
 
+#[derive(Clone)]
 pub struct Graph {
     pub nodes: Vec<Node>,
+    pub forward_edges: FastEdgeAccess,
+    pub backward_edges: FastEdgeAccess,
+}
+
+#[derive(Clone)]
+pub struct FastEdgeAccess {
     pub edges: Vec<FastEdge>,
     pub edges_start_at: Vec<u32>,
+}
+
+impl FastEdgeAccess {
+    pub fn new(edges: &Vec<Edge>) -> FastEdgeAccess {
+        let mut edges = edges.clone();
+
+        let mut edges_start_at: Vec<u32> = vec![0; edges.len() + 1];
+
+        // temporarrly adding a node in order to generate the list
+        edges.push(Edge {
+            source: edges.len() as u32,
+            target: 0,
+            cost: 0,
+        });
+        edges.sort_unstable_by_key(|edge| edge.source);
+
+        let mut current = 0;
+        for (i, edge) in edges.iter().enumerate() {
+            if edge.source != current {
+                for index in (current + 1)..=edge.source {
+                    edges_start_at[index as usize] = i as u32;
+                }
+                current = edge.source;
+            }
+        }
+        edges.pop();
+        let edges = edges.iter().map(|edge| edge.make_fast()).collect();
+        let edges_start_at = edges_start_at.clone();
+
+        FastEdgeAccess {
+            edges,
+            edges_start_at,
+        }
+    }
+
+    pub fn outgoing_edges(&self, source: u32) -> &[FastEdge] {
+        let start = self.edges_start_at[source as usize] as usize;
+        let end = self.edges_start_at[source as usize + 1] as usize;
+
+        &self.edges[start..end]
+    }
 }
 
 impl NaiveGraph {
@@ -86,8 +135,8 @@ impl NaiveGraph {
                 let node_line = node_line.unwrap();
                 let mut values = node_line.split_whitespace();
                 let id: u32 = values.next().unwrap().parse().unwrap();
-                let latitude: f32 = values.next().unwrap().parse().unwrap();
-                let longitude: f32 = values.next().unwrap().parse().unwrap();
+                let latitude: f64 = values.next().unwrap().parse().unwrap();
+                let longitude: f64 = values.next().unwrap().parse().unwrap();
                 Node::new(id, latitude, longitude)
             })
             .collect();
@@ -110,61 +159,43 @@ impl NaiveGraph {
 
     pub fn make_bidirectional(&mut self) {
         let mut edge_map = HashMap::new();
-        self.edges
-            .iter()
-            .flat_map(|edge| vec![edge.clone(), edge.get_inverted()])
-            .for_each(|edge| {
-                let key = (edge.source, edge.target);
-                if &edge.cost < edge_map.get(&key).unwrap_or(&u32::MAX) {
-                    edge_map.insert(key, edge.cost);
-                }
-            });
+        self.edges.iter().for_each(|edge| {
+            let key = (edge.source, edge.target);
+            let key = (std::cmp::min(key.0, key.1), std::cmp::max(key.0, key.1));
+            if &edge.cost < edge_map.get(&key).unwrap_or(&u32::MAX) {
+                edge_map.insert(key, edge.cost);
+            }
+        });
         self.edges = edge_map
             .iter()
             .map(|(&(source, target), &cost)| Edge::new(source, target, cost))
+            .flat_map(|edge| vec![edge.clone(), edge.get_inverted()])
             .collect();
     }
 }
 
 impl Graph {
     pub fn outgoing_edges(&self, source: u32) -> &[FastEdge] {
-        let start = self.edges_start_at[source as usize] as usize;
-        let end = self.edges_start_at[source as usize + 1] as usize;
-
-        &self.edges[start..end]
+        self.forward_edges.outgoing_edges(source)
     }
 
-    pub fn from_file(filename: &str) -> Graph {
-        let mut naive_graph = NaiveGraph::from_file(filename);
-        naive_graph.make_bidirectional();
+    pub fn incoming_edges(&self, target: u32) -> &[FastEdge] {
+        self.backward_edges.outgoing_edges(target)
+    }
 
-        let mut edges = naive_graph.edges.clone();
+    pub fn new(graph: NaiveGraph) -> Graph {
+        let mut graph = graph.clone();
+        graph.make_bidirectional();
 
-        let mut edges_start_at: Vec<u32> = vec![0; edges.len() + 1];
+        let forward_edges = FastEdgeAccess::new(&graph.edges);
 
-        // temporarrly adding a node in order to generate the list
-        edges.push(Edge {
-            source: edges.len() as u32,
-            target: 0,
-            cost: 0,
-        });
-        edges.sort_unstable_by_key(|edge| edge.source);
-
-        let mut current = 0;
-        for (i, edge) in edges.iter().enumerate() {
-            if edge.source != current {
-                for index in (current + 1)..=edge.source {
-                    edges_start_at[index as usize] = i as u32;
-                }
-                current = edge.source;
-            }
-        }
-        edges.pop();
+        let inverted_edges = graph.edges.iter().map(|edge| edge.get_inverted()).collect();
+        let backward_edges = FastEdgeAccess::new(&inverted_edges);
 
         Graph {
-            nodes: naive_graph.nodes.clone(),
-            edges: edges.iter().map(|edge| edge.make_fast()).collect(),
-            edges_start_at: edges_start_at.clone(),
+            nodes: graph.nodes.clone(),
+            forward_edges,
+            backward_edges,
         }
     }
 }
