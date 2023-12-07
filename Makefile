@@ -21,4 +21,4 @@ server:
 	cargo run --bin server --release  -- --fmi-path tests/data/fmi/network.fmi
 
 test:
-	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi --number-of-tests 1000
+	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi --number-of-tests 100

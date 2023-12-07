@@ -54,9 +54,8 @@ impl DijkstraData {
 
     pub fn pop(&mut self) -> Option<u32> {
         while let Some(source) = self.queue.pop() {
-            if self.nodes[source as usize].is_expanded {
+            if !self.nodes[source as usize].is_expanded {
                 self.nodes[source as usize].is_expanded = true;
-            } else {
                 return Some(source);
             }
         }
