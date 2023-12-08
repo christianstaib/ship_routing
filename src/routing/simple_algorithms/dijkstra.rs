@@ -36,4 +36,17 @@ impl<'a> Dijkstra<'a> {
 
         data.get_route(request.target)
     }
+
+    pub fn single_source(&self, request: &RouteRequest) -> DijkstraData {
+        let mut data = DijkstraData::new(self.graph.nodes.len(), request.source);
+
+        while let Some(state) = data.pop() {
+            self.graph
+                .outgoing_edges(state.value)
+                .iter()
+                .for_each(|edge| data.update(state.value, edge));
+        }
+
+        data
+    }
 }
