@@ -9,10 +9,7 @@ use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
     route::{RouteRequest, Routing},
-    simple_algorithms::{
-        a_star, bidirectional_a_star, bidirectional_dijkstra, bidirectional_landmark, dijkstra,
-        landmark,
-    },
+    simple_algorithms::*,
     Graph, NaiveGraph,
 };
 
@@ -36,36 +33,36 @@ fn main() {
     let graph = Graph::new(naive_graph);
 
     let mut algorithms: Vec<(String, Box<dyn Routing>, Vec<Duration>)> = Vec::new();
-    // algorithms.push((
-    //     "a start".to_string(),
-    //     Box::new(a_star::Dijkstra::new(&graph)),
-    //     Vec::new(),
-    // ));
-    // algorithms.push((
-    //     "landmark a star".to_string(),
-    //     Box::new(landmark::Dijkstra::new(&graph)),
-    //     Vec::new(),
-    // ));
+    // // algorithms.push((
+    // //     "a start".to_string(),
+    // //     Box::new(a_star::Dijkstra::new(&graph)),
+    // //     Vec::new(),
+    // // ));
     algorithms.push((
-        "bidirectional landmark a star".to_string(),
-        Box::new(bidirectional_landmark::Dijkstra::new(&graph)),
+        "bidirectional a start".to_string(),
+        Box::new(bidirectional_a_star::Dijkstra::new(&graph)),
         Vec::new(),
     ));
+    // // algorithms.push((
+    // //     "landmark a star".to_string(),
+    // //     Box::new(landmark::Dijkstra::new(&graph)),
+    // //     Vec::new(),
+    // // ));
     // algorithms.push((
-    //     "bidirectional a start".to_string(),
-    //     Box::new(bidirectional_a_star::Dijkstra::new(&graph)),
+    //     "bidirectional landmark a star".to_string(),
+    //     Box::new(bidirectional_landmark::Dijkstra::new(&graph)),
     //     Vec::new(),
     // ));
-    // algorithms.push((
-    //     "dijkstra".to_string(),
-    //     Box::new(dijkstra::Dijkstra::new(&graph)),
-    //     Vec::new(),
-    // ));
-    // algorithms.push((
-    //     "bidirectional dijkstra".to_string(),
-    //     Box::new(bidirectional_dijkstra::Dijkstra::new(&graph)),
-    //     Vec::new(),
-    // ));
+    // // algorithms.push((
+    // //     "dijkstra".to_string(),
+    // //     Box::new(dijkstra::Dijkstra::new(&graph)),
+    // //     Vec::new(),
+    // // ));
+    // // algorithms.push((
+    // //     "bidirectional dijkstra".to_string(),
+    // //     Box::new(bidirectional_dijkstra::Dijkstra::new(&graph)),
+    // //     Vec::new(),
+    // // ));
 
     let reader = BufReader::new(File::open("tests/data/fmi/test_cases.csv").unwrap());
     reader

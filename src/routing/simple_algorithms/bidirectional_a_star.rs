@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use crate::{
     geometry::{radians_to_meter, Arc},
     routing::{
@@ -12,7 +10,6 @@ use crate::{
 #[derive(Clone)]
 pub struct Dijkstra<'a> {
     graph: &'a Graph,
-    max_edge_diff: u32,
 }
 
 impl<'a> Routing for Dijkstra<'a> {
@@ -23,30 +20,21 @@ impl<'a> Routing for Dijkstra<'a> {
 
 impl<'a> Dijkstra<'a> {
     pub fn new(graph: &'a Graph) -> Dijkstra {
-        Dijkstra {
-            graph,
-            max_edge_diff: graph
-                .forward_edges
-                .edges
-                .iter()
-                .max_by_key(|edge| edge.cost)
-                .unwrap()
-                .cost,
-        }
+        Dijkstra { graph }
     }
 
     fn dijkstra(&self, request: &RouteRequest) -> Option<Route> {
-        let mut forward_data = DijkstraData::new(self.graph.nodes.len(), request.source);
-        let mut backward_data = DijkstraData::new(self.graph.nodes.len(), request.target);
+        let mut forward = DijkstraData::new(self.graph.nodes.len(), request.source);
+        let mut backward = DijkstraData::new(self.graph.nodes.len(), request.target);
 
         let mut minmal_cost = u32::MAX;
 
         loop {
-            let forward_state = forward_data.pop()?;
-            if backward_data.nodes[forward_state.value as usize].is_expanded {
+            let forward_state = forward.pop()?;
+            if backward.nodes[forward_state.value as usize].is_expanded {
                 minmal_cost = minmal_cost.min(
-                    forward_data.nodes[forward_state.value as usize].cost
-                        + backward_data.nodes[forward_state.value as usize].cost,
+                    forward.nodes[forward_state.value as usize].cost
+                        + backward.nodes[forward_state.value as usize].cost,
                 );
             }
             self.graph
@@ -59,15 +47,16 @@ impl<'a> Dijkstra<'a> {
                             &self.graph.nodes[request.target as usize],
                         )
                         .central_angle(),
-                    ) * 0.9) as u32;
-                    forward_data.update_with_h(forward_state.value, edge, h)
+                    ))
+                    .round() as u32;
+                    forward.update_with_h(forward_state.value, edge, 0)
                 });
 
-            let backward_state = backward_data.pop()?;
-            if forward_data.nodes[backward_state.value as usize].is_expanded {
+            let backward_state = backward.pop()?;
+            if forward.nodes[backward_state.value as usize].is_expanded {
                 minmal_cost = minmal_cost.min(
-                    forward_data.nodes[backward_state.value as usize].cost
-                        + backward_data.nodes[backward_state.value as usize].cost,
+                    forward.nodes[backward_state.value as usize].cost
+                        + backward.nodes[backward_state.value as usize].cost,
                 );
             }
             self.graph
@@ -76,23 +65,29 @@ impl<'a> Dijkstra<'a> {
                 .for_each(|edge| {
                     let h = (radians_to_meter(
                         Arc::new(
-                            &self.graph.nodes[edge.target as usize],
                             &self.graph.nodes[request.source as usize],
+                            &self.graph.nodes[edge.target as usize],
                         )
                         .central_angle(),
-                    ) * 0.9) as u32;
-                    backward_data.update_with_h(backward_state.value, edge, h)
+                    )
+                    .round()) as u32;
+                    backward.update_with_h(backward_state.value, edge, 0)
                 });
 
-            if forward_state.key + backward_state.key >= minmal_cost {
+            if forward.nodes[forward_state.value as usize]
+                .cost
+                .checked_add(backward.nodes[backward_state.value as usize].cost)
+                .unwrap_or(0)
+                >= minmal_cost
+            {
                 break;
             }
         }
 
-        let contact_node = forward_data
+        let contact_node = forward
             .nodes
             .iter()
-            .zip(backward_data.nodes.iter())
+            .zip(backward.nodes.iter())
             .enumerate()
             .min_by_key(|(_, (forward, backward))| {
                 forward.cost.checked_add(backward.cost).unwrap_or(u32::MAX)
@@ -100,8 +95,8 @@ impl<'a> Dijkstra<'a> {
             .unwrap()
             .0 as u32;
 
-        let mut forward_route = forward_data.get_route(contact_node)?;
-        let mut backward_route = backward_data.get_route(contact_node)?;
+        let mut forward_route = forward.get_route(contact_node)?;
+        let mut backward_route = backward.get_route(contact_node)?;
         backward_route.nodes.pop();
         backward_route.nodes.reverse();
         forward_route.nodes.extend(backward_route.nodes);

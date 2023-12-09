@@ -35,13 +35,14 @@ impl<'a> Dijkstra<'a> {
                 .outgoing_edges(state.value)
                 .iter()
                 .for_each(|edge| {
-                    let h = (radians_to_meter(
+                    let h = radians_to_meter(
                         Arc::new(
                             &self.graph.nodes[edge.target as usize],
                             &self.graph.nodes[request.target as usize],
                         )
                         .central_angle(),
-                    ) * 0.75) as u32;
+                    )
+                    .round() as u32;
                     data.update_with_h(state.value, edge, h);
                 })
         }

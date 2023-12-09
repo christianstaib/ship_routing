@@ -54,43 +54,11 @@ pub struct Dijkstra<'a> {
 }
 
 impl<'a> Routing for Dijkstra<'a> {
-    fn get_route(&self, route_request: &RouteRequest) -> Option<Route> {
-        self.dijkstra(route_request)
-    }
-}
-
-impl<'a> Dijkstra<'a> {
-    pub fn new(graph: &'a Graph) -> Dijkstra {
-        println!("creating landmarks");
-        let landmarks = (0..250)
-            .progress()
-            .par_bridge()
-            .map(|_| {
-                let mut rng = rand::thread_rng();
-                Landmark::new(rng.gen_range(0..graph.nodes.len() as u32), graph)
-            })
-            .collect();
-        Dijkstra { graph, landmarks }
-    }
-
-    fn dijkstra(&self, request: &RouteRequest) -> Option<Route> {
+    fn get_route(&self, request: &RouteRequest) -> Option<Route> {
         let mut forward_data = DijkstraData::new(self.graph.nodes.len(), request.source);
         let mut backward_data = DijkstraData::new(self.graph.nodes.len(), request.target);
 
-        let n = 10;
-        let mut diff: Vec<_> = self
-            .landmarks
-            .iter()
-            .map(|landmark| landmark.lower_bound(request.source, request.target) as isize * -1)
-            .enumerate()
-            .collect();
-
-        diff.sort_by_key(|&(_, diff)| diff);
-
-        let mut landmarks = Vec::new();
-        for (i, _) in diff.iter().take(n) {
-            landmarks.push(self.landmarks[*i as usize].clone());
-        }
+        let landmarks = self.tune_landmarks(request, 10);
 
         let mut minmal_cost = u32::MAX;
 
@@ -111,7 +79,7 @@ impl<'a> Dijkstra<'a> {
                         .map(|landmark| landmark.lower_bound(edge.target, request.target))
                         .max()
                         .unwrap();
-                    forward_data.update_with_h(forward_state.value, edge, h)
+                    forward_data.update_with_h(forward_state.value, edge, 0)
                 });
 
             let backward_state = backward_data.pop()?;
@@ -130,32 +98,71 @@ impl<'a> Dijkstra<'a> {
                         .map(|landmark| landmark.lower_bound(edge.target, request.source))
                         .max()
                         .unwrap();
-                    backward_data.update_with_h(backward_state.value, edge, h)
+                    backward_data.update_with_h(backward_state.value, edge, 0)
                 });
 
-            if forward_state.key + backward_state.key >= minmal_cost {
+            if forward_data.nodes[forward_state.value as usize].cost
+                + backward_data.nodes[backward_state.value as usize].cost
+                >= minmal_cost
+            {
                 break;
             }
         }
 
-        let contact_node = forward_data
-            .nodes
-            .iter()
-            .zip(backward_data.nodes.iter())
-            .enumerate()
-            .min_by_key(|(_, (forward, backward))| {
-                forward.cost.checked_add(backward.cost).unwrap_or(u32::MAX)
-            })
-            .unwrap()
-            .0 as u32;
-
-        let mut forward_route = forward_data.get_route(contact_node)?;
-        let mut backward_route = backward_data.get_route(contact_node)?;
-        backward_route.nodes.pop();
-        backward_route.nodes.reverse();
-        forward_route.nodes.extend(backward_route.nodes);
-        forward_route.cost += backward_route.cost;
-
-        Some(forward_route)
+        get_route(forward_data, backward_data)
     }
+}
+
+impl<'a> Dijkstra<'a> {
+    pub fn new(graph: &'a Graph) -> Dijkstra {
+        println!("creating landmarks");
+        let landmarks = (0..100)
+            .progress()
+            .par_bridge()
+            .map(|_| {
+                let mut rng = rand::thread_rng();
+                Landmark::new(rng.gen_range(0..graph.nodes.len() as u32), graph)
+            })
+            .collect();
+        Dijkstra { graph, landmarks }
+    }
+
+    fn tune_landmarks(&self, request: &RouteRequest, n: u32) -> Vec<Landmark> {
+        let mut diff: Vec<_> = self
+            .landmarks
+            .iter()
+            .map(|landmark| landmark.lower_bound(request.source, request.target) as isize * -1)
+            .enumerate()
+            .collect();
+
+        diff.sort_by_key(|&(_, diff)| diff);
+
+        let mut landmarks = Vec::new();
+        for (i, _) in diff.iter().take(n as usize) {
+            landmarks.push(self.landmarks[*i as usize].clone());
+        }
+        landmarks
+    }
+}
+
+fn get_route(forward_data: DijkstraData, backward_data: DijkstraData) -> Option<Route> {
+    let contact_node = forward_data
+        .nodes
+        .iter()
+        .zip(backward_data.nodes.iter())
+        .enumerate()
+        .min_by_key(|(_, (forward, backward))| {
+            forward.cost.checked_add(backward.cost).unwrap_or(u32::MAX)
+        })
+        .unwrap()
+        .0 as u32;
+
+    let mut forward_route = forward_data.get_route(contact_node)?;
+    let mut backward_route = backward_data.get_route(contact_node)?;
+    backward_route.nodes.pop();
+    backward_route.nodes.reverse();
+    forward_route.nodes.extend(backward_route.nodes);
+    forward_route.cost += backward_route.cost;
+
+    Some(forward_route)
 }

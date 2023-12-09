@@ -62,7 +62,7 @@ impl<'a> Routing for Dijkstra<'a> {
 impl<'a> Dijkstra<'a> {
     pub fn new(graph: &'a Graph) -> Dijkstra {
         println!("creating landmarks");
-        let landmarks = (0..500)
+        let landmarks = (0..100)
             .progress()
             .par_bridge()
             .map(|_| {
