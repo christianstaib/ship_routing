@@ -1,9 +1,7 @@
 use std::usize;
 
 use super::{
-    queue::{
-        heap_queue::{HeapQueue, State},
-    },
+    queue::heap_queue::{HeapQueue, State},
     route::Route,
     FastEdge,
 };

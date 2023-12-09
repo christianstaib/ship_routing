@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::BinaryHeap, fmt::Binary};
+use std::{cmp::Ordering, collections::BinaryHeap};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct State {

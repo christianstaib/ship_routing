@@ -33,23 +33,27 @@ impl<'a> Dijkstra<'a> {
             let forward_state = forward.pop()?;
             if backward.nodes[forward_state.value as usize].is_expanded {
                 minmal_cost = minmal_cost.min(
-                    forward.nodes[forward_state.value as usize].cost
-                        + backward.nodes[forward_state.value as usize].cost,
+                    forward.nodes[forward_state.value as usize]
+                        .cost
+                        .checked_add(backward.nodes[forward_state.value as usize].cost)
+                        .unwrap(),
                 );
             }
             self.graph
                 .outgoing_edges(forward_state.value)
                 .iter()
                 .for_each(|edge| {
-                    let _h = (radians_to_meter(
+                    let _h = ((radians_to_meter(
                         Arc::new(
                             &self.graph.nodes[edge.target as usize],
                             &self.graph.nodes[request.target as usize],
                         )
                         .central_angle(),
                     ))
-                    .round() as u32;
-                    forward.update_with_h(forward_state.value, edge, 0)
+                    .round() as u32)
+                        .checked_sub(100)
+                        .unwrap_or(0);
+                    forward.update_with_h(forward_state.value, edge, _h)
                 });
 
             let backward_state = backward.pop()?;
