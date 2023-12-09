@@ -3,7 +3,6 @@ use std::usize;
 use super::{
     queue::{
         heap_queue::{HeapQueue, State},
-        BucketQueue,
     },
     route::Route,
     FastEdge,

@@ -1,14 +1,12 @@
-use std::{time::Instant, usize};
+use std::{usize};
 
 use indicatif::ProgressIterator;
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::{
-    geometry::{radians_to_meter, Arc},
     routing::{
         dijkstra_data::DijkstraData,
-        graph,
         route::{Route, RouteRequest, Routing},
         Graph,
     },
@@ -31,7 +29,7 @@ impl Landmark {
         };
         let data = dijkstra.single_source(&request);
         let costs = (0..graph.nodes.len())
-            .map(|node| data.nodes[node as usize].cost)
+            .map(|node| data.nodes[node].cost)
             .collect();
         Landmark { node, costs }
     }
@@ -80,7 +78,7 @@ impl<'a> Dijkstra<'a> {
         let mut diff: Vec<_> = self
             .landmarks
             .iter()
-            .map(|landmark| landmark.lower_bound(request.source, request.target) as isize * -1)
+            .map(|landmark| -(landmark.lower_bound(request.source, request.target) as isize))
             .enumerate()
             .collect();
 
@@ -88,7 +86,7 @@ impl<'a> Dijkstra<'a> {
 
         let mut landmarks = Vec::new();
         for (i, _) in diff.iter().take(n) {
-            landmarks.push(self.landmarks[*i as usize].clone());
+            landmarks.push(self.landmarks[*i].clone());
         }
 
         while let Some(state) = data.pop() {

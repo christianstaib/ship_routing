@@ -41,7 +41,7 @@ impl<'a> Dijkstra<'a> {
                 .outgoing_edges(forward_state.value)
                 .iter()
                 .for_each(|edge| {
-                    let h = (radians_to_meter(
+                    let _h = (radians_to_meter(
                         Arc::new(
                             &self.graph.nodes[edge.target as usize],
                             &self.graph.nodes[request.target as usize],
@@ -63,7 +63,7 @@ impl<'a> Dijkstra<'a> {
                 .incoming_edges(backward_state.value)
                 .iter()
                 .for_each(|edge| {
-                    let h = (radians_to_meter(
+                    let _h = (radians_to_meter(
                         Arc::new(
                             &self.graph.nodes[request.source as usize],
                             &self.graph.nodes[edge.target as usize],
