@@ -8,10 +8,12 @@ use std::{
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    route::{RouteRequest, RouteValidationRequest, Routing},
+    route::{RouteValidationRequest, Routing},
     simple_algorithms::{
-        a_star_with_distance::ASTarWithDistance, a_star_with_landmarks::AStarWithLandmarks,
+        a_star_with_distance::ASTarWithDistance,
+        a_star_with_landmarks::AStarWithLandmarks,
         a_star_with_zero::AStarWithZero,
+        bi_a_star_with_zero::{self, BiAStarWithZero},
     },
     Graph, NaiveGraph,
 };
@@ -35,47 +37,44 @@ fn main() {
 
     let graph = Graph::new(naive_graph);
 
-    let mut algorithms: Vec<(String, Box<dyn Routing>, Vec<Duration>)> = Vec::new();
+    let mut algorithms: Vec<(&str, Box<dyn Routing>)> = Vec::new();
     // // algorithms.push((
     // //     "a start".to_string(),
     // //     Box::new(a_star::Dijkstra::new(&graph)),
-    // //     Vec::new(),
     // // ));
     // algorithms.push((
     //     "bidirectional a start".to_string(),
     //     Box::new(bidirectional_landmark::BiLandmark::new(&graph)),
-    //     Vec::new(),
     // ));
-    algorithms.push((
-        "a star with landmarks".to_string(),
-        Box::new(AStarWithLandmarks::new(&graph)),
-        Vec::new(),
-    ));
-    algorithms.push((
-        "a star with zero (dijkstra)".to_string(),
-        Box::new(AStarWithZero::new(&graph)),
-        Vec::new(),
-    ));
-    algorithms.push((
-        "a star with distance".to_string(),
-        Box::new(ASTarWithDistance::new(&graph)),
-        Vec::new(),
-    ));
+    // // // algorithms.push((
+    // // //     "a star with landmarks",
+    // // //     Box::new(AStarWithLandmarks::new(&graph)),
+    // // // ));
+    // // // algorithms.push((
+    // // //     "a star with zero (dijkstra)",
+    // // //     Box::new(AStarWithZero::new(&graph)),
+    // // // ));
+    // // // algorithms.push((
+    // // //     "a star with distance",
+    // // //     Box::new(ASTarWithDistance::new(&graph)),
+    // // // ));
     // algorithms.push((
     //     "bidirectional landmark a star".to_string(),
     //     Box::new(bidirectional_landmark::BiLandmark::new(&graph)),
-    //     Vec::new(),
     // ));
     // algorithms.push((
     //     "dijkstra".to_string(),
     //     Box::new(dijkstra::Dijkstra::new(&graph)),
-    //     Vec::new(),
     // ));
-    // algorithms.push((
-    //     "bidirectional dijkstra".to_string(),
-    //     Box::new(bidirectional_dijkstra::BiDijkstra::new(&graph)),
-    //     Vec::new(),
-    // ));
+    algorithms.push((
+        "bidirectional a star with zero (bidirectional dijkstra)",
+        Box::new(BiAStarWithZero::new(&graph)),
+    ));
+
+    let mut algorithms: Vec<_> = algorithms
+        .iter()
+        .map(|(name, algorithm)| (name, algorithm, Vec::new()))
+        .collect();
 
     let reader = BufReader::new(File::open("tests/data/fmi/test_cases.csv").unwrap());
     reader
