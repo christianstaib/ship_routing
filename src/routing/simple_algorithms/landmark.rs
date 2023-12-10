@@ -1,15 +1,13 @@
-use std::{usize};
+use std::usize;
 
 use indicatif::ProgressIterator;
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::{
-    routing::{
-        dijkstra_data::DijkstraData,
-        route::{Route, RouteRequest, Routing},
-        Graph,
-    },
+use crate::routing::{
+    dijkstra_data::DijkstraData,
+    route::{Route, RouteRequest, Routing},
+    Graph,
 };
 
 use super::dijkstra;

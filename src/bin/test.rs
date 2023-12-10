@@ -38,21 +38,21 @@ fn main() {
     // //     Box::new(a_star::Dijkstra::new(&graph)),
     // //     Vec::new(),
     // // ));
-    // // algorithms.push((
-    // //     "bidirectional a start".to_string(),
-    // //     Box::new(bidirectional_a_star::Dijkstra::new(&graph)),
-    // //     Vec::new(),
-    // // ));
+    algorithms.push((
+        "bidirectional a start".to_string(),
+        Box::new(bidirectional_landmark::BiLandmark::new(&graph)),
+        Vec::new(),
+    ));
     // // algorithms.push((
     // //     "landmark a star".to_string(),
     // //     Box::new(landmark::Dijkstra::new(&graph)),
     // //     Vec::new(),
     // // ));
-    algorithms.push((
-        "bidirectional landmark a star".to_string(),
-        Box::new(bidirectional_landmark::BiLandmark::new(&graph)),
-        Vec::new(),
-    ));
+    // algorithms.push((
+    //     "bidirectional landmark a star".to_string(),
+    //     Box::new(bidirectional_landmark::BiLandmark::new(&graph)),
+    //     Vec::new(),
+    // ));
     // algorithms.push((
     //     "dijkstra".to_string(),
     //     Box::new(dijkstra::Dijkstra::new(&graph)),

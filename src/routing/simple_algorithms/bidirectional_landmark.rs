@@ -3,7 +3,10 @@ use crate::routing::{
     Graph,
 };
 
-use super::{bidirectional_a_star::BiAStar, heuristics::landmark::LandmarkCollection};
+use super::{
+    bidirectional_a_star::BiAStar,
+    heuristics::{distance::Distance, landmark::LandmarkCollection},
+};
 
 #[derive(Clone)]
 pub struct BiLandmark<'a> {
@@ -13,14 +16,20 @@ pub struct BiLandmark<'a> {
 
 impl<'a> Routing for BiLandmark<'a> {
     fn get_route(&self, request: &RouteRequest) -> Option<Route> {
-        self.bi_a_star
-            .get_route(request, Box::new(self.heuristic.tune(request, 10)))
+        let route = self.bi_a_star.get_route(
+            request,
+            Box::new(Distance {
+                graph: self.bi_a_star.graph.clone(),
+            }),
+        );
+
+        route
     }
 }
 
 impl<'a> BiLandmark<'a> {
     pub fn new(graph: &'a Graph) -> BiLandmark<'a> {
-        let heuristic = LandmarkCollection::new(graph, 50);
+        let heuristic = LandmarkCollection::new(graph, 1);
         let bi_a_star = BiAStar::new(graph);
         BiLandmark {
             bi_a_star,
