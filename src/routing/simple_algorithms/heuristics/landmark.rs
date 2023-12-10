@@ -8,6 +8,7 @@ use super::Heuristic;
 
 #[derive(Clone)]
 pub struct LandmarkCollection {
+    target: u32,
     landmarks: Vec<Landmark>,
 }
 
@@ -22,7 +23,10 @@ impl LandmarkCollection {
                 Landmark::new(rng.gen_range(0..graph.nodes.len() as u32), graph)
             })
             .collect();
-        LandmarkCollection { landmarks }
+        LandmarkCollection {
+            landmarks,
+            target: 0,
+        }
     }
 
     pub fn tune(&self, request: &RouteRequest, num_landmarks: u32) -> LandmarkCollection {
@@ -40,15 +44,18 @@ impl LandmarkCollection {
             landmarks.push(self.landmarks[*i].clone());
         }
 
-        LandmarkCollection { landmarks }
+        LandmarkCollection {
+            landmarks,
+            target: request.target,
+        }
     }
 }
 
 impl Heuristic for LandmarkCollection {
-    fn lower_bound(&self, source: u32, target: u32) -> u32 {
+    fn lower_bound(&self, source: u32) -> u32 {
         self.landmarks
             .iter()
-            .map(|landmark| landmark.lower_bound(source, target))
+            .map(|landmark| landmark.lower_bound(source, self.target))
             .max()
             .unwrap_or(0)
     }
@@ -82,14 +89,11 @@ impl Landmark {
             .checked_add(self.costs[target as usize])
             .unwrap_or(u32::MAX)
     }
-}
 
-impl Heuristic for Landmark {
     fn lower_bound(&self, source: u32, target: u32) -> u32 {
         if self.costs[source as usize] != u32::MAX && self.costs[target as usize] != u32::MAX {
             return self.costs[source as usize].abs_diff(self.costs[target as usize]);
         }
-        println!("err");
         0
     }
 }

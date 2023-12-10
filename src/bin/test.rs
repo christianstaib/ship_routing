@@ -45,7 +45,7 @@ fn main() {
     // ));
     algorithms.push((
         "landmark a star".to_string(),
-        Box::new(landmark::Dijkstra::new(&graph)),
+        Box::new(landmark::AStarWithLandmarks::new(&graph)),
         Vec::new(),
     ));
     // algorithms.push((

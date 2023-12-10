@@ -1,6 +1,6 @@
 use crate::{
     geometry::{radians_to_meter, Arc},
-    routing::{Graph},
+    routing::Graph,
 };
 
 use super::Heuristic;
@@ -8,21 +8,23 @@ use super::Heuristic;
 #[derive(Clone)]
 pub struct Distance {
     pub graph: Graph,
+    pub source: u32,
 }
 
 impl Distance {
-    pub fn new(graph: &Graph) -> Distance {
+    pub fn new(graph: &Graph, source: u32) -> Distance {
         Distance {
             graph: graph.clone(),
+            source,
         }
     }
 }
 
 impl Heuristic for Distance {
-    fn lower_bound(&self, source: u32, target: u32) -> u32 {
+    fn lower_bound(&self, target: u32) -> u32 {
         radians_to_meter(
             Arc::new(
-                &self.graph.nodes[source as usize],
+                &self.graph.nodes[self.source as usize],
                 &self.graph.nodes[target as usize],
             )
             .central_angle(),

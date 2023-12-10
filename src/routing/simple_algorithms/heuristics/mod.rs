@@ -1,5 +1,6 @@
 pub trait Heuristic {
-    fn lower_bound(&self, source: u32, target: u32) -> u32;
+    /// Lower bound for the cost from node some target node.
+    fn lower_bound(&self, node: u32) -> u32;
 }
 
 pub mod distance;

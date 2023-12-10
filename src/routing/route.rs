@@ -13,6 +13,7 @@ pub struct Route {
 
 pub trait Routing {
     fn get_route(&self, route_request: &RouteRequest) -> Option<Route>;
+    // fn get_data(&self, route_request: &RouteRequest) -> (Option<Route>, Vec<Vec<u32>>);
 }
 
 impl Route {
@@ -29,5 +30,14 @@ impl Route {
         (true_cost == self.cost)
             && (self.nodes.first().unwrap() == &request.source)
             && (self.nodes.last().unwrap() == &request.target)
+    }
+}
+
+impl RouteRequest {
+    pub fn reversed(&self) -> RouteRequest {
+        RouteRequest {
+            source: self.target,
+            target: self.source,
+        }
     }
 }
