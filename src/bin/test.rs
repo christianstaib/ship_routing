@@ -50,19 +50,19 @@ fn main() {
     // // ));
     algorithms.push((
         "bidirectional landmark a star".to_string(),
-        Box::new(bidirectional_landmark::Dijkstra::new(&graph)),
+        Box::new(bidirectional_landmark::BiLandmark::new(&graph)),
         Vec::new(),
     ));
-    // // algorithms.push((
-    // //     "dijkstra".to_string(),
-    // //     Box::new(dijkstra::Dijkstra::new(&graph)),
-    // //     Vec::new(),
-    // // ));
-    // // algorithms.push((
-    // //     "bidirectional dijkstra".to_string(),
-    // //     Box::new(bidirectional_dijkstra::Dijkstra::new(&graph)),
-    // //     Vec::new(),
-    // // ));
+    // algorithms.push((
+    //     "dijkstra".to_string(),
+    //     Box::new(dijkstra::Dijkstra::new(&graph)),
+    //     Vec::new(),
+    // ));
+    // algorithms.push((
+    //     "bidirectional dijkstra".to_string(),
+    //     Box::new(bidirectional_dijkstra::BiDijkstra::new(&graph)),
+    //     Vec::new(),
+    // ));
 
     let reader = BufReader::new(File::open("tests/data/fmi/test_cases.csv").unwrap());
     reader

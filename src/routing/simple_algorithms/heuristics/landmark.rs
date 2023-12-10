@@ -56,7 +56,7 @@ impl Heuristic for LandmarkCollection {
 
 #[derive(Clone)]
 pub struct Landmark {
-    pub node: u32,
+    pub source: u32,
     pub costs: Vec<u32>,
 }
 
@@ -71,7 +71,10 @@ impl Landmark {
         let costs = (0..graph.nodes.len())
             .map(|node| data.nodes[node].cost)
             .collect();
-        Landmark { node, costs }
+        Landmark {
+            source: node,
+            costs,
+        }
     }
 
     pub fn upper_bound(&self, source: u32, target: u32) -> u32 {
@@ -83,6 +86,10 @@ impl Landmark {
 
 impl Heuristic for Landmark {
     fn lower_bound(&self, source: u32, target: u32) -> u32 {
-        self.costs[source as usize].abs_diff(self.costs[target as usize])
+        if self.costs[source as usize] != u32::MAX && self.costs[target as usize] != u32::MAX {
+            return self.costs[source as usize].abs_diff(self.costs[target as usize]);
+        }
+        println!("err");
+        0
     }
 }

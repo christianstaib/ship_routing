@@ -59,7 +59,7 @@ async fn main() {
             let request = RouteRequest { source, target };
 
             let dijkstra = Dijkstra::new(&graph);
-            let dijkstra2 = bidirectional_dijkstra::Dijkstra::new(&graph);
+            let dijkstra2 = bidirectional_dijkstra::BiDijkstra::new(&graph);
             let start = Instant::now();
             let route_response = dijkstra.get_route(&request);
             let time = start.elapsed();
