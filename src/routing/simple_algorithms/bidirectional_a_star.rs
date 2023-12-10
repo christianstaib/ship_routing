@@ -11,16 +11,6 @@
 //     pub graph: &'a Graph,
 // }
 //
-// // let x = 0;
-// // let pr_x = (heuristic.lower_bound(request.source, x)
-// //     - heuristic.lower_bound(x, request.target))
-// //     / 2
-// //     + heuristic.lower_bound(request.target, request.source) / 2;
-// // let pf_x = (heuristic.lower_bound(x, request.target)
-// //     - heuristic.lower_bound(request.source, x))
-// //     / 2
-// //     + heuristic.lower_bound(request.source, request.target) / 2;
-//
 // impl<'a> BiAStar<'a> {
 //     pub fn new(graph: &'a Graph) -> BiAStar {
 //         BiAStar { graph }
@@ -30,23 +20,13 @@
 //         &self,
 //         request: &RouteRequest,
 //         forward_heuristic: Box<dyn Heuristic>,
-//         forward_heuristic: Box<dyn Heuristic>,
+//         backward_heuristic: Box<dyn Heuristic>,
 //     ) -> Option<Route> {
 //         let mut forward_data = DijkstraData::new(self.graph.nodes.len(), request.source);
 //         let mut backward_data = DijkstraData::new(self.graph.nodes.len(), request.target);
 //
 //         let mut minimal_cost = u32::MAX;
 //         let mut minimal_cost_node = u32::MAX;
-//
-//         let x = request.target;
-//         let pr_t = (forward_heuristic.lower_bound(request.source, x)
-//             - forward_heuristic.lower_bound(x, request.target))
-//             / 2
-//             + forward_heuristic.lower_bound(request.target, request.source) / 2;
-//         println!("pr_t is {}", pr_t);
-//
-//         let cf = forward_heuristic.lower_bound(request.source, request.target) / 2;
-//         let cb = forward_heuristic.lower_bound(request.target, request.source) / 2;
 //
 //         loop {
 //             let forward_state = forward_data.pop()?;
@@ -62,10 +42,7 @@
 //                 .outgoing_edges(forward_state.value)
 //                 .iter()
 //                 .for_each(|edge| {
-//                     let _h = (forward_heuristic.lower_bound(edge.target, request.target)
-//                         - forward_heuristic.lower_bound(request.source, edge.target))
-//                         / 2
-//                         + cf;
+//                     let _h = forward_heuristic.lower_bound(edge.target);
 //                     forward_data.update(forward_state.value, edge, _h)
 //                 });
 //
@@ -82,10 +59,7 @@
 //                 .incoming_edges(backward_state.value)
 //                 .iter()
 //                 .for_each(|edge| {
-//                     let _h = (forward_heuristic.lower_bound(request.source, edge.target)
-//                         - forward_heuristic.lower_bound(edge.target, request.target))
-//                         / 2
-//                         + cb;
+//                     let _h = forward_heuristic.lower_bound(edge.target);
 //                     backward_data.update(backward_state.value, edge, _h);
 //                 });
 //

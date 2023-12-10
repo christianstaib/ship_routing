@@ -1,4 +1,4 @@
-use super::Graph;
+use super::{dijkstra_data::DijkstraData, Graph};
 
 #[derive(Clone)]
 pub struct RouteRequest {
@@ -11,9 +11,31 @@ pub struct Route {
     pub cost: u32,
 }
 
+pub struct RouteValidationRequest {
+    pub request: RouteRequest,
+    pub cost: Option<u32>,
+}
+
+impl RouteValidationRequest {
+    pub fn from_str(str: &str) -> Option<RouteValidationRequest> {
+        let line: Vec<_> = str.split(',').collect();
+        let mut cost = None;
+        if let Some(str_cost) = line[2].parse::<u32>().ok() {
+            cost = Some(str_cost);
+        }
+        Some(RouteValidationRequest {
+            request: RouteRequest {
+                source: line[0].parse().ok()?,
+                target: line[1].parse().ok()?,
+            },
+            cost,
+        })
+    }
+}
+
 pub trait Routing {
-    fn get_route(&self, route_request: &RouteRequest) -> Option<Route>;
-    // fn get_data(&self, route_request: &RouteRequest) -> (Option<Route>, Vec<Vec<u32>>);
+    // fn get_route(&self, route_request: &RouteRequest) -> Option<Route>;
+    fn get_route(&self, route_request: &RouteRequest) -> (Option<Route>, Vec<DijkstraData>);
 }
 
 impl Route {

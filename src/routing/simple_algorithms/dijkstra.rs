@@ -10,8 +10,10 @@ pub struct Dijkstra<'a> {
 }
 
 impl<'a> Routing for Dijkstra<'a> {
-    fn get_route(&self, route_request: &RouteRequest) -> Option<Route> {
-        self.get_data(route_request).get_route(route_request.target)
+    fn get_route(&self, route_request: &RouteRequest) -> (Option<Route>, Vec<DijkstraData>) {
+        let data = self.get_data(route_request);
+        let route = data.get_route(route_request.target);
+        (route, vec![data])
     }
 }
 

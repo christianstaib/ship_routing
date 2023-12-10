@@ -3,7 +3,7 @@ use crate::routing::{dijkstra_data::DijkstraData, route::RouteRequest, Graph};
 use super::heuristics::Heuristic;
 
 pub struct AStar<'a> {
-    graph: &'a Graph,
+    pub graph: &'a Graph,
 }
 
 impl<'a> AStar<'a> {

@@ -1,7 +1,9 @@
 pub mod a_star;
+pub mod a_star_with_distance;
+pub mod a_star_with_landmarks;
+pub mod a_star_with_zero;
 pub mod bidirectional_a_star;
 pub mod bidirectional_dijkstra;
 pub mod bidirectional_landmark;
 pub mod dijkstra;
 pub mod heuristics;
-pub mod landmark;

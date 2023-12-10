@@ -9,9 +9,6 @@ use osm_test::routing::route::RouteRequest;
 use osm_test::routing::route::Routing;
 use osm_test::routing::simple_algorithms::a_star;
 
-
-
-
 use osm_test::routing::Graph;
 use osm_test::routing::NaiveGraph;
 use osm_test::spatial_graph::Fmi;
@@ -63,13 +60,13 @@ async fn main() {
             let target = fmi.nearest(route_request_lat_lon.to.0, route_request_lat_lon.to.1);
             let request = RouteRequest { source, target };
 
-            let dijkstra = a_star::Dijkstra::new(&graph);
+            let dijkstra = a_star::AStar::new(&graph);
             // let dijkstra2 = bidirectional_dijkstra::BiDijkstra::new(&graph);
             let start = Instant::now();
             let route_data = dijkstra.get_data(&request);
 
             let route_response = route_data.get_route(request.target);
-            let extendes_ids = route_data.get_extended_points();
+            let extendes_ids = route_data.get_scanned_points();
             let time = start.elapsed();
 
             if let Some(route) = route_response {

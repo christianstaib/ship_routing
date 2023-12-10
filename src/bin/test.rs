@@ -8,8 +8,11 @@ use std::{
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    route::{RouteRequest, Routing},
-    simple_algorithms::*,
+    route::{RouteRequest, RouteValidationRequest, Routing},
+    simple_algorithms::{
+        a_star_with_distance::ASTarWithDistance, a_star_with_landmarks::AStarWithLandmarks,
+        a_star_with_zero::AStarWithZero,
+    },
     Graph, NaiveGraph,
 };
 
@@ -44,8 +47,18 @@ fn main() {
     //     Vec::new(),
     // ));
     algorithms.push((
-        "landmark a star".to_string(),
-        Box::new(landmark::AStarWithLandmarks::new(&graph)),
+        "a star with landmarks".to_string(),
+        Box::new(AStarWithLandmarks::new(&graph)),
+        Vec::new(),
+    ));
+    algorithms.push((
+        "a star with zero (dijkstra)".to_string(),
+        Box::new(AStarWithZero::new(&graph)),
+        Vec::new(),
+    ));
+    algorithms.push((
+        "a star with distance".to_string(),
+        Box::new(ASTarWithDistance::new(&graph)),
         Vec::new(),
     ));
     // algorithms.push((
@@ -71,28 +84,30 @@ fn main() {
         .progress_count(args.number_of_tests as u64)
         .filter_map(|line| line.ok())
         .for_each(|line| {
-            let line: Vec<_> = line.split(',').collect();
-            let request = RouteRequest {
-                source: line[0].parse().unwrap(),
-                target: line[1].parse().unwrap(),
-            };
+            let validation_request = RouteValidationRequest::from_str(line.as_str()).unwrap();
+            let request = validation_request.request;
 
             for (name, routing_algorithm, times) in algorithms.iter_mut() {
                 let before = Instant::now();
-                let route_response = routing_algorithm.get_route(&request);
+                let (route_response, _) = routing_algorithm.get_route(&request);
                 times.push(before.elapsed());
+
                 if let Some(route) = route_response {
-                    route.is_valid(&graph, &request);
-                    assert_eq!(route.nodes.first().unwrap(), &request.source);
-                    assert_eq!(route.nodes.last().unwrap(), &request.target);
-                    let true_cost = line[2].parse::<u32>().unwrap();
-                    assert_eq!(
-                        true_cost, route.cost,
-                        "true cost is {} but \"{}\" got {}",
-                        true_cost, name, route.cost
+                    assert!(
+                        route.is_valid(&graph, &request),
+                        "the returned route is not valid"
                     );
+                    if let Some(true_cost) = validation_request.cost {
+                        assert_eq!(
+                            true_cost, route.cost,
+                            "true cost is {} but \"{}\" got {}",
+                            true_cost, name, route.cost
+                        );
+                    } else {
+                        panic!("\"{}\" found a route when there shouldn't be one", name);
+                    }
                 } else {
-                    assert_eq!(line[2], "-");
+                    assert!(validation_request.cost.is_none());
                 }
             }
         });
