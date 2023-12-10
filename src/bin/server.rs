@@ -9,6 +9,7 @@ use osm_test::routing::route::RouteRequest;
 use osm_test::routing::route::Routing;
 use osm_test::routing::simple_algorithms::a_star;
 
+use osm_test::routing::simple_algorithms::a_star_with_distance::ASTarWithDistance;
 use osm_test::routing::Graph;
 use osm_test::routing::NaiveGraph;
 use osm_test::spatial_graph::Fmi;
@@ -60,29 +61,26 @@ async fn main() {
             let target = fmi.nearest(route_request_lat_lon.to.0, route_request_lat_lon.to.1);
             let request = RouteRequest { source, target };
 
-            let dijkstra = a_star::AStar::new(&graph);
+            let dijkstra = ASTarWithDistance::new(&graph);
             // let dijkstra2 = bidirectional_dijkstra::BiDijkstra::new(&graph);
             let start = Instant::now();
-            let route_data = dijkstra.get_data(&request);
+            let (route, data) = dijkstra.get_route(&request);
 
-            let route_response = route_data.get_route(request.target);
-            let extendes_ids = route_data.get_scanned_points();
+            let extendes_ids: Vec<_> = data
+                .iter()
+                .flat_map(|data| data.get_scanned_points())
+                .collect();
             let time = start.elapsed();
 
-            if let Some(route) = route_response {
+            if let Some(route) = route {
                 let ids = &route.nodes;
                 let path = fmi.convert_path(ids);
                 let linesstring = Linestring::new(path);
-                // println!("{}", linesstring.to_feature().to_string());
 
-                // let route2 = dijkstra2.get_route(&request).unwrap();
                 assert!(&route.is_valid(&graph, &request));
-                // assert!(&route2.is_valid(&graph, &request));
                 println!("norm {:?} {:?}", &route.nodes.len(), &route.cost);
-                // println!("bidi {:?} {:?}", &route2.nodes.len(), &route2.cost);
                 let mut planet = Planet::new();
                 planet.linestrings.push(linesstring);
-                // planet.points.push(Point::from_coordinate(0.0, 0.0));
                 println!("there are {}", extendes_ids.len());
                 for id in extendes_ids {
                     let p = graph.nodes[id];
