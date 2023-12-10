@@ -5,6 +5,12 @@ pub struct BucketQueue {
     buckets: Vec<Vec<State>>,
 }
 
+impl Default for BucketQueue {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BucketQueue {
     pub fn new() -> BucketQueue {
         let buckets = vec![Vec::new(); 30_001];

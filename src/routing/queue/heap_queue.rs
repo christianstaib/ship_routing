@@ -32,6 +32,12 @@ pub struct HeapQueue {
     queue: BinaryHeap<State>,
 }
 
+impl Default for HeapQueue {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HeapQueue {
     pub fn new() -> HeapQueue {
         HeapQueue {

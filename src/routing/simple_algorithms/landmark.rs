@@ -25,7 +25,7 @@ impl Landmark {
             source: node,
             target: u32::MAX,
         };
-        let data = dijkstra.single_source(&request);
+        let data = dijkstra.get_data(&request);
         let costs = (0..graph.nodes.len())
             .map(|node| data.nodes[node].cost)
             .collect();

@@ -16,14 +16,14 @@ pub struct BiLandmark<'a> {
 
 impl<'a> Routing for BiLandmark<'a> {
     fn get_route(&self, request: &RouteRequest) -> Option<Route> {
-        let route = self.bi_a_star.get_route(
+        
+
+        self.bi_a_star.get_route(
             request,
             Box::new(Distance {
                 graph: self.bi_a_star.graph.clone(),
             }),
-        );
-
-        route
+        )
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::{
     geometry::{radians_to_meter, Arc},
-    routing::{graph, Graph},
+    routing::{Graph},
 };
 
 use super::Heuristic;

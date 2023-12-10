@@ -1,5 +1,7 @@
 use std::usize;
 
+
+
 use super::{
     queue::heap_queue::{HeapQueue, State},
     route::Route,
@@ -82,5 +84,14 @@ impl DijkstraData {
             });
         }
         None
+    }
+
+    pub fn get_extended_points(&self) -> Vec<usize> {
+        self.nodes
+            .iter()
+            .enumerate()
+            .filter(|(_, entry)| entry.cost != u32::MAX)
+            .map(|(i, _)| i)
+            .collect()
     }
 }

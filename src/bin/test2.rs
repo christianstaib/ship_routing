@@ -40,7 +40,7 @@ fn main() {
             for edge in edges {
                 let h = radians_to_meter(
                     Arc::new(
-                        &graph.nodes[source as usize],
+                        &graph.nodes[source],
                         &graph.nodes[edge.target as usize],
                     )
                     .central_angle(),
@@ -52,7 +52,7 @@ fn main() {
             for edge in edges {
                 let h = radians_to_meter(
                     Arc::new(
-                        &graph.nodes[source as usize],
+                        &graph.nodes[source],
                         &graph.nodes[edge.target as usize],
                     )
                     .central_angle(),

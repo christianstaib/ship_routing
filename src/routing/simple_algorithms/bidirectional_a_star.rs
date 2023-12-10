@@ -100,7 +100,7 @@ impl<'a> BiAStar<'a> {
 }
 
 fn construct_route(
-    contact_node: u32,
+    _contact_node: u32,
     forward_data: DijkstraData,
     backward_data: DijkstraData,
 ) -> Option<Route> {
