@@ -1,21 +1,18 @@
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-    time::{Duration, Instant},
-    usize,
-};
-
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
     route::{RouteValidationRequest, Routing},
     simple_algorithms::{
-        a_star_with_distance::ASTarWithDistance,
-        a_star_with_landmarks::AStarWithLandmarks,
-        a_star_with_zero::AStarWithZero,
-        bi_a_star_with_zero::{self, BiAStarWithZero},
+        a_star_with_distance::ASTarWithDistance, a_star_with_landmarks::AStarWithLandmarks,
+        a_star_with_zero::AStarWithZero, bi_a_star_with_zero::BiAStarWithZero,
     },
     Graph, NaiveGraph,
+};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    time::{Duration, Instant},
+    usize,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -46,18 +43,15 @@ fn main() {
     //     "bidirectional a start".to_string(),
     //     Box::new(bidirectional_landmark::BiLandmark::new(&graph)),
     // ));
-    // // // algorithms.push((
-    // // //     "a star with landmarks",
-    // // //     Box::new(AStarWithLandmarks::new(&graph)),
-    // // // ));
-    // // // algorithms.push((
-    // // //     "a star with zero (dijkstra)",
-    // // //     Box::new(AStarWithZero::new(&graph)),
-    // // // ));
-    // // // algorithms.push((
-    // // //     "a star with distance",
-    // // //     Box::new(ASTarWithDistance::new(&graph)),
-    // // // ));
+    algorithms.push((
+        "a star with landmarks",
+        Box::new(AStarWithLandmarks::new(&graph)),
+    ));
+    algorithms.push(("a star with zero", Box::new(AStarWithZero::new(&graph))));
+    algorithms.push((
+        "a star with distance",
+        Box::new(ASTarWithDistance::new(&graph)),
+    ));
     // algorithms.push((
     //     "bidirectional landmark a star".to_string(),
     //     Box::new(bidirectional_landmark::BiLandmark::new(&graph)),
@@ -67,13 +61,13 @@ fn main() {
     //     Box::new(dijkstra::Dijkstra::new(&graph)),
     // ));
     algorithms.push((
-        "bidirectional a star with zero (bidirectional dijkstra)",
+        "bidirectional a star with zero",
         Box::new(BiAStarWithZero::new(&graph)),
     ));
 
     let mut algorithms: Vec<_> = algorithms
         .iter()
-        .map(|(name, algorithm)| (name, algorithm, Vec::new()))
+        .map(|(name, algorithm)| (name, algorithm, Vec::new(), Vec::new()))
         .collect();
 
     let reader = BufReader::new(File::open("tests/data/fmi/test_cases.csv").unwrap());
@@ -86,10 +80,16 @@ fn main() {
             let validation_request = RouteValidationRequest::from_str(line.as_str()).unwrap();
             let request = validation_request.request;
 
-            for (name, routing_algorithm, times) in algorithms.iter_mut() {
+            for (name, routing_algorithm, times, scanned) in algorithms.iter_mut() {
                 let before = Instant::now();
-                let (route_response, _) = routing_algorithm.get_route(&request);
+                let (route_response, route_data) = routing_algorithm.get_route(&request);
                 times.push(before.elapsed());
+                scanned.push(
+                    route_data
+                        .iter()
+                        .map(|edpanded_ids| edpanded_ids.get_scanned_points().len())
+                        .sum::<usize>(),
+                );
 
                 if let Some(route) = route_response {
                     assert!(
@@ -111,11 +111,12 @@ fn main() {
             }
         });
 
-    for (name, _, times) in algorithms.iter() {
+    for (name, _, times, scanned) in algorithms.iter() {
         println!(
-            "average time for {:?} is {:?}",
+            "{:<40}: {:>4.3}ms, avgscan: {:>9}",
             name,
-            times.iter().sum::<Duration>() / times.len() as u32
+            (times.iter().sum::<Duration>() / times.len() as u32).as_secs_f64() * 1_000.0,
+            scanned.iter().sum::<usize>() / scanned.len()
         );
     }
 }

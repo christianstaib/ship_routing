@@ -11,7 +11,7 @@ pub struct Dijkstra<'a> {
 
 impl<'a> Routing for Dijkstra<'a> {
     fn get_route(&self, route_request: &RouteRequest) -> (Option<Route>, Vec<DijkstraData>) {
-        let data = self.get_data(route_request);
+        let data = self.get_forward_data(route_request.source);
         let route = data.get_route(route_request.target);
         (route, vec![data])
     }
@@ -22,14 +22,23 @@ impl<'a> Dijkstra<'a> {
         Dijkstra { graph }
     }
 
-    pub fn get_data(&self, request: &RouteRequest) -> DijkstraData {
-        let mut data = DijkstraData::new(self.graph.nodes.len(), request.source);
+    pub fn get_backward_data(&self, target: u32) -> DijkstraData {
+        let mut data = DijkstraData::new(self.graph.nodes.len(), target);
 
         while let Some(state) = data.pop() {
-            if state.value == request.target {
-                break;
-            }
+            self.graph
+                .outgoing_edges(state.value)
+                .iter()
+                .for_each(|edge| data.update(state.value, edge, 0));
+        }
 
+        data
+    }
+
+    pub fn get_forward_data(&self, source: u32) -> DijkstraData {
+        let mut data = DijkstraData::new(self.graph.nodes.len(), source);
+
+        while let Some(state) = data.pop() {
             self.graph
                 .outgoing_edges(state.value)
                 .iter()

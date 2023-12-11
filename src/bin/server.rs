@@ -10,6 +10,7 @@ use osm_test::routing::route::Routing;
 use osm_test::routing::simple_algorithms::a_star;
 
 use osm_test::routing::simple_algorithms::a_star_with_distance::ASTarWithDistance;
+use osm_test::routing::simple_algorithms::a_star_with_landmarks::AStarWithLandmarks;
 use osm_test::routing::Graph;
 use osm_test::routing::NaiveGraph;
 use osm_test::spatial_graph::Fmi;
@@ -61,8 +62,7 @@ async fn main() {
             let target = fmi.nearest(route_request_lat_lon.to.0, route_request_lat_lon.to.1);
             let request = RouteRequest { source, target };
 
-            let dijkstra = ASTarWithDistance::new(&graph);
-            // let dijkstra2 = bidirectional_dijkstra::BiDijkstra::new(&graph);
+            let dijkstra = AStarWithLandmarks::new(&graph);
             let start = Instant::now();
             let (route, data) = dijkstra.get_route(&request);
 
@@ -78,10 +78,8 @@ async fn main() {
                 let linesstring = Linestring::new(path);
 
                 assert!(&route.is_valid(&graph, &request));
-                println!("norm {:?} {:?}", &route.nodes.len(), &route.cost);
                 let mut planet = Planet::new();
                 planet.linestrings.push(linesstring);
-                println!("there are {}", extendes_ids.len());
                 for id in extendes_ids {
                     let p = graph.nodes[id];
                     planet.arcs.push(geometry::Arc::new(&p, &p));

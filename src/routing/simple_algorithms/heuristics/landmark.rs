@@ -63,37 +63,41 @@ impl Heuristic for LandmarkCollection {
 
 #[derive(Clone)]
 pub struct Landmark {
-    pub source: u32,
-    pub costs: Vec<u32>,
+    pub reference: u32,
+    pub costs_to: Vec<u32>,
+    pub costs_from: Vec<u32>,
 }
 
 impl Landmark {
-    pub fn new(node: u32, graph: &Graph) -> Landmark {
+    pub fn new(reference: u32, graph: &Graph) -> Landmark {
         let dijkstra = dijkstra::Dijkstra::new(graph);
-        let request = RouteRequest {
-            source: node,
-            target: u32::MAX,
-        };
-        let data = dijkstra.get_data(&request);
-        let costs = (0..graph.nodes.len())
-            .map(|node| data.nodes[node].cost)
+
+        let forward_data = dijkstra.get_forward_data(reference);
+        let costs_to = (0..graph.nodes.len())
+            .map(|node| forward_data.nodes[node].cost)
             .collect();
+
+        let backward_data = dijkstra.get_backward_data(reference);
+        let costs_from = (0..graph.nodes.len())
+            .map(|node| backward_data.nodes[node].cost)
+            .collect();
+
         Landmark {
-            source: node,
-            costs,
+            reference,
+            costs_to,
+            costs_from,
         }
     }
 
     pub fn upper_bound(&self, source: u32, target: u32) -> u32 {
-        self.costs[source as usize]
-            .checked_add(self.costs[target as usize])
-            .unwrap_or(u32::MAX)
+        self.costs_from[source as usize] + self.costs_to[target as usize]
     }
 
     fn lower_bound(&self, source: u32, target: u32) -> u32 {
-        if self.costs[source as usize] != u32::MAX && self.costs[target as usize] != u32::MAX {
-            return self.costs[source as usize].abs_diff(self.costs[target as usize]);
-        }
-        0
+        let lower_bound = std::cmp::max(
+            self.costs_to[target as usize] - self.costs_to[source as usize],
+            self.costs_from[source as usize] - self.costs_to[target as usize],
+        );
+        lower_bound
     }
 }

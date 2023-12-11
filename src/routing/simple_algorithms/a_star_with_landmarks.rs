@@ -23,7 +23,7 @@ impl<'a> Routing for AStarWithLandmarks<'a> {
 impl<'a> AStarWithLandmarks<'a> {
     pub fn new(graph: &'a Graph) -> AStarWithLandmarks {
         let a_star = AStar::new(graph);
-        let heuristic = LandmarkCollection::new(graph, 100);
+        let heuristic = LandmarkCollection::new(graph, 10);
         AStarWithLandmarks { a_star, heuristic }
     }
 }
