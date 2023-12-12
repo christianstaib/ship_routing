@@ -1,8 +1,7 @@
-use std::{cmp::Ordering, collections::HashMap, usize};
+use std::{collections::HashMap, usize};
 
 use indicatif::ProgressIterator;
 use rayon::iter::{ParallelBridge, ParallelIterator};
-use serde_derive::{Deserialize, Serialize};
 
 use crate::routing::{
     graph::{Edge, Graph},
@@ -47,6 +46,10 @@ impl Contractor {
             }
             shortcuts.extend(this_shortcuts);
             self.levels[node] = level as u32;
+
+            if level >= 2_000_000 {
+                break;
+            }
         }
 
         self.graph = graph;
@@ -91,11 +94,15 @@ impl Contractor {
                 self.graph.forward_edges[f_state.value as usize]
                     .iter()
                     .filter(|edge| {
-                        self.levels[edge.source as usize] < self.levels[edge.target as usize]
+                        self.levels[edge.source as usize] <= self.levels[edge.target as usize]
                     })
                     .for_each(|edge| {
                         let alteranativ_cost = f_cost[f_state.value as usize] + edge.cost;
                         if alteranativ_cost < f_cost[edge.target as usize] {
+                            assert!(
+                                self.levels[f_state.value as usize]
+                                    <= self.levels[edge.target as usize]
+                            );
                             f_cost[edge.target as usize] = alteranativ_cost;
                             f_queue.insert(alteranativ_cost, edge.target)
                         }
@@ -105,13 +112,17 @@ impl Contractor {
             if let Some(b_state) = b_queue.pop() {
                 self.graph.backward_edges[b_state.value as usize]
                     .iter()
-                    .map(|edge| edge.get_inverted())
                     .filter(|edge| {
-                        self.levels[edge.source as usize] > self.levels[edge.target as usize]
+                        self.levels[edge.source as usize] >= self.levels[edge.target as usize]
                     })
+                    .map(|edge| edge.get_inverted())
                     .for_each(|edge| {
                         let alteranativ_cost = b_cost[b_state.value as usize] + edge.cost;
                         if alteranativ_cost < b_cost[edge.target as usize] {
+                            assert!(
+                                self.levels[b_state.value as usize]
+                                    >= self.levels[edge.target as usize]
+                            );
                             b_cost[edge.target as usize] = alteranativ_cost;
                             b_queue.insert(alteranativ_cost, edge.target)
                         }
