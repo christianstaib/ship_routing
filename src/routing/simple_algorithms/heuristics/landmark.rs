@@ -2,7 +2,7 @@ use indicatif::ProgressIterator;
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::routing::{route::RouteRequest, simple_algorithms::dijkstra, Graph};
+use crate::routing::{graph::Graph, route::RouteRequest, simple_algorithms::dijkstra};
 
 use super::Heuristic;
 
@@ -94,7 +94,6 @@ impl Landmark {
     }
 
     fn lower_bound(&self, source: u32, target: u32) -> u32 {
-        
         std::cmp::max(
             self.costs_to[target as usize].saturating_sub(self.costs_from[source as usize]),
             self.costs_from[source as usize].saturating_sub(self.costs_to[target as usize]),

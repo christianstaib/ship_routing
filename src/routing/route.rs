@@ -1,8 +1,8 @@
 use serde_derive::{Deserialize, Serialize};
 
-use super::{dijkstra_data::DijkstraData, Graph};
+use super::{dijkstra_data::DijkstraData, graph::Graph};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RouteRequest {
     pub source: u32,
     pub target: u32,
@@ -14,7 +14,7 @@ pub struct Route {
     pub cost: u32,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RouteValidationRequest {
     pub request: RouteRequest,
     pub cost: Option<u32>,

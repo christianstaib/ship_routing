@@ -1,6 +1,6 @@
 use crate::routing::{
+    graph::Graph,
     route::{RouteRequest, RouteResponse, Routing},
-    Graph,
 };
 
 use super::{a_star::AStar, heuristics::distance::Distance};

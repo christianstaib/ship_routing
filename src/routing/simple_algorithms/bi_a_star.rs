@@ -1,7 +1,7 @@
 use crate::routing::{
     dijkstra_data::DijkstraData,
+    graph::Graph,
     route::{Route, RouteRequest, RouteResponse, Routing},
-    Graph,
 };
 
 use super::heuristics::Heuristic;

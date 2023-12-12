@@ -1,9 +1,9 @@
 use std::usize;
 
 use super::{
+    graph::FastEdge,
     queue::heap_queue::{HeapQueue, State},
     route::Route,
-    FastEdge,
 };
 
 #[derive(Clone)]

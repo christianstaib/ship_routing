@@ -3,9 +3,10 @@ use std::{fs::File, io::BufWriter, io::Write};
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
+    graph::Graph,
+    graph::NaiveGraph,
     route::{RouteRequest, RouteValidationRequest, Routing},
     simple_algorithms::dijkstra::Dijkstra,
-    Graph, NaiveGraph,
 };
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
@@ -46,7 +47,7 @@ fn main() {
             if let Some(route) = response.route {
                 cost = Some(route.cost);
             }
-            RouteValidationRequest { request, cost };
+            RouteValidationRequest { request, cost }
         })
         .collect();
 
