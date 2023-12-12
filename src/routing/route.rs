@@ -20,7 +20,7 @@ impl RouteValidationRequest {
     pub fn from_str(str: &str) -> Option<RouteValidationRequest> {
         let line: Vec<_> = str.split(',').collect();
         let mut cost = None;
-        if let Some(str_cost) = line[2].parse::<u32>().ok() {
+        if let Ok(str_cost) = line[2].parse::<u32>() {
             cost = Some(str_cost);
         }
         Some(RouteValidationRequest {

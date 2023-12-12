@@ -3,8 +3,7 @@ use indicatif::ProgressIterator;
 use osm_test::routing::{
     route::{RouteValidationRequest, Routing},
     simple_algorithms::{
-        a_star_with_distance::ASTarWithDistance, a_star_with_landmarks::AStarWithLandmarks,
-        a_star_with_zero::AStarWithZero, bi_a_star_with_landmarks::BiAStarWithLandmarks,
+        bi_a_star_with_landmarks::BiAStarWithLandmarks,
         bi_a_star_with_zero::BiAStarWithZero,
     },
     Graph, NaiveGraph,
