@@ -1,7 +1,6 @@
 use crate::routing::{
-    dijkstra_data::DijkstraData,
     fast_graph::FastGraph,
-    route::{Route, RouteRequest, RouteResponse, Routing},
+    route::{RouteRequest, RouteResponse, Routing},
 };
 
 use super::{bi_a_star::BiAStar, heuristics::landmark::LandmarkCollection};

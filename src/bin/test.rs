@@ -6,7 +6,7 @@ use osm_test::routing::{
     route::{RouteResponse, RouteValidationRequest, Routing},
     simple_algorithms::{
         a_star_with_distance::ASTarWithDistance, a_star_with_landmarks::AStarWithLandmarks,
-        a_star_with_zero::AStarWithZero, bi_a_star_with_landmarks::BiAStarWithLandmarks,
+        a_star_with_zero::AStarWithZero,
         bi_a_star_with_zero::BiAStarWithZero, dijkstra::Dijkstra,
     },
 };
@@ -74,7 +74,7 @@ fn main() {
 
             for (_, routing_algorithm, times, scanned, legal) in algorithms.iter_mut() {
                 let before = Instant::now();
-                let response = routing_algorithm.get_route(&request);
+                let response = routing_algorithm.get_route(request);
                 times.push(before.elapsed());
                 scanned.push(
                     response
@@ -111,5 +111,5 @@ fn response_is_legal(
 
         return request.cost == Some(route.cost);
     }
-    return request.cost.is_none();
+    request.cost.is_none()
 }
