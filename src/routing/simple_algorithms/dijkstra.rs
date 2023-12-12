@@ -1,6 +1,6 @@
 use crate::routing::{
     dijkstra_data::DijkstraData,
-    route::{Route, RouteRequest, Routing},
+    route::{Route, RouteRequest, RouteResponse, Routing},
     Graph,
 };
 
@@ -10,10 +10,13 @@ pub struct Dijkstra<'a> {
 }
 
 impl<'a> Routing for Dijkstra<'a> {
-    fn get_route(&self, route_request: &RouteRequest) -> (Option<Route>, Vec<DijkstraData>) {
+    fn get_route(&self, route_request: &RouteRequest) -> RouteResponse {
         let data = self.get_forward_data(route_request.source);
         let route = data.get_route(route_request.target);
-        (route, vec![data])
+        RouteResponse {
+            route,
+            data: vec![data],
+        }
     }
 }
 

@@ -28,6 +28,7 @@ impl PartialOrd for State {
     }
 }
 
+#[derive(Clone)]
 pub struct HeapQueue {
     queue: BinaryHeap<State>,
 }

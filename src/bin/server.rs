@@ -60,15 +60,16 @@ async fn main() {
 
             let dijkstra = AStarWithLandmarks::new(&graph);
             let start = Instant::now();
-            let (route, data) = dijkstra.get_route(&request);
+            let response = dijkstra.get_route(&request);
 
-            let extendes_ids: Vec<_> = data
+            let extendes_ids: Vec<_> = response
+                .data
                 .iter()
                 .flat_map(|data| data.get_scanned_points())
                 .collect();
             let time = start.elapsed();
 
-            if let Some(route) = route {
+            if let Some(route) = response.route {
                 let ids = &route.nodes;
                 let path = fmi.convert_path(ids);
                 let linesstring = Linestring::new(path);

@@ -1,16 +1,20 @@
+use serde_derive::{Deserialize, Serialize};
+
 use super::{dijkstra_data::DijkstraData, Graph};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct RouteRequest {
     pub source: u32,
     pub target: u32,
 }
 
+#[derive(Clone)]
 pub struct Route {
     pub nodes: Vec<u32>,
     pub cost: u32,
 }
 
+#[derive(Clone, Serialize, Deserialize)]
 pub struct RouteValidationRequest {
     pub request: RouteRequest,
     pub cost: Option<u32>,
@@ -33,9 +37,14 @@ impl RouteValidationRequest {
     }
 }
 
+#[derive(Clone)]
+pub struct RouteResponse {
+    pub route: Option<Route>,
+    pub data: Vec<DijkstraData>,
+}
+
 pub trait Routing {
-    // fn get_route(&self, route_request: &RouteRequest) -> Option<Route>;
-    fn get_route(&self, route_request: &RouteRequest) -> (Option<Route>, Vec<DijkstraData>);
+    fn get_route(&self, route_request: &RouteRequest) -> RouteResponse;
 }
 
 impl Route {

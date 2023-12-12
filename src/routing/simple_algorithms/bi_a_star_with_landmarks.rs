@@ -1,6 +1,6 @@
 use crate::routing::{
     dijkstra_data::DijkstraData,
-    route::{Route, RouteRequest, Routing},
+    route::{Route, RouteRequest, RouteResponse, Routing},
     Graph,
 };
 
@@ -14,7 +14,7 @@ pub struct BiAStarWithLandmarks<'a> {
 }
 
 impl<'a> Routing for BiAStarWithLandmarks<'a> {
-    fn get_route(&self, request: &RouteRequest) -> (Option<Route>, Vec<DijkstraData>) {
+    fn get_route(&self, request: &RouteRequest) -> RouteResponse {
         self.bi_a_star.get_data(
             request,
             Box::new(self.forward_heuristic.tune(request, 3)),

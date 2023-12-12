@@ -1,6 +1,5 @@
 use crate::routing::{
-    dijkstra_data::DijkstraData,
-    route::{Route, RouteRequest, Routing},
+    route::{RouteRequest, RouteResponse, Routing},
     Graph,
 };
 
@@ -11,11 +10,9 @@ pub struct ASTarWithDistance<'a> {
 }
 
 impl<'a> Routing for ASTarWithDistance<'a> {
-    fn get_route(&self, request: &RouteRequest) -> (Option<Route>, Vec<DijkstraData>) {
+    fn get_route(&self, request: &RouteRequest) -> RouteResponse {
         let heuristic = Box::new(Distance::new(self.a_star.graph, request.target));
-        let data = self.a_star.get_data(request, heuristic);
-        let route = data.get_route(request.target);
-        (route, vec![data])
+        self.a_star.get_data(request, heuristic)
     }
 }
 

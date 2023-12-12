@@ -1,4 +1,8 @@
-use crate::routing::{dijkstra_data::DijkstraData, route::RouteRequest, Graph};
+use crate::routing::{
+    dijkstra_data::DijkstraData,
+    route::{RouteRequest, RouteResponse},
+    Graph,
+};
 
 use super::heuristics::Heuristic;
 
@@ -11,7 +15,7 @@ impl<'a> AStar<'a> {
         AStar { graph }
     }
 
-    pub fn get_data(&self, request: &RouteRequest, heuristic: Box<dyn Heuristic>) -> DijkstraData {
+    pub fn get_data(&self, request: &RouteRequest, heuristic: Box<dyn Heuristic>) -> RouteResponse {
         let mut data = DijkstraData::new(self.graph.nodes.len(), request.source);
 
         while let Some(state) = data.pop() {
@@ -28,6 +32,9 @@ impl<'a> AStar<'a> {
                 })
         }
 
-        data
+        RouteResponse {
+            route: data.get_route(request.target),
+            data: vec![data],
+        }
     }
 }

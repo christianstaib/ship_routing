@@ -1,6 +1,6 @@
 use crate::routing::{
     dijkstra_data::DijkstraData,
-    route::{Route, RouteRequest, Routing},
+    route::{Route, RouteRequest, RouteResponse, Routing},
     Graph,
 };
 
@@ -46,7 +46,7 @@ impl<'a> BiAStar<'a> {
         request: &RouteRequest,
         forward_heuristic: Box<dyn Heuristic>,
         backward_heuristic: Box<dyn Heuristic>,
-    ) -> (Option<Route>, Vec<DijkstraData>) {
+    ) -> RouteResponse {
         let mut forward_data = DijkstraData::new(self.graph.nodes.len(), request.source);
         let mut backward_data = DijkstraData::new(self.graph.nodes.len(), request.target);
 
@@ -58,7 +58,10 @@ impl<'a> BiAStar<'a> {
             &mut backward_data,
         );
 
-        (route, vec![forward_data, backward_data])
+        RouteResponse {
+            route,
+            data: vec![forward_data, backward_data],
+        }
     }
 
     pub fn get_route(

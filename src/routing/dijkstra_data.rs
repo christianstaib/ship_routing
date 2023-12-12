@@ -23,6 +23,7 @@ impl DijsktraEntry {
     }
 }
 
+#[derive(Clone)]
 pub struct DijkstraData {
     pub queue: HeapQueue,
     pub nodes: Vec<DijsktraEntry>,

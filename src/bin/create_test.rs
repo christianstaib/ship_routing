@@ -3,7 +3,7 @@ use std::{fs::File, io::BufWriter, io::Write};
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    route::{RouteRequest, Routing},
+    route::{RouteRequest, RouteValidationRequest, Routing},
     simple_algorithms::dijkstra::Dijkstra,
     Graph, NaiveGraph,
 };
@@ -17,6 +17,9 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     fmi_path: String,
+    /// Path of .fmi file
+    #[arg(short, long)]
+    tests_path: String,
     /// Number of tests to be run
     #[arg(short, long)]
     number_of_tests: u32,
@@ -28,32 +31,26 @@ fn main() {
     let graph = Graph::new(NaiveGraph::from_file(args.fmi_path.as_str()));
     let dijkstra = Dijkstra::new(&graph);
 
-    let mut writer = BufWriter::new(File::create("tests/data/fmi/test_cases.csv").unwrap());
-
-    let mut rng = rand::thread_rng();
-    let routes_requests: Vec<_> = (0..args.number_of_tests)
-        .map(|_| RouteRequest {
-            source: rng.gen_range(0..graph.nodes.len()) as u32,
-            target: rng.gen_range(0..graph.nodes.len()) as u32,
-        })
-        .collect();
-
-    let routes: Vec<_> = routes_requests
-        .iter()
+    let routes: Vec<_> = (0..args.number_of_tests)
         .progress()
         .par_bridge()
-        .map(|route_request| {
-            let route_response = dijkstra.get_route(route_request);
-            let mut cost = "-".to_string();
-            if let Some(route) = route_response.0 {
-                cost = route.cost.to_string();
+        .map(|_| {
+            let mut rng = rand::thread_rng();
+            let request = RouteRequest {
+                source: rng.gen_range(0..graph.nodes.len()) as u32,
+                target: rng.gen_range(0..graph.nodes.len()) as u32,
+            };
+
+            let response = dijkstra.get_route(&request);
+            let mut cost = None;
+            if let Some(route) = response.route {
+                cost = Some(route.cost);
             }
-            format!("{},{},{}", route_request.source, route_request.target, cost)
+            RouteValidationRequest { request, cost };
         })
         .collect();
 
-    routes
-        .iter()
-        .for_each(|route| writeln!(writer, "{}", route).unwrap());
+    let mut writer = BufWriter::new(File::create(args.tests_path.as_str()).unwrap());
+    serde_json::to_writer(&mut writer, &routes).unwrap();
     writer.flush().unwrap();
 }

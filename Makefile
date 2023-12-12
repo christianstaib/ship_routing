@@ -22,3 +22,6 @@ server:
 
 test:
 	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi --number-of-tests 100
+
+create_tests:
+	cargo run --bin create_test --release -- --fmi-path tests/data/fmi/network.fmi --tests-path tests/data/fmi/tests.json --number-of-tests 1000

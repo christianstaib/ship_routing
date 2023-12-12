@@ -3,8 +3,7 @@ use indicatif::ProgressIterator;
 use osm_test::routing::{
     route::{RouteValidationRequest, Routing},
     simple_algorithms::{
-        bi_a_star_with_landmarks::BiAStarWithLandmarks,
-        bi_a_star_with_zero::BiAStarWithZero,
+        bi_a_star_with_landmarks::BiAStarWithLandmarks, bi_a_star_with_zero::BiAStarWithZero,
     },
     Graph, NaiveGraph,
 };
@@ -74,16 +73,17 @@ fn main() {
 
             for (name, routing_algorithm, times, scanned) in algorithms.iter_mut() {
                 let before = Instant::now();
-                let (route_response, route_data) = routing_algorithm.get_route(&request);
+                let respone = routing_algorithm.get_route(&request);
                 times.push(before.elapsed());
                 scanned.push(
-                    route_data
+                    respone
+                        .data
                         .iter()
                         .map(|edpanded_ids| edpanded_ids.get_scanned_points().len())
                         .sum::<usize>(),
                 );
 
-                if let Some(route) = route_response {
+                if let Some(route) = respone.route {
                     assert!(
                         route.is_valid(&graph, &request),
                         "the returned route is not valid"

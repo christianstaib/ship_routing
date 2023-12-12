@@ -1,6 +1,6 @@
 use crate::routing::{
     dijkstra_data::DijkstraData,
-    route::{Route, RouteRequest, Routing},
+    route::{Route, RouteRequest, RouteResponse, Routing},
     Graph,
 };
 
@@ -11,11 +11,9 @@ pub struct AStarWithZero<'a> {
 }
 
 impl<'a> Routing for AStarWithZero<'a> {
-    fn get_route(&self, request: &RouteRequest) -> (Option<Route>, Vec<DijkstraData>) {
+    fn get_route(&self, request: &RouteRequest) -> RouteResponse {
         let heuristic = Box::new(Zero {});
-        let data = self.a_star.get_data(request, heuristic);
-        let route = data.get_route(request.target);
-        (route, vec![data])
+        self.a_star.get_data(request, heuristic)
     }
 }
 
