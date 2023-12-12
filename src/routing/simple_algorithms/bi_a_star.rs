@@ -1,6 +1,6 @@
 use crate::routing::{
     dijkstra_data::DijkstraData,
-    fast_graph::Graph,
+    fast_graph::FastGraph,
     route::{Route, RouteRequest, RouteResponse, Routing},
 };
 
@@ -8,7 +8,7 @@ use super::heuristics::Heuristic;
 
 #[derive(Clone)]
 pub struct BiAStar<'a> {
-    pub graph: &'a Graph,
+    pub graph: &'a FastGraph,
 }
 
 struct ConstantHeuristic {
@@ -37,7 +37,7 @@ impl ConstantHeuristic {
 }
 
 impl<'a> BiAStar<'a> {
-    pub fn new(graph: &'a Graph) -> BiAStar {
+    pub fn new(graph: &'a FastGraph) -> BiAStar {
         BiAStar { graph }
     }
 

@@ -9,7 +9,7 @@ pub struct FastEdge {
 }
 
 #[derive(Clone)]
-pub struct Graph {
+pub struct FastGraph {
     pub nodes: Vec<Point>,
     pub forward_edges: FastEdgeAccess,
     pub backward_edges: FastEdgeAccess,
@@ -62,7 +62,7 @@ impl FastEdgeAccess {
     }
 }
 
-impl Graph {
+impl FastGraph {
     pub fn outgoing_edges(&self, source: u32) -> &[FastEdge] {
         self.forward_edges.outgoing_edges(source)
     }
@@ -71,7 +71,7 @@ impl Graph {
         self.backward_edges.outgoing_edges(target)
     }
 
-    pub fn new(graph: NaiveGraph) -> Graph {
+    pub fn new(graph: NaiveGraph) -> FastGraph {
         let mut graph = graph.clone();
         graph.make_bidirectional();
 
@@ -80,7 +80,7 @@ impl Graph {
         let inverted_edges = graph.edges.iter().map(|edge| edge.get_inverted()).collect();
         let backward_edges = FastEdgeAccess::new(&inverted_edges);
 
-        Graph {
+        FastGraph {
             nodes: graph.nodes.clone(),
             forward_edges,
             backward_edges,

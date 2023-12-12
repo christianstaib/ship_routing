@@ -2,7 +2,7 @@ use indicatif::ProgressIterator;
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::routing::{fast_graph::Graph, route::RouteRequest, simple_algorithms::dijkstra};
+use crate::routing::{fast_graph::FastGraph, route::RouteRequest, simple_algorithms::dijkstra};
 
 use super::Heuristic;
 
@@ -13,7 +13,7 @@ pub struct LandmarkCollection {
 }
 
 impl LandmarkCollection {
-    pub fn new(graph: &Graph, num_landmarks: u32) -> LandmarkCollection {
+    pub fn new(graph: &FastGraph, num_landmarks: u32) -> LandmarkCollection {
         println!("creating landmarks");
         let landmarks = (0..num_landmarks)
             .progress()
@@ -69,7 +69,7 @@ pub struct Landmark {
 }
 
 impl Landmark {
-    pub fn new(reference: u32, graph: &Graph) -> Landmark {
+    pub fn new(reference: u32, graph: &FastGraph) -> Landmark {
         let dijkstra = dijkstra::Dijkstra::new(graph);
 
         let forward_data = dijkstra.get_forward_data(reference);

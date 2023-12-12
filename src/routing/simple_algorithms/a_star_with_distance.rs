@@ -1,5 +1,5 @@
 use crate::routing::{
-    fast_graph::Graph,
+    fast_graph::FastGraph,
     route::{RouteRequest, RouteResponse, Routing},
 };
 
@@ -17,7 +17,7 @@ impl<'a> Routing for ASTarWithDistance<'a> {
 }
 
 impl<'a> ASTarWithDistance<'a> {
-    pub fn new(graph: &'a Graph) -> ASTarWithDistance {
+    pub fn new(graph: &'a FastGraph) -> ASTarWithDistance {
         let a_star = AStar::new(graph);
         ASTarWithDistance { a_star }
     }

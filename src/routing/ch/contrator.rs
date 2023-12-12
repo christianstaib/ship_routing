@@ -1,5 +1,5 @@
-use crate::routing::fast_graph::Graph;
+use crate::routing::fast_graph::FastGraph;
 
 pub struct Contractor {
-    graph: Graph,
+    graph: FastGraph,
 }

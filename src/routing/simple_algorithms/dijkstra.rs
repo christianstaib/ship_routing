@@ -1,12 +1,12 @@
 use crate::routing::{
     dijkstra_data::DijkstraData,
-    fast_graph::Graph,
+    fast_graph::FastGraph,
     route::{Route, RouteRequest, RouteResponse, Routing},
 };
 
 #[derive(Clone)]
 pub struct Dijkstra<'a> {
-    graph: &'a Graph,
+    graph: &'a FastGraph,
 }
 
 impl<'a> Routing for Dijkstra<'a> {
@@ -21,7 +21,7 @@ impl<'a> Routing for Dijkstra<'a> {
 }
 
 impl<'a> Dijkstra<'a> {
-    pub fn new(graph: &'a Graph) -> Dijkstra {
+    pub fn new(graph: &'a FastGraph) -> Dijkstra {
         Dijkstra { graph }
     }
 

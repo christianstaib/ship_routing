@@ -1,5 +1,5 @@
 use crate::routing::{
-    fast_graph::Graph,
+    fast_graph::FastGraph,
     route::{RouteRequest, RouteResponse, Routing},
 };
 
@@ -18,7 +18,7 @@ impl<'a> Routing for AStarWithLandmarks<'a> {
 }
 
 impl<'a> AStarWithLandmarks<'a> {
-    pub fn new(graph: &'a Graph) -> AStarWithLandmarks {
+    pub fn new(graph: &'a FastGraph) -> AStarWithLandmarks {
         let a_star = AStar::new(graph);
         let heuristic = LandmarkCollection::new(graph, 500);
         AStarWithLandmarks { a_star, heuristic }

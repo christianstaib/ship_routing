@@ -1,6 +1,6 @@
 use crate::routing::{
     dijkstra_data::DijkstraData,
-    fast_graph::Graph,
+    fast_graph::FastGraph,
     route::{Route, RouteRequest, RouteResponse, Routing},
 };
 
@@ -18,7 +18,7 @@ impl<'a> Routing for AStarWithZero<'a> {
 }
 
 impl<'a> AStarWithZero<'a> {
-    pub fn new(graph: &'a Graph) -> AStarWithZero {
+    pub fn new(graph: &'a FastGraph) -> AStarWithZero {
         let a_star = AStar::new(graph);
         AStarWithZero { a_star }
     }

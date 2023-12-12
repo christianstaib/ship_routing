@@ -1,17 +1,17 @@
 use crate::routing::{
     dijkstra_data::DijkstraData,
-    fast_graph::Graph,
+    fast_graph::FastGraph,
     route::{RouteRequest, RouteResponse},
 };
 
 use super::heuristics::Heuristic;
 
 pub struct AStar<'a> {
-    pub graph: &'a Graph,
+    pub graph: &'a FastGraph,
 }
 
 impl<'a> AStar<'a> {
-    pub fn new(graph: &'a Graph) -> AStar {
+    pub fn new(graph: &'a FastGraph) -> AStar {
         AStar { graph }
     }
 

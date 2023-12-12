@@ -1,6 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
-use super::{dijkstra_data::DijkstraData, fast_graph::Graph};
+use super::{dijkstra_data::DijkstraData, fast_graph::FastGraph};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RouteRequest {
@@ -48,7 +48,7 @@ pub trait Routing {
 }
 
 impl Route {
-    pub fn is_valid(&self, graph: &Graph, request: &RouteRequest) -> bool {
+    pub fn is_valid(&self, graph: &FastGraph, request: &RouteRequest) -> bool {
         let mut true_cost = 0;
         for (source, target) in self.nodes.windows(2).map(|vec| (vec[0], vec[1])) {
             true_cost += graph
