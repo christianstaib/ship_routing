@@ -3,7 +3,7 @@ use std::{fs::File, io::BufWriter, io::Write};
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    fast_graph::Graph,
+    fast_graph::FastGraph,
     naive_graph::NaiveGraph,
     route::{RouteRequest, RouteValidationRequest, Routing},
     simple_algorithms::dijkstra::Dijkstra,
@@ -29,7 +29,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = Graph::new(NaiveGraph::from_file(args.fmi_path.as_str()));
+    let graph = FastGraph::new(NaiveGraph::from_file(args.fmi_path.as_str()));
     let dijkstra = Dijkstra::new(&graph);
 
     let routes: Vec<_> = (0..args.number_of_tests)

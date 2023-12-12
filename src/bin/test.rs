@@ -1,7 +1,7 @@
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    fast_graph::Graph,
+    fast_graph::FastGraph,
     naive_graph::NaiveGraph,
     route::{RouteResponse, RouteValidationRequest, Routing},
     simple_algorithms::{
@@ -34,7 +34,7 @@ fn main() {
 
     let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
 
-    let graph = Graph::new(naive_graph);
+    let graph = FastGraph::new(naive_graph);
 
     let algorithms: Vec<(&str, Box<dyn Routing>)> = vec![
         (
@@ -102,7 +102,7 @@ fn main() {
 fn response_is_legal(
     request: &RouteValidationRequest,
     response: RouteResponse,
-    graph: &Graph,
+    graph: &FastGraph,
 ) -> bool {
     if let Some(route) = response.route {
         if !route.is_valid(graph, &request.request) {

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use osm_test::routing::fast_graph::Graph;
+use osm_test::routing::fast_graph::FastGraph;
 use osm_test::routing::naive_graph::NaiveGraph;
 use osm_test::routing::route::RouteRequest;
 use osm_test::routing::route::Routing;
@@ -44,7 +44,7 @@ async fn main() {
 
     println!("Loading graph from file");
     let time = Instant::now();
-    let graph = Graph::new(NaiveGraph::from_file(args.fmi_path.as_str()));
+    let graph = FastGraph::new(NaiveGraph::from_file(args.fmi_path.as_str()));
     let graph = Arc::new(graph);
     let fmi = Arc::new(Fmi::from_file(args.fmi_path.as_str()));
     println!("Finished loading graph, took {:?}.", time.elapsed());
