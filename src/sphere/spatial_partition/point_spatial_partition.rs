@@ -1,8 +1,11 @@
 use indicatif::ProgressIterator;
 
-use crate::geometry::{Collides, Contains, Point};
+use crate::sphere::geometry::{
+    collision_detection::{Collides, Contains},
+    point::Point,
+};
 
-use super::{tiling::Tiling, ConvecQuadrilateral};
+use super::tiling::{ConvecQuadrilateral, Tiling};
 
 #[derive(Clone)]
 pub struct PointSpatialPartition {

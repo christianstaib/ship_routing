@@ -4,7 +4,7 @@ use geojson::{Feature, Geometry, Value};
 use nalgebra::Vector3;
 use rand::Rng;
 
-use crate::geometry::Point;
+use super::point::Point;
 
 /// Represents a minor arc, e.g. the shortest path between to points, called 'from' and 'to'.
 #[derive(Clone, PartialEq)]
@@ -39,8 +39,6 @@ impl Arc {
 
         let sine_theta = from_to_normal.cross(&from_north_pole_normal).magnitude() * sign;
         let cosine_theta = from_to_normal.dot(&from_north_pole_normal);
-
-        
 
         sine_theta.atan2(cosine_theta).rem_euclid(2.0 * PI)
     }
@@ -88,11 +86,17 @@ impl Arc {
         let candidate = self.normal().cross(&other.normal()).normalize();
         if !candidate.x.is_nan() && !candidate.y.is_nan() && !candidate.z.is_nan() {
             let candidate = Point::from_n_vector(&candidate);
-            if self.between_normals(&candidate) && other.between_normals(&candidate) && !candidate.is_approximately_equal(self.from()) {
+            if self.between_normals(&candidate)
+                && other.between_normals(&candidate)
+                && !candidate.is_approximately_equal(self.from())
+            {
                 return Some(candidate);
             }
             let candidate = candidate.antipode();
-            if self.between_normals(&candidate) && other.between_normals(&candidate) && !candidate.is_approximately_equal(self.from()) {
+            if self.between_normals(&candidate)
+                && other.between_normals(&candidate)
+                && !candidate.is_approximately_equal(self.from())
+            {
                 return Some(candidate);
             }
         }
@@ -173,7 +177,7 @@ impl Arc {
 mod tests {
     use std::f64::consts::PI;
 
-    use crate::geometry::{Arc, Point};
+    use crate::sphere::geometry::{arc::Arc, point::Point};
 
     #[test]
     fn test_central_angle1() {
@@ -218,9 +222,11 @@ mod tests {
 
     #[test]
     fn test_edge_intersection() {
-        let outline = [Point::from_coordinate(-1.0, 0.0),
+        let outline = [
+            Point::from_coordinate(-1.0, 0.0),
             Point::from_coordinate(0.0, 0.0),
-            Point::from_coordinate(1.0, 0.0)];
+            Point::from_coordinate(1.0, 0.0),
+        ];
 
         let ray = Arc::new(
             &Point::from_coordinate(0.0, 1.0),

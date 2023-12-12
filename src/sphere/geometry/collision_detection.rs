@@ -1,6 +1,9 @@
-use crate::{
-    geometry::{meters_to_radians, Arc, Point, Polygon},
-    spatial_partition::ConvecQuadrilateral,
+use crate::sphere::spatial_partition::tiling::ConvecQuadrilateral;
+
+use super::{
+    arc::Arc,
+    point::{meters_to_radians, Point},
+    polygon::Polygon,
 };
 
 pub trait CollisionDetection {

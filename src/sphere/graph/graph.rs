@@ -7,7 +7,11 @@ use std::{
 
 use indicatif::ProgressIterator;
 
-use crate::geometry::{radians_to_meter, Arc, Planet, Point};
+use crate::sphere::geometry::{
+    arc::Arc,
+    planet::Planet,
+    point::{radians_to_meter, Point},
+};
 
 pub struct Fmi {
     pub points: Vec<Point>,

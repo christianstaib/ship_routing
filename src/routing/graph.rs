@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead};
 
-use crate::geometry::Point;
+use crate::sphere::geometry::point::Point;
 
 #[derive(Clone)]
 pub struct Edge {

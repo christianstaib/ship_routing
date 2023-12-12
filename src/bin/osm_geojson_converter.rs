@@ -1,5 +1,5 @@
 use clap::Parser;
-use osm_test::geometry::Planet;
+use osm_test::sphere::geometry::planet::Planet;
 
 /// Parse parameters for OSM converter
 #[derive(Parser, Debug)]

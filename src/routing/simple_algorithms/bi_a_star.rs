@@ -11,6 +11,31 @@ pub struct BiAStar<'a> {
     pub graph: &'a Graph,
 }
 
+struct ConstantHeuristic {
+    forward_heuristic: Box<dyn Heuristic>,
+    backward_heuristic: Box<dyn Heuristic>,
+    s: u32,
+    t: u32,
+}
+
+impl ConstantHeuristic {
+    fn pi_f(&self, v: u32) -> u32 {
+        self.forward_heuristic.lower_bound(v)
+    }
+
+    fn pi_r(&self, v: u32) -> u32 {
+        self.backward_heuristic.lower_bound(v)
+    }
+
+    fn p_f(&self, v: u32) -> u32 {
+        (self.pi_f(v) - self.pi_r(v)) / 2 + self.pi_r(self.t) / 2
+    }
+
+    fn p_r(&self, v: u32) -> u32 {
+        (self.pi_r(v) - self.pi_f(v)) / 2 + self.pi_f(self.s) / 2
+    }
+}
+
 impl<'a> BiAStar<'a> {
     pub fn new(graph: &'a Graph) -> BiAStar {
         BiAStar { graph }
@@ -47,7 +72,13 @@ impl<'a> BiAStar<'a> {
         let mut minimal_cost = u32::MAX;
         let mut minimal_cost_node = u32::MAX;
 
-        let pr_t = backward_heuristic.lower_bound(request.target);
+        let heu = ConstantHeuristic {
+            forward_heuristic,
+            backward_heuristic,
+            s: request.source,
+            t: request.target,
+        };
+
         loop {
             let forward_state = forward_data.pop()?;
             if backward_data.nodes[forward_state.value as usize].is_expanded {
@@ -62,7 +93,7 @@ impl<'a> BiAStar<'a> {
                 .outgoing_edges(forward_state.value)
                 .iter()
                 .for_each(|edge| {
-                    let h = forward_heuristic.lower_bound(edge.target);
+                    let h = heu.p_f(edge.target);
                     forward_data.update(forward_state.value, edge, h)
                 });
 
@@ -79,12 +110,14 @@ impl<'a> BiAStar<'a> {
                 .incoming_edges(backward_state.value)
                 .iter()
                 .for_each(|edge| {
-                    let h = backward_heuristic.lower_bound(edge.target);
+                    let h = heu.p_r(edge.target);
                     backward_data.update(backward_state.value, edge, h);
                 });
 
             if forward_state.key + backward_state.key
-                > minimal_cost.checked_add(pr_t).unwrap_or(u32::MAX)
+                > minimal_cost
+                    .checked_add(heu.p_r(request.target))
+                    .unwrap_or(u32::MAX)
             {
                 break;
             }

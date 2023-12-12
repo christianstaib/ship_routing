@@ -4,11 +4,13 @@ use std::time::Instant;
 use indicatif::ProgressIterator;
 use rayon::prelude::*;
 
-use crate::geometry::{meters_to_radians, radians_to_meter, Arc, Planet, Point, PointGenerator};
-use crate::spatial_partition::ConvecQuadrilateral;
-use crate::spatial_partition::{PointSpatialPartition, PolygonSpatialPartition};
-
-use super::Fmi;
+use crate::sphere::geometry::arc::Arc;
+use crate::sphere::geometry::planet::Planet;
+use crate::sphere::geometry::point::{meters_to_radians, radians_to_meter, Point, PointGenerator};
+use crate::sphere::graph::graph::Fmi;
+use crate::sphere::spatial_partition::point_spatial_partition::PointSpatialPartition;
+use crate::sphere::spatial_partition::polygon_spatial_partition::PolygonSpatialPartition;
+use crate::sphere::spatial_partition::tiling::ConvecQuadrilateral;
 
 pub fn generate_network(
     num_nodes: u32,
@@ -69,10 +71,12 @@ fn generate_arcs(
         .progress()
         .par_bridge()
         .map(|point| {
-            [ur(point, radius, 2.0),
+            [
+                ur(point, radius, 2.0),
                 ur(point, radius, 4.0),
                 ur(point, radius, 6.0),
-                ur(point, radius, 8.0)]
+                ur(point, radius, 8.0),
+            ]
             .iter()
             .filter_map(|polygon| {
                 let mut local_points = point_grid.get_points(polygon);

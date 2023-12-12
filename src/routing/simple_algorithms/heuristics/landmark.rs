@@ -95,8 +95,12 @@ impl Landmark {
 
     fn lower_bound(&self, source: u32, target: u32) -> u32 {
         let lower_bound = std::cmp::max(
-            self.costs_to[target as usize] - self.costs_to[source as usize],
-            self.costs_from[source as usize] - self.costs_to[target as usize],
+            self.costs_to[target as usize]
+                .checked_sub(self.costs_from[source as usize])
+                .unwrap_or(0),
+            self.costs_from[source as usize]
+                .checked_sub(self.costs_to[target as usize])
+                .unwrap_or(0),
         );
         lower_bound
     }

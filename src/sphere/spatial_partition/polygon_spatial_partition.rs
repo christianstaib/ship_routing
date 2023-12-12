@@ -1,10 +1,13 @@
 use indicatif::ProgressIterator;
 
-use crate::geometry::{
-    meters_to_radians, Arc, Collides, CollisionDetection, Contains, Point, Polygon,
+use crate::sphere::geometry::{
+    arc::Arc,
+    collision_detection::{Collides, CollisionDetection, Contains},
+    point::{meters_to_radians, Point},
+    polygon::Polygon,
 };
 
-use super::{tiling::Tiling, ConvecQuadrilateral};
+use super::tiling::{ConvecQuadrilateral, Tiling};
 
 #[derive(Clone)]
 pub struct PolygonSpatialPartition {

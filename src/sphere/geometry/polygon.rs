@@ -2,7 +2,7 @@ use std::vec;
 
 use geojson::{Feature, Geometry, Value};
 
-use super::{Arc, Point};
+use super::{arc::Arc, point::Point};
 
 #[derive(Clone)]
 pub struct Polygon {
@@ -32,10 +32,7 @@ impl Polygon {
     }
 
     pub fn from_geojson_vec(vec: Vec<Vec<f64>>) -> Polygon {
-        let outline = vec
-            .into_iter()
-            .map(Point::from_geojson_vec)
-            .collect();
+        let outline = vec.into_iter().map(Point::from_geojson_vec).collect();
         Polygon::new(outline)
     }
 

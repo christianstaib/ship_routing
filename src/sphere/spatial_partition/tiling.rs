@@ -1,4 +1,4 @@
-use crate::geometry::{Arc, Point};
+use crate::sphere::geometry::{arc::Arc, point::Point};
 
 #[derive(Clone)]
 pub struct ConvecQuadrilateral {
@@ -23,40 +23,16 @@ impl ConvecQuadrilateral {
         let middle = d0.intersection(&d1).expect("should intersection");
 
         let mut subs = Vec::new();
-        let p0 = ConvecQuadrilateral::new(&vec![
-            m[3],
-            middle,
-            m[2],
-            o[3],
-            m[3],
-        ]);
+        let p0 = ConvecQuadrilateral::new(&vec![m[3], middle, m[2], o[3], m[3]]);
         subs.push(p0);
 
-        let p1 = ConvecQuadrilateral::new(&vec![
-            middle,
-            m[1],
-            o[2],
-            m[2],
-            middle,
-        ]);
+        let p1 = ConvecQuadrilateral::new(&vec![middle, m[1], o[2], m[2], middle]);
         subs.push(p1);
 
-        let p2 = ConvecQuadrilateral::new(&vec![
-            m[0],
-            o[1],
-            m[1],
-            middle,
-            m[0],
-        ]);
+        let p2 = ConvecQuadrilateral::new(&vec![m[0], o[1], m[1], middle, m[0]]);
         subs.push(p2);
 
-        let p3 = ConvecQuadrilateral::new(&vec![
-            o[0],
-            m[0],
-            middle,
-            m[3],
-            o[0],
-        ]);
+        let p3 = ConvecQuadrilateral::new(&vec![o[0], m[0], middle, m[3], o[0]]);
         subs.push(p3);
 
         subs

@@ -10,9 +10,14 @@ use image::{GrayImage, Luma};
 use imageproc::{drawing::draw_antialiased_line_segment_mut, pixelops::interpolate};
 use indicatif::ProgressIterator;
 
-use crate::{geometry::Arc, geometry::Linestring, geometry::Point, geometry::Polygon};
-
-use super::{collision_detection::CollisionDetection, Contains, OsmData};
+use super::{
+    arc::Arc,
+    collision_detection::{CollisionDetection, Contains},
+    linestring::Linestring,
+    osm_data::OsmData,
+    point::Point,
+    polygon::Polygon,
+};
 
 #[derive(Clone)]
 pub struct Planet {
@@ -24,8 +29,7 @@ pub struct Planet {
 
 impl CollisionDetection for Planet {
     fn is_on_polygon(&self, point: &Point) -> bool {
-        self.polygons
-            .iter().any(|polygon| polygon.contains(point))
+        self.polygons.iter().any(|polygon| polygon.contains(point))
     }
 }
 

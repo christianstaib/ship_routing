@@ -4,7 +4,7 @@ use crate::routing::{
     Graph,
 };
 
-use super::{bidirectional_a_star::BiAStar, heuristics::zero::Zero};
+use super::{bi_a_star::BiAStar, heuristics::zero::Zero};
 
 #[derive(Clone)]
 pub struct BiAStarWithZero<'a> {

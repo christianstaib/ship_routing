@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use indicatif::ProgressBar;
 use osmpbf::{Element, ElementReader};
 
-use super::{Planet, Point, Polygon};
+use super::{planet::Planet, point::Point, polygon::Polygon};
 
 /// a planet struct which ways are not cloesed
 pub struct OsmData {

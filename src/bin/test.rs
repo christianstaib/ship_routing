@@ -4,7 +4,8 @@ use osm_test::routing::{
     route::{RouteValidationRequest, Routing},
     simple_algorithms::{
         a_star_with_distance::ASTarWithDistance, a_star_with_landmarks::AStarWithLandmarks,
-        a_star_with_zero::AStarWithZero, bi_a_star_with_zero::BiAStarWithZero,
+        a_star_with_zero::AStarWithZero, bi_a_star_with_landmarks::BiAStarWithLandmarks,
+        bi_a_star_with_zero::BiAStarWithZero,
     },
     Graph, NaiveGraph,
 };
@@ -35,27 +36,19 @@ fn main() {
     let graph = Graph::new(naive_graph);
 
     let mut algorithms: Vec<(&str, Box<dyn Routing>)> = Vec::new();
-    // // algorithms.push((
-    // //     "a start".to_string(),
-    // //     Box::new(a_star::Dijkstra::new(&graph)),
-    // // ));
     // algorithms.push((
-    //     "bidirectional a start".to_string(),
-    //     Box::new(bidirectional_landmark::BiLandmark::new(&graph)),
+    //     "a star with landmarks",
+    //     Box::new(AStarWithLandmarks::new(&graph)),
+    // ));
+    // algorithms.push(("a star with zero", Box::new(AStarWithZero::new(&graph))));
+    // algorithms.push((
+    //     "a star with distance",
+    //     Box::new(ASTarWithDistance::new(&graph)),
     // ));
     algorithms.push((
-        "a star with landmarks",
-        Box::new(AStarWithLandmarks::new(&graph)),
+        "bidirectional a star with landmarks",
+        Box::new(BiAStarWithLandmarks::new(&graph)),
     ));
-    algorithms.push(("a star with zero", Box::new(AStarWithZero::new(&graph))));
-    algorithms.push((
-        "a star with distance",
-        Box::new(ASTarWithDistance::new(&graph)),
-    ));
-    // algorithms.push((
-    //     "bidirectional landmark a star".to_string(),
-    //     Box::new(bidirectional_landmark::BiLandmark::new(&graph)),
-    // ));
     // algorithms.push((
     //     "dijkstra".to_string(),
     //     Box::new(dijkstra::Dijkstra::new(&graph)),

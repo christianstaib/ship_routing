@@ -45,7 +45,7 @@ fn main() {
         .map(|route_request| {
             let route_response = dijkstra.get_route(route_request);
             let mut cost = "-".to_string();
-            if let Some(route) = route_response {
+            if let Some(route) = route_response.0 {
                 cost = route.cost.to_string();
             }
             format!("{},{},{}", route_request.source, route_request.target, cost)
