@@ -6,8 +6,7 @@ use osm_test::routing::{
     route::{RouteResponse, RouteValidationRequest, Routing},
     simple_algorithms::{
         a_star_with_distance::ASTarWithDistance, a_star_with_landmarks::AStarWithLandmarks,
-        a_star_with_zero::AStarWithZero,
-        bi_a_star_with_zero::BiAStarWithZero, dijkstra::Dijkstra,
+        a_star_with_zero::AStarWithZero, bi_a_star_with_zero::BiAStarWithZero, dijkstra::Dijkstra,
     },
 };
 use std::{
@@ -41,16 +40,16 @@ fn main() {
             "bidirectional a star with with zero",
             Box::new(BiAStarWithZero::new(&graph)),
         ),
-        (
-            "a star with landmarks",
-            Box::new(AStarWithLandmarks::new(&graph)),
-        ),
-        ("dijkstra", Box::new(Dijkstra::new(&graph))),
-        ("a star with zero", Box::new(AStarWithZero::new(&graph))),
-        (
-            "a star with distance",
-            Box::new(ASTarWithDistance::new(&graph)),
-        ),
+        // (
+        //     "a star with landmarks",
+        //     Box::new(AStarWithLandmarks::new(&graph)),
+        // ),
+        // ("dijkstra", Box::new(Dijkstra::new(&graph))),
+        // ("a star with zero", Box::new(AStarWithZero::new(&graph))),
+        // (
+        //     "a star with distance",
+        //     Box::new(ASTarWithDistance::new(&graph)),
+        // ),
         // (
         //     "bidirectional a star with landmarks",
         //     Box::new(BiAStarWithLandmarks::new(&graph)),

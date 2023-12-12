@@ -1,6 +1,8 @@
-use super::fast_graph::FastEdge;
+use crate::sphere::geometry::point::Point;
 
-#[derive(Clone)]
+use super::{fast_graph::FastEdge, naive_graph::NaiveGraph};
+
+#[derive(Clone, PartialEq, Eq)]
 pub struct Edge {
     pub source: u32,
     pub target: u32,
@@ -25,13 +27,6 @@ impl Edge {
     }
 }
 
-#[derive(Clone)]
-pub struct Node {
-    pub id: u32,
-    pub longitude: f64,
-    pub latitude: f64,
-}
-
 impl Edge {
     pub fn make_fast(&self) -> FastEdge {
         FastEdge {
@@ -41,12 +36,26 @@ impl Edge {
     }
 }
 
-impl Node {
-    pub fn new(id: u32, longitude: f64, latitude: f64) -> Node {
-        Node {
-            id,
-            longitude,
-            latitude,
+#[derive(Clone)]
+pub struct Graph {
+    pub nodes: Vec<Point>,
+    pub forward_edges: Vec<Vec<Edge>>,
+    pub backward_edges: Vec<Vec<Edge>>,
+}
+
+impl Graph {
+    pub fn from_naive_graph(graph: &NaiveGraph) -> Graph {
+        let mut forward_edges = vec![Vec::new(); graph.nodes.len()];
+        let mut backward_edges = vec![Vec::new(); graph.nodes.len()];
+        graph.edges.iter().for_each(|edge| {
+            forward_edges[edge.source as usize].push(edge.clone());
+            backward_edges[edge.target as usize].push(edge.clone());
+        });
+
+        Graph {
+            nodes: graph.nodes.clone(),
+            forward_edges,
+            backward_edges,
         }
     }
 }
