@@ -1,5 +1,9 @@
+use std::{fs::File, io::BufReader};
+
 use clap::Parser;
-use osm_test::routing::{ch::contrator::Contractor, graph::Graph, naive_graph::NaiveGraph};
+use osm_test::routing::{
+    ch::contrator::Contractor, graph::Graph, naive_graph::NaiveGraph, route::RouteValidationRequest,
+};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -22,4 +26,12 @@ fn main() {
     contractor.contract();
 
     println!("there are {:?} shortcuts", contractor.shortcuts.len());
+
+    let reader = BufReader::new(File::open("tests/data/fmi/tests.json").unwrap());
+    let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
+
+    for test in tests.iter().take(1) {
+        let cost = contractor.get_cost(&test.request);
+        println!("ist: {:?}, soll: {:?}", cost, test.cost);
+    }
 }
