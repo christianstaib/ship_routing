@@ -1,6 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
-use super::{dijkstra_data::DijkstraData, graph::Graph};
+use super::{dijkstra_data::DijkstraData, fast_graph::Graph};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RouteRequest {

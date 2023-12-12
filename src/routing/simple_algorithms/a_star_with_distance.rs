@@ -1,5 +1,5 @@
 use crate::routing::{
-    graph::Graph,
+    fast_graph::Graph,
     route::{RouteRequest, RouteResponse, Routing},
 };
 

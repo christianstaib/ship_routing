@@ -1,7 +1,7 @@
 use std::usize;
 
 use super::{
-    graph::FastEdge,
+    fast_graph::FastEdge,
     queue::heap_queue::{HeapQueue, State},
     route::Route,
 };

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use osm_test::routing::graph::Graph;
-use osm_test::routing::graph::NaiveGraph;
+use osm_test::routing::fast_graph::Graph;
+use osm_test::routing::naive_graph::NaiveGraph;
 use osm_test::routing::route::RouteRequest;
 use osm_test::routing::route::Routing;
 use osm_test::routing::simple_algorithms::a_star_with_landmarks::AStarWithLandmarks;

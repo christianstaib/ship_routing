@@ -1,5 +1,5 @@
 use crate::{
-    routing::graph::Graph,
+    routing::fast_graph::Graph,
     sphere::geometry::{arc::Arc, point::radians_to_meter},
 };
 

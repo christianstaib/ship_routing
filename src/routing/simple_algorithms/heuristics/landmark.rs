@@ -2,7 +2,7 @@ use indicatif::ProgressIterator;
 use rand::Rng;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::routing::{graph::Graph, route::RouteRequest, simple_algorithms::dijkstra};
+use crate::routing::{fast_graph::Graph, route::RouteRequest, simple_algorithms::dijkstra};
 
 use super::Heuristic;
 

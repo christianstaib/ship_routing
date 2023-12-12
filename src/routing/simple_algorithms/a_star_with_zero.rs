@@ -1,6 +1,6 @@
 use crate::routing::{
     dijkstra_data::DijkstraData,
-    graph::Graph,
+    fast_graph::Graph,
     route::{Route, RouteRequest, RouteResponse, Routing},
 };
 

@@ -3,8 +3,8 @@ use std::{fs::File, io::BufWriter, io::Write};
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    graph::Graph,
-    graph::NaiveGraph,
+    fast_graph::Graph,
+    naive_graph::NaiveGraph,
     route::{RouteRequest, RouteValidationRequest, Routing},
     simple_algorithms::dijkstra::Dijkstra,
 };

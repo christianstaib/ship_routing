@@ -1,8 +1,8 @@
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    graph::Graph,
-    graph::NaiveGraph,
+    fast_graph::Graph,
+    naive_graph::NaiveGraph,
     route::{RouteResponse, RouteValidationRequest, Routing},
     simple_algorithms::{
         a_star_with_distance::ASTarWithDistance, a_star_with_landmarks::AStarWithLandmarks,
