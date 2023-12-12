@@ -1,6 +1,8 @@
 use std::{cmp::Ordering, collections::HashMap, usize};
 
 use indicatif::ProgressIterator;
+use rayon::iter::{ParallelBridge, ParallelIterator};
+use serde_derive::{Deserialize, Serialize};
 
 use crate::routing::{
     graph::{Edge, Graph},
@@ -10,6 +12,7 @@ use crate::routing::{
 
 use super::ch_helper::ChHelper;
 
+#[derive()]
 pub struct Contractor {
     pub graph: Graph,
     pub levels: Vec<u32>,
@@ -136,30 +139,35 @@ impl Contractor {
         let outgoing_edges = &self.graph.forward_edges[node as usize];
         let incoming_edges = &self.graph.backward_edges[node as usize];
 
-        let mut shortcuts: Vec<((u32, u32), Vec<(u32, u32, u32)>)> = Vec::new();
         let ch_dijkstra = ChHelper::new(&self.graph);
 
-        incoming_edges.iter().for_each(|incoming_edge| {
-            if let Some(max_outgoing_cost) = outgoing_edges.iter().map(|edge| edge.cost).max() {
-                let max_cost = incoming_edge.cost + max_outgoing_cost;
-                let cost = ch_dijkstra.costs_without(incoming_edge.source, max_cost, node);
+        incoming_edges
+            .iter()
+            .par_bridge()
+            .map(|incoming_edge| {
+                let mut shortcuts = Vec::new();
+                if let Some(max_outgoing_cost) = outgoing_edges.iter().map(|edge| edge.cost).max() {
+                    let max_cost = incoming_edge.cost + max_outgoing_cost;
+                    let cost = ch_dijkstra.costs_without(incoming_edge.source, max_cost, node);
 
-                outgoing_edges.iter().for_each(|outgoing_edge| {
-                    let pair_cost = incoming_edge.cost + outgoing_edge.cost;
+                    outgoing_edges.iter().for_each(|outgoing_edge| {
+                        let pair_cost = incoming_edge.cost + outgoing_edge.cost;
 
-                    // shortcut needed
-                    if &pair_cost < cost.get(&outgoing_edge.target).unwrap_or(&u32::MAX) {
-                        let k = (incoming_edge.source, outgoing_edge.target);
-                        let v = vec![
-                            (incoming_edge.source, node, pair_cost),
-                            (node, outgoing_edge.target, pair_cost),
-                        ];
-                        shortcuts.push((k, v));
-                    }
-                });
-            }
-        });
-        shortcuts
+                        // shortcut needed
+                        if &pair_cost < cost.get(&outgoing_edge.target).unwrap_or(&u32::MAX) {
+                            let k = (incoming_edge.source, outgoing_edge.target);
+                            let v = vec![
+                                (incoming_edge.source, node, pair_cost),
+                                (node, outgoing_edge.target, pair_cost),
+                            ];
+                            shortcuts.push((k, v));
+                        }
+                    });
+                }
+                shortcuts
+            })
+            .flatten()
+            .collect()
     }
 
     fn remove(&mut self, node: u32) {
