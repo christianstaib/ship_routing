@@ -32,6 +32,7 @@ impl Fmi {
             .enumerate()
             .progress_count(num_nodes as u64)
             .map(|(i, line)| {
+                // nodeID nodeID2 latitude longitude elevation
                 let line = line.unwrap();
                 let mut line = line.split_whitespace();
                 let id: u32 = line.next().unwrap().parse().unwrap();
@@ -71,9 +72,10 @@ impl Fmi {
         writeln!(writer, "{}", self.arcs.len()).unwrap();
         println!("writing {} points to file", self.points.len());
         self.points.iter().progress().for_each(|point| {
+            // nodeID nodeID2 latitude longitude elevation
             writeln!(
                 writer,
-                "{} {} {}",
+                "{} 0 {} {} 0",
                 point_id_map.get(point).unwrap(),
                 point.latitude(),
                 point.longitude()
@@ -84,9 +86,10 @@ impl Fmi {
 
         println!("writing {} arcs to file", self.arcs.len());
         self.arcs.iter().progress().for_each(|arc| {
+            // srcIDX trgIDX cost type maxspeed
             writeln!(
                 writer,
-                "{} {} {}",
+                "{} {} {} 0 0",
                 point_id_map.get(arc.from()).unwrap(),
                 point_id_map.get(arc.to()).unwrap(),
                 radians_to_meter(arc.central_angle()).round() as u32

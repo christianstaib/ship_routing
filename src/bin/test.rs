@@ -39,10 +39,10 @@ fn main() {
     let graph = FastGraph::new(&naive_graph);
 
     let algorithms: Vec<(&str, Box<dyn Routing>)> = vec![
-        // (
-        //     "bidirectional a star with with zero",
-        //     Box::new(BiAStarWithZero::new(&graph)),
-        // ),
+        (
+            "bidirectional a star with with zero",
+            Box::new(BiAStarWithZero::new(&graph)),
+        ),
         // (
         //     "a star with landmarks",
         //     Box::new(AStarWithLandmarks::new(&graph)),

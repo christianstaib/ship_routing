@@ -27,12 +27,14 @@ impl NaiveGraph {
             .by_ref()
             .take(number_of_nodes)
             .map(|node_line| {
+                // nodeID nodeID2 latitude longitude elevation
                 let node_line = node_line.unwrap();
                 let mut values = node_line.split_whitespace();
                 values.next();
                 values.next();
                 let latitude: f64 = values.next().unwrap().parse().unwrap();
                 let longitude: f64 = values.next().unwrap().parse().unwrap();
+                values.next();
                 Point::from_coordinate(latitude, longitude)
             })
             .collect();
@@ -41,11 +43,14 @@ impl NaiveGraph {
             .by_ref()
             .take(number_of_edges)
             .map(|edge_line| {
+                // srcIDX trgIDX cost type maxspeed
                 let line = edge_line.unwrap();
                 let mut values = line.split_whitespace();
                 let source: u32 = values.next().unwrap().parse().unwrap();
                 let target: u32 = values.next().unwrap().parse().unwrap();
                 let cost: u32 = values.next().unwrap().parse().unwrap();
+                values.next();
+                values.next();
                 Edge::new(source, target, cost)
             })
             .collect();

@@ -28,6 +28,10 @@ impl Contractor {
     }
 
     pub fn contract(&mut self) {
+        println!(
+            "there are {} edges",
+            self.graph.forward_edges.iter().flatten().count()
+        );
         let graph = self.graph.clone();
         for (level, node) in (0..self.graph.nodes.len()).enumerate().progress() {
             self.contract_node(node as u32);
@@ -41,6 +45,15 @@ impl Contractor {
             .map(|(_, edges)| edges)
             .flatten()
             .for_each(|edge| self.graph.add_edge(edge));
+
+        println!(
+            "there are {} edges",
+            self.graph.forward_edges.iter().flatten().count()
+        );
+        println!(
+            "there are {} edges",
+            self.graph.backward_edges.iter().flatten().count()
+        );
     }
 
     pub fn get_fast_graph(&self) -> FastGraph {
@@ -58,7 +71,7 @@ impl Contractor {
             .iter()
             .flatten()
             .filter(|&edge| self.levels[edge.source as usize] <= self.levels[edge.target as usize])
-            .cloned()
+            .map(|edge| edge.get_inverted())
             .collect();
         FastGraph {
             nodes: self.graph.nodes.clone(),

@@ -83,48 +83,50 @@ impl<'a> BiAStar<'a> {
         };
 
         loop {
-            let forward_state = forward_data.pop()?;
-            if backward_data.nodes[forward_state.value as usize].is_expanded {
-                let contact_cost = forward_data.nodes[forward_state.value as usize].cost
-                    + backward_data.nodes[forward_state.value as usize].cost;
-                if contact_cost < minimal_cost {
-                    minimal_cost = contact_cost;
-                    minimal_cost_node = forward_state.value;
+            let forward_state = forward_data.pop();
+            if let Some(forward_state) = forward_state {
+                if backward_data.nodes[forward_state.value as usize].is_expanded {
+                    let contact_cost = forward_data.nodes[forward_state.value as usize].cost
+                        + backward_data.nodes[forward_state.value as usize].cost;
+                    if contact_cost < minimal_cost {
+                        minimal_cost = contact_cost;
+                        minimal_cost_node = forward_state.value;
+                    }
                 }
+                self.graph
+                    .outgoing_edges(forward_state.value)
+                    .iter()
+                    .for_each(|edge| {
+                        let h = heu.p_f(edge.target);
+                        forward_data.update(forward_state.value, edge, h)
+                    });
             }
-            self.graph
-                .outgoing_edges(forward_state.value)
-                .iter()
-                .for_each(|edge| {
-                    let h = heu.p_f(edge.target);
-                    forward_data.update(forward_state.value, edge, h)
-                });
 
-            let backward_state = backward_data.pop()?;
-            if forward_data.nodes[backward_state.value as usize].is_expanded {
-                let contact_cost = forward_data.nodes[backward_state.value as usize].cost
-                    + backward_data.nodes[backward_state.value as usize].cost;
-                if contact_cost < minimal_cost {
-                    minimal_cost = contact_cost;
-                    minimal_cost_node = backward_state.value;
+            let backward_state = backward_data.pop();
+            if let Some(backward_state) = backward_state {
+                if forward_data.nodes[backward_state.value as usize].is_expanded {
+                    let contact_cost = forward_data.nodes[backward_state.value as usize].cost
+                        + backward_data.nodes[backward_state.value as usize].cost;
+                    if contact_cost < minimal_cost {
+                        minimal_cost = contact_cost;
+                        minimal_cost_node = backward_state.value;
+                    }
                 }
+                self.graph
+                    .incoming_edges(backward_state.value)
+                    .iter()
+                    .for_each(|edge| {
+                        let h = heu.p_r(edge.target);
+                        backward_data.update(backward_state.value, edge, h);
+                    });
             }
-            self.graph
-                .incoming_edges(backward_state.value)
-                .iter()
-                .for_each(|edge| {
-                    let h = heu.p_r(edge.target);
-                    backward_data.update(backward_state.value, edge, h);
-                });
 
-            if forward_state.key + backward_state.key
-                > minimal_cost
-                    .checked_add(heu.p_r(request.target))
-                    .unwrap_or(u32::MAX)
-            {
+            if forward_state.is_none() && backward_state.is_none() {
                 break;
             }
         }
+
+        println!("minimal cost node is {}", minimal_cost_node);
 
         construct_route(minimal_cost_node, forward_data, backward_data)
     }
