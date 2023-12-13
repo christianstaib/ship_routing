@@ -23,6 +23,9 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     fmi_path: String,
+    /// Path of .fmi file
+    #[arg(short, long)]
+    tests_path: String,
     /// Number of tests to be run
     #[arg(short, long)]
     number_of_tests: u32,
@@ -33,18 +36,18 @@ fn main() {
 
     let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
 
-    let graph = FastGraph::new(naive_graph);
+    let graph = FastGraph::new(&naive_graph);
 
     let algorithms: Vec<(&str, Box<dyn Routing>)> = vec![
-        (
-            "bidirectional a star with with zero",
-            Box::new(BiAStarWithZero::new(&graph)),
-        ),
+        // (
+        //     "bidirectional a star with with zero",
+        //     Box::new(BiAStarWithZero::new(&graph)),
+        // ),
         // (
         //     "a star with landmarks",
         //     Box::new(AStarWithLandmarks::new(&graph)),
         // ),
-        // ("dijkstra", Box::new(Dijkstra::new(&graph))),
+        ("dijkstra", Box::new(Dijkstra::new(&graph))),
         // ("a star with zero", Box::new(AStarWithZero::new(&graph))),
         // (
         //     "a star with distance",
@@ -61,7 +64,7 @@ fn main() {
         .map(|(name, algorithm)| (name, algorithm, Vec::new(), Vec::new(), Vec::new()))
         .collect();
 
-    let reader = BufReader::new(File::open("tests/data/fmi/tests.json").unwrap());
+    let reader = BufReader::new(File::open(args.tests_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
     tests
@@ -75,6 +78,7 @@ fn main() {
                 let before = Instant::now();
                 let response = routing_algorithm.get_route(request);
                 times.push(before.elapsed());
+
                 scanned.push(
                     response
                         .data

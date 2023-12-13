@@ -71,9 +71,9 @@ impl FastGraph {
         self.backward_edges.outgoing_edges(target)
     }
 
-    pub fn new(graph: NaiveGraph) -> FastGraph {
-        let mut graph = graph.clone();
-        graph.make_bidirectional();
+    pub fn new(graph: &NaiveGraph) -> FastGraph {
+        let graph = graph.clone();
+        // graph.make_bidirectional();
 
         let forward_edges = FastEdgeAccess::new(&graph.edges);
 

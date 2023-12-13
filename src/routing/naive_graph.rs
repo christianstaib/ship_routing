@@ -29,7 +29,8 @@ impl NaiveGraph {
             .map(|node_line| {
                 let node_line = node_line.unwrap();
                 let mut values = node_line.split_whitespace();
-                let _: u32 = values.next().unwrap().parse().unwrap();
+                values.next();
+                values.next();
                 let latitude: f64 = values.next().unwrap().parse().unwrap();
                 let longitude: f64 = values.next().unwrap().parse().unwrap();
                 Point::from_coordinate(latitude, longitude)
@@ -52,19 +53,19 @@ impl NaiveGraph {
         NaiveGraph { nodes, edges }
     }
 
-    pub fn make_bidirectional(&mut self) {
-        let mut edge_map = HashMap::new();
-        self.edges.iter().for_each(|edge| {
-            let key = (edge.source, edge.target);
-            let key = (std::cmp::min(key.0, key.1), std::cmp::max(key.0, key.1));
-            if &edge.cost < edge_map.get(&key).unwrap_or(&u32::MAX) {
-                edge_map.insert(key, edge.cost);
-            }
-        });
-        self.edges = edge_map
-            .iter()
-            .map(|(&(source, target), &cost)| Edge::new(source, target, cost))
-            .flat_map(|edge| vec![edge.clone(), edge.get_inverted()])
-            .collect();
-    }
+    // pub fn _make_bidirectional(&mut self) {
+    //     let mut edge_map = HashMap::new();
+    //     self.edges.iter().for_each(|edge| {
+    //         let key = (edge.source, edge.target);
+    //         let key = (std::cmp::min(key.0, key.1), std::cmp::max(key.0, key.1));
+    //         if &edge.cost < edge_map.get(&key).unwrap_or(&u32::MAX) {
+    //             edge_map.insert(key, edge.cost);
+    //         }
+    //     });
+    //     self.edges = edge_map
+    //         .iter()
+    //         .map(|(&(source, target), &cost)| Edge::new(source, target, cost))
+    //         .flat_map(|edge| vec![edge.clone(), edge.get_inverted()])
+    //         .collect();
+    // }
 }

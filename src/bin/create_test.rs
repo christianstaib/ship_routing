@@ -29,7 +29,8 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let graph = FastGraph::new(NaiveGraph::from_file(args.fmi_path.as_str()));
+    let graph = NaiveGraph::from_file(args.fmi_path.as_str());
+    let graph = FastGraph::new(&graph);
     let dijkstra = Dijkstra::new(&graph);
 
     let routes: Vec<_> = (0..args.number_of_tests)

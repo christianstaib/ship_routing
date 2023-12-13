@@ -12,13 +12,15 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     fmi_path: String,
+    /// Path of .fmi file
+    #[arg(short, long)]
+    test_path: String,
 }
 
 fn main() {
     let args = Args::parse();
 
-    let mut naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
-    naive_graph.make_bidirectional();
+    let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
     let graph = Graph::from_naive_graph(&naive_graph);
     let mut contractor = Contractor::new(graph);
 
@@ -27,10 +29,10 @@ fn main() {
 
     println!("there are {:?} shortcuts", contractor.shortcuts.len());
 
-    let reader = BufReader::new(File::open("tests/data/fmi/tests.json").unwrap());
+    let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
-    for test in tests.iter().take(1) {
+    for test in tests.iter() {
         let cost = contractor.get_cost(&test.request);
         println!("ist: {:?}, soll: {:?}", cost, test.cost);
     }
