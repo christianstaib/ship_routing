@@ -17,18 +17,19 @@ impl<'a> ChHelper<'a> {
         queue.insert(0, node);
         cost.insert(node, 0);
 
-        while let Some(current_state) = queue.pop() {
-            let current_node_cost = *cost.get(&current_state.value).unwrap();
-            self.graph.forward_edges[current_state.value as usize]
+        while let Some(state) = queue.pop() {
+            if node > max_cost {
+                break;
+            }
+            self.graph.forward_edges[state.value as usize]
                 .iter()
+                .filter(|edge| edge.target != without)
                 .for_each(|edge| {
-                    if edge.target != without {
-                        let alternative_cost = current_node_cost + edge.cost;
-                        let current_cost = cost.get(&edge.target).unwrap_or(&u32::MAX);
-                        if (&alternative_cost < current_cost) && (alternative_cost <= max_cost) {
-                            queue.insert(alternative_cost, edge.target);
-                            cost.insert(edge.target, alternative_cost);
-                        }
+                    let alternative_cost = cost.get(&edge.source).unwrap() + edge.cost;
+                    let current_cost = cost.get(&edge.target).unwrap_or(&u32::MAX);
+                    if &alternative_cost < current_cost {
+                        queue.insert(alternative_cost, edge.target);
+                        cost.insert(edge.target, alternative_cost);
                     }
                 });
         }
