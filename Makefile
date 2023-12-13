@@ -25,3 +25,6 @@ test:
 
 create_tests:
 	cargo run --bin create_test --release -- --fmi-path tests/data/fmi/network.fmi --tests-path tests/data/fmi/tests.json --number-of-tests 1000
+
+test_ch:
+	cargo run --bin ch --release -- --fmi-path stgtregbz.fmi --test-path stgtregbz_tests.json

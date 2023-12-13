@@ -9,6 +9,7 @@ pub struct FastEdge {
 }
 
 #[derive(Clone)]
+/// Gives fast access to predecessor and successor in a graph.
 pub struct FastGraph {
     pub nodes: Vec<Point>,
     pub forward_edges: FastEdgeAccess,

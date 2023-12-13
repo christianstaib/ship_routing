@@ -1,3 +1,5 @@
+use std::usize;
+
 use crate::sphere::geometry::point::Point;
 
 use super::{fast_graph::FastEdge, naive_graph::NaiveGraph};
@@ -45,8 +47,14 @@ pub struct Graph {
 
 impl Graph {
     pub fn from_naive_graph(graph: &NaiveGraph) -> Graph {
-        let mut forward_edges = vec![Vec::new(); graph.nodes.len()];
-        let mut backward_edges = vec![Vec::new(); graph.nodes.len()];
+        let max_node_id = graph
+            .edges
+            .iter()
+            .map(|edge| std::cmp::max(edge.source, edge.target))
+            .max()
+            .unwrap_or(0);
+        let mut forward_edges = vec![Vec::new(); (max_node_id + 1) as usize];
+        let mut backward_edges = vec![Vec::new(); (max_node_id + 1) as usize];
         graph.edges.iter().for_each(|edge| {
             forward_edges[edge.source as usize].push(edge.clone());
             backward_edges[edge.target as usize].push(edge.clone());
@@ -57,5 +65,29 @@ impl Graph {
             forward_edges,
             backward_edges,
         }
+    }
+
+    /// Adds an edge to the graph.
+    pub fn add_edge(&mut self, edge: &Edge) {
+        self.forward_edges[edge.source as usize].push(edge.clone());
+        self.backward_edges[edge.target as usize].push(edge.clone());
+    }
+
+    /// Removes the node from the graph.
+    ///
+    /// Removing means, that afterwards, there will be no edges going into node or going out of
+    /// node.
+    pub fn remove(&mut self, node: u32) {
+        let outgoing_edges = std::mem::take(&mut self.forward_edges[node as usize]);
+        outgoing_edges.iter().for_each(|outgoing_edge| {
+            self.backward_edges[outgoing_edge.target as usize]
+                .retain(|backward_edge| backward_edge != outgoing_edge)
+        });
+
+        let incoming_edges = std::mem::take(&mut self.backward_edges[node as usize]);
+        incoming_edges.iter().for_each(|incoming_edge| {
+            self.forward_edges[incoming_edge.source as usize]
+                .retain(|forward_edge| forward_edge != incoming_edge)
+        });
     }
 }
