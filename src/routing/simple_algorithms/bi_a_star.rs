@@ -126,8 +126,6 @@ impl<'a> BiAStar<'a> {
             }
         }
 
-        println!("minimal cost node is {}", minimal_cost_node);
-
         construct_route(minimal_cost_node, forward_data, backward_data)
     }
 }

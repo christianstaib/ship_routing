@@ -1,4 +1,4 @@
-use std::usize;
+use std::{backtrace, usize};
 
 use crate::sphere::geometry::point::Point;
 
@@ -80,14 +80,20 @@ impl Graph {
     pub fn remove(&mut self, node: u32) {
         let outgoing_edges = std::mem::take(&mut self.forward_edges[node as usize]);
         outgoing_edges.iter().for_each(|outgoing_edge| {
-            self.backward_edges[outgoing_edge.target as usize]
-                .retain(|backward_edge| backward_edge != outgoing_edge)
+            let idx = self.backward_edges[outgoing_edge.target as usize]
+                .iter()
+                .position(|backward_edge| outgoing_edge == backward_edge)
+                .unwrap();
+            self.backward_edges[outgoing_edge.target as usize].remove(idx);
         });
 
         let incoming_edges = std::mem::take(&mut self.backward_edges[node as usize]);
         incoming_edges.iter().for_each(|incoming_edge| {
-            self.forward_edges[incoming_edge.source as usize]
-                .retain(|forward_edge| forward_edge != incoming_edge)
+            let idx = self.forward_edges[incoming_edge.source as usize]
+                .iter()
+                .position(|forward_edge| forward_edge == incoming_edge)
+                .unwrap();
+            self.forward_edges[incoming_edge.source as usize].remove(idx);
         });
     }
 }
