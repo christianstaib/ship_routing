@@ -1,10 +1,12 @@
 use std::{backtrace, usize};
 
+use serde_derive::{Deserialize, Serialize};
+
 use crate::sphere::geometry::point::Point;
 
 use super::{fast_graph::FastEdge, naive_graph::NaiveGraph};
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Edge {
     pub source: u32,
     pub target: u32,
@@ -38,9 +40,9 @@ impl Edge {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Graph {
-    pub nodes: Vec<Point>,
+    //pub nodes: Vec<Point>,
     pub forward_edges: Vec<Vec<Edge>>,
     pub backward_edges: Vec<Vec<Edge>>,
 }
@@ -61,7 +63,7 @@ impl Graph {
         });
 
         Graph {
-            nodes: graph.nodes.clone(),
+            // nodes: graph.nodes.clone(),
             forward_edges,
             backward_edges,
         }

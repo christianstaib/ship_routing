@@ -11,7 +11,8 @@ pub struct FastEdge {
 #[derive(Clone)]
 /// Gives fast access to predecessor and successor in a graph.
 pub struct FastGraph {
-    pub nodes: Vec<Point>,
+    // pub nodes: Vec<Point>,
+    pub num_nodes: u32,
     pub forward_edges: FastEdgeAccess,
     pub backward_edges: FastEdgeAccess,
 }
@@ -82,7 +83,8 @@ impl FastGraph {
         let backward_edges = FastEdgeAccess::new(&inverted_edges);
 
         FastGraph {
-            nodes: graph.nodes.clone(),
+            // nodes: graph.nodes.clone(),
+            num_nodes: graph.nodes.len() as u32,
             forward_edges,
             backward_edges,
         }

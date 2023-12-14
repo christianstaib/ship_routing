@@ -16,7 +16,7 @@ impl<'a> AStar<'a> {
     }
 
     pub fn get_data(&self, request: &RouteRequest, heuristic: Box<dyn Heuristic>) -> RouteResponse {
-        let mut data = DijkstraData::new(self.graph.nodes.len(), request.source);
+        let mut data = DijkstraData::new(self.graph.num_nodes as usize, request.source);
 
         while let Some(state) = data.pop() {
             if state.value == request.target {

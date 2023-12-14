@@ -20,7 +20,7 @@ impl LandmarkCollection {
             .par_bridge()
             .map(|_| {
                 let mut rng = rand::thread_rng();
-                Landmark::new(rng.gen_range(0..graph.nodes.len() as u32), graph)
+                Landmark::new(rng.gen_range(0..graph.num_nodes as u32), graph)
             })
             .collect();
         LandmarkCollection {
@@ -73,12 +73,12 @@ impl Landmark {
         let dijkstra = dijkstra::Dijkstra::new(graph);
 
         let forward_data = dijkstra.get_forward_data(reference);
-        let costs_to = (0..graph.nodes.len())
+        let costs_to = (0..graph.num_nodes as usize)
             .map(|node| forward_data.nodes[node].cost)
             .collect();
 
         let backward_data = dijkstra.get_backward_data(reference);
-        let costs_from = (0..graph.nodes.len())
+        let costs_from = (0..graph.num_nodes as usize)
             .map(|node| backward_data.nodes[node].cost)
             .collect();
 

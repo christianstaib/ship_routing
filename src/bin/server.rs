@@ -44,7 +44,8 @@ async fn main() {
 
     println!("Loading graph from file");
     let time = Instant::now();
-    let graph = FastGraph::new(NaiveGraph::from_file(args.fmi_path.as_str()));
+    let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
+    let graph = FastGraph::new(&naive_graph);
     let graph = Arc::new(graph);
     let fmi = Arc::new(Fmi::from_file(args.fmi_path.as_str()));
     println!("Finished loading graph, took {:?}.", time.elapsed());
@@ -78,7 +79,7 @@ async fn main() {
                 let mut planet = Planet::new();
                 planet.linestrings.push(linesstring);
                 for id in extendes_ids {
-                    let p = graph.nodes[id];
+                    let p = naive_graph.nodes[id];
                     planet.arcs.push(geometry::arc::Arc::new(&p, &p));
                 }
 

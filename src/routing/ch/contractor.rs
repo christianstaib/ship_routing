@@ -1,0 +1,134 @@
+use indicatif::ProgressBar;
+use serde_derive::{Deserialize, Serialize};
+
+use crate::routing::{
+    ch::graph_cleaner::{remove_edge_to_self, removing_double_edges},
+    graph::{Edge, Graph},
+};
+
+use super::{ch_queue::queue::CHQueue, shortcut_generator::ShortcutGenerator};
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct ContractedGraph {
+    pub graph: Graph,
+    pub map: Vec<((u32, u32), Vec<(u32, u32)>)>,
+}
+
+pub struct Contractor {
+    graph: Graph,
+    queue: CHQueue,
+    levels: Vec<u32>,
+}
+
+impl Contractor {
+    pub fn new(graph: Graph) -> Self {
+        let levels = vec![0; graph.forward_edges.len()];
+        let queue = CHQueue::new(&graph);
+
+        Contractor {
+            graph,
+            queue,
+            levels,
+        }
+    }
+
+    pub fn get_graph(&mut self) -> ContractedGraph {
+        let shortcuts = self.contract();
+        println!("finished contracting");
+        let map = shortcuts
+            .into_iter()
+            .map(|(shortcut, edges)| {
+                (
+                    (shortcut.source, shortcut.target),
+                    edges
+                        .iter()
+                        .map(|edge| (edge.source, edge.target))
+                        .collect(),
+                )
+            })
+            .collect();
+        ContractedGraph {
+            graph: self.graph.clone(),
+            map,
+        }
+    }
+
+    pub fn contract(&mut self) -> Vec<(Edge, Vec<Edge>)> {
+        removing_double_edges(&mut self.graph);
+        remove_edge_to_self(&mut self.graph);
+        println!("start contracting node");
+        let outgoing_edges = self.graph.forward_edges.clone();
+        let incoming_edges = self.graph.backward_edges.clone();
+
+        let mut shortcuts = Vec::new();
+
+        let bar = ProgressBar::new(self.graph.forward_edges.len() as u64);
+        let mut level = 0;
+        while let Some(v) = self.queue.lazy_pop(&self.graph) {
+            shortcuts.append(&mut self.contract_node(v));
+            self.levels[v as usize] = level;
+
+            level += 1;
+            bar.inc(1);
+        }
+        bar.finish();
+
+        {
+            self.graph.forward_edges = outgoing_edges;
+            self.graph.backward_edges = incoming_edges;
+            for (shortcut, _) in &shortcuts {
+                self.graph.forward_edges[shortcut.source as usize].push(shortcut.clone());
+                self.graph.backward_edges[shortcut.target as usize].push(shortcut.clone());
+            }
+        }
+
+        removing_double_edges(&mut self.graph);
+        remove_edge_to_self(&mut self.graph);
+        self.removing_level_property();
+
+        shortcuts
+    }
+
+    fn contract_node(&mut self, v: u32) -> Vec<(Edge, Vec<Edge>)> {
+        // U --> v --> W
+        let shortcut_generator = ShortcutGenerator::new(&self.graph);
+        let shortcuts = shortcut_generator.naive_shortcuts(v);
+        self.add_shortcuts(&shortcuts);
+        self.disconnect(v);
+        shortcuts
+    }
+
+    fn add_shortcuts(&mut self, shortcuts: &Vec<(Edge, Vec<Edge>)>) {
+        for (shortcut, _) in shortcuts {
+            self.graph.forward_edges[shortcut.source as usize].push(shortcut.clone());
+            self.graph.backward_edges[shortcut.target as usize].push(shortcut.clone());
+        }
+    }
+
+    pub fn removing_level_property(&mut self) {
+        println!("removing edges that violated level property");
+        self.graph.forward_edges.iter_mut().for_each(|edges| {
+            edges.retain(|edge| {
+                self.levels[edge.source as usize] < self.levels[edge.target as usize]
+            });
+        });
+
+        self.graph.backward_edges.iter_mut().for_each(|edges| {
+            edges.retain(|edge| {
+                self.levels[edge.source as usize] > self.levels[edge.target as usize]
+            });
+        });
+    }
+
+    pub fn disconnect(&mut self, node_id: u32) {
+        while let Some(incoming_edge) = self.graph.backward_edges[node_id as usize].pop() {
+            self.graph.forward_edges[incoming_edge.source as usize]
+                .retain(|outgoing_edge| outgoing_edge.target != node_id);
+        }
+
+        while let Some(outgoing_edge) = self.graph.forward_edges[node_id as usize].pop() {
+            self.graph.backward_edges[outgoing_edge.target as usize]
+                .retain(|incoming_edge| incoming_edge.source != node_id);
+        }
+    }
+}

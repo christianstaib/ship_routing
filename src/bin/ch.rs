@@ -1,8 +1,9 @@
-use std::{fs::File, io::BufReader};
+use std::{fs::File, io::BufReader, time::Instant};
 
 use clap::Parser;
 use osm_test::routing::{
-    ch::contrator::Contractor,
+    ch::contractor::Contractor,
+    fast_graph::FastGraph,
     graph::Graph,
     naive_graph::NaiveGraph,
     route::{RouteValidationRequest, Routing},
@@ -27,22 +28,14 @@ fn main() {
     let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
     let graph = Graph::from_naive_graph(&naive_graph);
 
-    println!(
-        "there are {} edges to begin with",
-        graph.forward_edges.iter().flatten().count()
-    );
-
     let mut contractor = Contractor::new(graph);
+    let start = Instant::now();
     println!("start contrating");
     contractor.contract();
-    println!("there are {:?} shortcuts", contractor.shortcuts.len());
+    let contraced_graph = contractor.get_graph();
+    println!("contracting took {:?}", start.elapsed());
 
-    let graph = contractor.get_fast_graph();
-
-    println!(
-        "there are {} in total",
-        graph.backward_edges.edges.len() + graph.forward_edges.edges.len()
-    );
+    let graph = FastGraph::new(contraced_graph.graph);
 
     let dijkstra = BiAStarWithZero::new(&graph);
 

@@ -22,13 +22,14 @@ impl Distance {
 
 impl Heuristic for Distance {
     fn lower_bound(&self, target: u32) -> u32 {
-        radians_to_meter(
-            Arc::new(
-                &self.graph.nodes[self.source as usize],
-                &self.graph.nodes[target as usize],
-            )
-            .central_angle(),
-        )
-        .round() as u32
+        // radians_to_meter(
+        //     Arc::new(
+        //         &self.graph.nodes[self.source as usize],
+        //         &self.graph.nodes[target as usize],
+        //     )
+        //     .central_angle(),
+        // )
+        // .round() as u32
+        0
     }
 }

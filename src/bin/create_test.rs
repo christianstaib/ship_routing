@@ -39,8 +39,8 @@ fn main() {
         .map(|_| {
             let mut rng = rand::thread_rng();
             let request = RouteRequest {
-                source: rng.gen_range(0..graph.nodes.len()) as u32,
-                target: rng.gen_range(0..graph.nodes.len()) as u32,
+                source: rng.gen_range(0..graph.num_nodes) as u32,
+                target: rng.gen_range(0..graph.num_nodes) as u32,
             };
 
             let response = dijkstra.get_route(&request);
