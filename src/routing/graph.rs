@@ -77,7 +77,7 @@ impl Graph {
     ///
     /// Removing means, that afterwards, there will be no edges going into node or going out of
     /// node.
-    pub fn remove(&mut self, node: u32) {
+    pub fn disconnect(&mut self, node: u32) {
         let outgoing_edges = std::mem::take(&mut self.forward_edges[node as usize]);
         outgoing_edges.iter().for_each(|outgoing_edge| {
             let idx = self.backward_edges[outgoing_edge.target as usize]

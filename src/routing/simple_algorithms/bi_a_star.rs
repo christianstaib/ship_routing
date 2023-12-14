@@ -85,6 +85,7 @@ impl<'a> BiAStar<'a> {
         loop {
             let forward_state = forward_data.pop();
             if let Some(forward_state) = forward_state {
+                println!("pushed forward");
                 if backward_data.nodes[forward_state.value as usize].is_expanded {
                     let contact_cost = forward_data.nodes[forward_state.value as usize].cost
                         + backward_data.nodes[forward_state.value as usize].cost;
@@ -104,6 +105,7 @@ impl<'a> BiAStar<'a> {
 
             let backward_state = backward_data.pop();
             if let Some(backward_state) = backward_state {
+                println!("pushed backward");
                 if forward_data.nodes[backward_state.value as usize].is_expanded {
                     let contact_cost = forward_data.nodes[backward_state.value as usize].cost
                         + backward_data.nodes[backward_state.value as usize].cost;

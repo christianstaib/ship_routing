@@ -11,7 +11,7 @@ impl<'a> ChHelper<'a> {
         ChHelper { graph }
     }
 
-    pub fn costs_without(&self, node: u32, max_cost: u32, without: u32) -> HashMap<u32, u32> {
+    pub fn cost(&self, node: u32, max_cost: u32, without: u32) -> HashMap<u32, u32> {
         let mut queue = HeapQueue::new();
         let mut cost = HashMap::new();
         queue.insert(0, node);

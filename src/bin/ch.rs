@@ -6,9 +6,7 @@ use osm_test::routing::{
     graph::Graph,
     naive_graph::NaiveGraph,
     route::{RouteValidationRequest, Routing},
-    simple_algorithms::{
-        a_star_with_zero::AStarWithZero, bi_a_star_with_zero::BiAStarWithZero, dijkstra,
-    },
+    simple_algorithms::bi_a_star_with_zero::BiAStarWithZero,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -28,8 +26,13 @@ fn main() {
 
     let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
     let graph = Graph::from_naive_graph(&naive_graph);
-    let mut contractor = Contractor::new(graph);
 
+    println!(
+        "there are {} edges to begin with",
+        graph.forward_edges.iter().flatten().count()
+    );
+
+    let mut contractor = Contractor::new(graph);
     println!("start contrating");
     contractor.contract();
     println!("there are {:?} shortcuts", contractor.shortcuts.len());
@@ -37,12 +40,8 @@ fn main() {
     let graph = contractor.get_fast_graph();
 
     println!(
-        "there are {} forward edges",
-        graph.forward_edges.edges.len()
-    );
-    println!(
-        "there are {} backward edges",
-        graph.backward_edges.edges.len()
+        "there are {} in total",
+        graph.backward_edges.edges.len() + graph.forward_edges.edges.len()
     );
 
     let dijkstra = BiAStarWithZero::new(&graph);

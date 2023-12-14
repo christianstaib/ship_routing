@@ -61,17 +61,26 @@ impl Fmi {
     }
 
     pub fn to_file(&self, path: &str) {
-        println!("enumerating points");
+        println!("writing to file");
         let mut point_id_map = HashMap::new();
-        for (i, point) in self.points.iter().enumerate().progress() {
+        for (i, point) in self.points.iter().enumerate() {
             point_id_map.insert(point, i);
         }
 
+        let mut arc_map: HashMap<(u32, u32), u32> = HashMap::new();
+        self.arcs.iter().for_each(|arc| {
+            // srcIDX trgIDX cost type maxspeed
+            let source = *point_id_map.get(arc.from()).unwrap() as u32;
+            let target = *point_id_map.get(arc.to()).unwrap() as u32;
+            let cost = radians_to_meter(arc.central_angle()).round() as u32;
+            arc_map.insert((source, target), cost);
+            arc_map.insert((target, source), cost);
+        });
+
         let mut writer = BufWriter::new(File::create(path).unwrap());
         writeln!(writer, "{}", self.points.len()).unwrap();
-        writeln!(writer, "{}", self.arcs.len()).unwrap();
-        println!("writing {} points to file", self.points.len());
-        self.points.iter().progress().for_each(|point| {
+        writeln!(writer, "{}", arc_map.len()).unwrap();
+        self.points.iter().for_each(|point| {
             // nodeID nodeID2 latitude longitude elevation
             writeln!(
                 writer,
@@ -84,17 +93,9 @@ impl Fmi {
         });
         writer.flush().unwrap();
 
-        println!("writing {} arcs to file", self.arcs.len());
-        self.arcs.iter().progress().for_each(|arc| {
+        arc_map.iter().for_each(|((source, target), cost)| {
             // srcIDX trgIDX cost type maxspeed
-            writeln!(
-                writer,
-                "{} {} {} 0 0",
-                point_id_map.get(arc.from()).unwrap(),
-                point_id_map.get(arc.to()).unwrap(),
-                radians_to_meter(arc.central_angle()).round() as u32
-            )
-            .unwrap();
+            writeln!(writer, "{} {} {} 0 0", source, target, cost).unwrap();
         });
         writer.flush().unwrap();
     }

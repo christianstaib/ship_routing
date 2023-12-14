@@ -44,22 +44,27 @@ impl Contractor {
     }
 
     pub fn get_fast_graph(&self) -> FastGraph {
-        let forward_edges = self
+        let forward_edges: Vec<_> = self
             .graph
             .forward_edges
             .iter()
             .flatten()
-            .filter(|&edge| self.levels[edge.source as usize] >= self.levels[edge.target as usize])
+            .filter(|&edge| self.levels[edge.source as usize] <= self.levels[edge.target as usize])
             .cloned()
             .collect();
-        let backward_edges = self
+        let backward_edges: Vec<_> = self
             .graph
-            .backward_edges
+            .forward_edges
             .iter()
             .flatten()
-            .filter(|&edge| self.levels[edge.source as usize] <= self.levels[edge.target as usize])
+            .filter(|edge| self.levels[edge.source as usize] >= self.levels[edge.target as usize])
             .map(|edge| edge.get_inverted())
             .collect();
+        println!(
+            "f_edges {}, b_edges {}",
+            forward_edges.len(),
+            backward_edges.len()
+        );
         FastGraph {
             nodes: self.graph.nodes.clone(),
             forward_edges: FastEdgeAccess::new(&forward_edges),
@@ -79,7 +84,7 @@ impl Contractor {
             .flatten()
             .for_each(|edge| self.graph.add_edge(edge));
         self.shortcuts.extend(shortcuts_for_node);
-        self.graph.remove(node);
+        self.graph.disconnect(node);
     }
 
     /// Generates shortcuts for a node.
@@ -97,24 +102,25 @@ impl Contractor {
 
         incoming_edges
             .iter()
-            .par_bridge()
-            .map(|incoming_edge| {
+            // .par_bridge()
+            .map(|in_edge| {
                 let mut shortcuts = Vec::new();
                 if let Some(max_outgoing_cost) = outgoing_edges.iter().map(|edge| edge.cost).max() {
-                    let max_cost = incoming_edge.cost + max_outgoing_cost;
-                    let cost = ch_dijkstra.costs_without(incoming_edge.source, max_cost, node);
+                    let max_cost = in_edge.cost + max_outgoing_cost;
+                    let cost = ch_dijkstra.cost(in_edge.source, max_cost, node);
 
-                    outgoing_edges.iter().for_each(|outgoing_edge| {
-                        let pair_cost = incoming_edge.cost + outgoing_edge.cost;
+                    outgoing_edges.iter().for_each(|out_edge| {
+                        let pair_cost = in_edge.cost + out_edge.cost;
+                        let without_cost = cost.get(&out_edge.target).unwrap_or(&u32::MAX);
 
                         // shortcut needed
-                        if &pair_cost < cost.get(&outgoing_edge.target).unwrap_or(&u32::MAX) {
+                        if &pair_cost < without_cost {
                             let k = Edge {
-                                source: incoming_edge.source,
-                                target: outgoing_edge.target,
-                                cost: incoming_edge.cost + outgoing_edge.cost,
+                                source: in_edge.source,
+                                target: out_edge.target,
+                                cost: in_edge.cost + out_edge.cost,
                             };
-                            let v = [incoming_edge.clone(), outgoing_edge.clone()];
+                            let v = [in_edge.clone(), out_edge.clone()];
                             shortcuts.push((k, v));
                         }
                     });
