@@ -30,18 +30,18 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    // let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
-    // let graph = Graph::from_naive_graph(&naive_graph);
+    let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
+    let graph = Graph::from_naive_graph(&naive_graph);
 
-    // let mut contractor = Contractor::new(graph);
-    // let start = Instant::now();
-    // println!("start contrating");
-    // contractor.contract();
-    // let contraced_graph = contractor.get_graph();
-    // println!("contracting took {:?}", start.elapsed());
+    let mut contractor = Contractor::new(graph);
+    let start = Instant::now();
+    println!("start contrating");
+    contractor.contract();
+    let contraced_graph = contractor.get_graph();
+    println!("contracting took {:?}", start.elapsed());
 
-    let reader = BufReader::new(File::open("graph.json").unwrap());
-    let contraced_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
+    // let reader = BufReader::new(File::open("graph.json").unwrap());
+    // let contraced_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
 
     println!("there are {} shortcuts", contraced_graph.map.len());
     println!(
