@@ -48,6 +48,7 @@ fn main() {
             if let Some(route) = response.route {
                 cost = Some(route.cost);
             }
+
             RouteValidationRequest { request, cost }
         })
         .collect();

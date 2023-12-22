@@ -21,10 +21,10 @@ server:
 	cargo run --bin server --release  -- --fmi-path tests/data/fmi/network.fmi
 
 test:
-	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi --tests-path tests/data/fmi/tests.json --number-of-tests 3
+	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi --tests-path tests/data/fmi/tests.json --number-of-tests 1000
 
 create_tests:
 	cargo run --bin create_test --release -- --fmi-path tests/data/fmi/network.fmi --tests-path tests/data/fmi/tests.json --number-of-tests 1000
 
 test_ch:
-	cargo run --bin ch --release -- --fmi-path stgtregbz.fmi --test-path stgtregbz_tests.json
+	cargo run --bin ch --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --test-path tests/data/fmi/stgtregbz_tests.json

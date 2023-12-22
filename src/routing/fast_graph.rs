@@ -2,7 +2,7 @@ use crate::sphere::geometry::point::Point;
 
 use super::{graph::Edge, naive_graph::NaiveGraph};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FastEdge {
     pub target: u32,
     pub cost: u32,

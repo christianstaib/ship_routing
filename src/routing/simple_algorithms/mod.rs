@@ -5,5 +5,6 @@ pub mod a_star_with_zero;
 pub mod bi_a_star;
 pub mod bi_a_star_with_landmarks;
 pub mod bi_a_star_with_zero;
+pub mod ch_bi_dijkstra;
 pub mod dijkstra;
 pub mod heuristics;
