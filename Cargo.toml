@@ -28,3 +28,4 @@ env_logger = "0.10.1"
 log = "0.4.20"
 image = "0.23"  # Use the latest version available
 imageproc = "0.20"  # Use the latest version available
+ahash = "0.8.6"

@@ -12,7 +12,7 @@ use osm_test::routing::{
     graph::Graph,
     naive_graph::NaiveGraph,
     route::{RouteValidationRequest, Routing},
-    simple_algorithms::bi_a_star_with_zero::BiAStarWithZero,
+    simple_algorithms::{bi_a_star_with_zero::BiAStarWithZero, ch_bi_dijkstra::ChDijkstra},
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -84,7 +84,9 @@ fn main() {
         backward_edges,
     };
 
-    let dijkstra = BiAStarWithZero::new(&graph);
+    let shortcuts = contraced_graph.map.iter().cloned().collect();
+
+    let dijkstra = ChDijkstra::new(&graph, &shortcuts);
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
@@ -93,11 +95,11 @@ fn main() {
     for _ in (0..100).progress() {
         for test in tests.iter().take(10) {
             let before = Instant::now();
-            let response = dijkstra.get_route(&test.request);
+            let route = dijkstra.get_route(&test.request);
             times.push(before.elapsed());
 
             let mut cost = None;
-            if let Some(route) = response.route {
+            if let Some(route) = route {
                 cost = Some(route.cost);
             }
             assert_eq!(cost, test.cost);

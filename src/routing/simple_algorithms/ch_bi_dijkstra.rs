@@ -1,126 +1,234 @@
+use std::collections::BinaryHeap;
+
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
+
 use crate::routing::{
-    dijkstra_data::DijkstraData,
     fast_graph::FastGraph,
-    route::{Route, RouteRequest, RouteResponse, Routing},
+    queue::heap_queue::State,
+    route::{Route, RouteRequest, RouteResponse},
 };
 
 #[derive(Clone)]
 pub struct ChDijkstra<'a> {
     pub graph: &'a FastGraph,
-}
-
-impl<'a> Routing for ChDijkstra<'a> {
-    fn get_route(&self, request: &RouteRequest) -> RouteResponse {
-        self.get_data(request)
-    }
+    pub shortcuts: &'a HashMap<(u32, u32), Vec<(u32, u32)>>,
 }
 
 impl<'a> ChDijkstra<'a> {
-    pub fn new(graph: &'a FastGraph) -> ChDijkstra {
-        ChDijkstra { graph }
+    pub fn new(
+        graph: &'a FastGraph,
+        shortcuts: &'a HashMap<(u32, u32), Vec<(u32, u32)>>,
+    ) -> ChDijkstra<'a> {
+        ChDijkstra { graph, shortcuts }
     }
 
-    pub fn get_data(&self, request: &RouteRequest) -> RouteResponse {
-        let mut forward_data = DijkstraData::new(self.graph.num_nodes as usize, request.source);
-        let mut backward_data = DijkstraData::new(self.graph.num_nodes as usize, request.target);
+    ///
+    /// (contact_node, cost)
+    pub fn get_forward_label(&self, source: u32) -> HashMap<u32, u32> {
+        let mut costs = HashMap::new();
+        let mut open = BinaryHeap::new();
+        let mut expanded = HashSet::new();
 
-        let route = self.get_route(request, &mut forward_data, &mut backward_data);
+        open.push(State {
+            key: 0,
+            value: source,
+        });
+        costs.insert(source, 0);
 
-        RouteResponse {
-            route,
-            data: vec![forward_data, backward_data],
-        }
-    }
-
-    pub fn get_route(
-        &self,
-        _request: &RouteRequest,
-        forward_data: &mut DijkstraData,
-        backward_data: &mut DijkstraData,
-    ) -> Option<Route> {
-        let mut minimal_cost = u32::MAX;
-        let mut meeting_node = u32::MAX;
-
-        loop {
-            let forward_state = forward_data.pop();
-            if let Some(forward_state) = forward_state {
-                let current_node = forward_state.value;
-
-                if backward_data.nodes[forward_state.value as usize].is_expanded {
-                    let contact_cost = forward_data.nodes[forward_state.value as usize].cost
-                        + backward_data.nodes[forward_state.value as usize].cost;
-                    if contact_cost < minimal_cost {
-                        minimal_cost = contact_cost;
-                        meeting_node = forward_state.value;
-                    }
-                }
+        while let Some(state) = open.pop() {
+            let current_node = state.value;
+            if !expanded.contains(&current_node) {
+                expanded.insert(current_node);
 
                 self.graph
-                    .outgoing_edges(forward_state.value)
+                    .outgoing_edges(state.value)
                     .iter()
                     .for_each(|edge| {
-                        let alternative_cost =
-                            forward_data.nodes[current_node as usize].cost + edge.cost;
-                        let current_cost = forward_data.nodes[edge.target as usize].cost;
+                        let alternative_cost = costs.get(&current_node).unwrap() + edge.cost;
+                        let current_cost = *costs.get(&edge.target).unwrap_or(&u32::MAX);
                         if alternative_cost < current_cost {
-                            forward_data.nodes[edge.target as usize].cost = alternative_cost;
-                            forward_data.nodes[edge.target as usize].predecessor = current_node;
-                            forward_data.queue.insert(alternative_cost + 0, edge.target);
+                            costs.insert(edge.target, alternative_cost);
+                            open.push(State {
+                                key: alternative_cost,
+                                value: edge.target,
+                            });
                         }
                     });
             }
+        }
 
-            let backward_state = backward_data.pop();
-            if let Some(backward_state) = backward_state {
-                if forward_data.nodes[backward_state.value as usize].is_expanded {
-                    let contact_cost = forward_data.nodes[backward_state.value as usize].cost
-                        + backward_data.nodes[backward_state.value as usize].cost;
-                    if contact_cost < minimal_cost {
-                        minimal_cost = contact_cost;
-                        meeting_node = backward_state.value;
-                    }
-                }
+        costs
+    }
+
+    ///
+    /// (contact_node, cost)
+    pub fn get_backward_label(&self, target: u32) -> HashMap<u32, u32> {
+        let mut costs = HashMap::new();
+        let mut open = BinaryHeap::new();
+        let mut expanded = HashSet::new();
+
+        open.push(State {
+            key: 0,
+            value: target,
+        });
+        costs.insert(target, 0);
+
+        while let Some(state) = open.pop() {
+            let current_node = state.value;
+            if !expanded.contains(&current_node) {
+                expanded.insert(current_node);
 
                 self.graph
-                    .incoming_edges(backward_state.value)
+                    .incoming_edges(state.value)
                     .iter()
                     .for_each(|edge| {
-                        {
-                            let source = backward_state.value;
-                            let alternative_cost =
-                                backward_data.nodes[source as usize].cost + edge.cost;
-                            let current_cost = backward_data.nodes[edge.target as usize].cost;
-                            if alternative_cost < current_cost {
-                                backward_data.nodes[edge.target as usize].predecessor = source;
-                                backward_data.nodes[edge.target as usize].cost = alternative_cost;
-                                backward_data
-                                    .queue
-                                    .insert(alternative_cost + 0, edge.target);
-                            }
-                        };
+                        let alternative_cost = costs.get(&current_node).unwrap() + edge.cost;
+                        let current_cost = *costs.get(&edge.target).unwrap_or(&u32::MAX);
+                        if alternative_cost < current_cost {
+                            costs.insert(edge.target, alternative_cost);
+                            open.push(State {
+                                key: alternative_cost,
+                                value: edge.target,
+                            });
+                        }
                     });
             }
+        }
+        costs
+    }
 
-            if forward_state.is_none() && backward_state.is_none() {
-                break;
+    /// (contact_node, cost)
+    pub fn get_route(&self, request: &RouteRequest) -> Option<Route> {
+        let mut forward_costs = HashMap::new();
+        let mut backward_costs = HashMap::new();
+
+        let mut forward_predecessor = HashMap::new();
+        let mut backward_predecessor = HashMap::new();
+
+        let mut forward_open = BinaryHeap::new();
+        let mut backward_open = BinaryHeap::new();
+
+        let mut forward_expanded = HashSet::new();
+        let mut backward_expaned = HashSet::new();
+
+        forward_open.push(State {
+            key: 0,
+            value: request.source,
+        });
+        forward_costs.insert(request.source, 0);
+
+        backward_open.push(State {
+            key: 0,
+            value: request.target,
+        });
+        backward_costs.insert(request.target, 0);
+
+        let mut minimal_cost = u32::MAX;
+        let mut meeting_node = u32::MAX;
+
+        while !forward_open.is_empty() || !backward_open.is_empty() {
+            if let Some(forward_state) = forward_open.pop() {
+                let current_node = forward_state.value;
+                if !forward_expanded.contains(&current_node) {
+                    forward_expanded.insert(current_node);
+
+                    if backward_expaned.contains(&current_node) {
+                        let contact_cost = forward_costs.get(&current_node).unwrap()
+                            + backward_costs.get(&current_node).unwrap();
+                        if contact_cost < minimal_cost {
+                            minimal_cost = contact_cost;
+                            meeting_node = forward_state.value;
+                        }
+                    }
+
+                    self.graph
+                        .outgoing_edges(forward_state.value)
+                        .iter()
+                        .for_each(|edge| {
+                            let alternative_cost =
+                                forward_costs.get(&current_node).unwrap() + edge.cost;
+                            let current_cost =
+                                *forward_costs.get(&edge.target).unwrap_or(&u32::MAX);
+                            if alternative_cost < current_cost {
+                                forward_costs.insert(edge.target, alternative_cost);
+                                forward_predecessor.insert(edge.target, current_node);
+                                forward_open.push(State {
+                                    key: alternative_cost,
+                                    value: edge.target,
+                                });
+                            }
+                        });
+                }
+            }
+
+            if let Some(backward_state) = backward_open.pop() {
+                let current_node = backward_state.value;
+                if !backward_expaned.contains(&current_node) {
+                    backward_expaned.insert(current_node);
+
+                    if forward_expanded.contains(&current_node) {
+                        let contact_cost = forward_costs.get(&current_node).unwrap()
+                            + backward_costs.get(&current_node).unwrap();
+                        if contact_cost < minimal_cost {
+                            minimal_cost = contact_cost;
+                            meeting_node = backward_state.value;
+                        }
+                    }
+
+                    self.graph
+                        .incoming_edges(backward_state.value)
+                        .iter()
+                        .for_each(|edge| {
+                            let alternative_cost =
+                                backward_costs.get(&current_node).unwrap() + edge.cost;
+                            let current_cost =
+                                *backward_costs.get(&edge.target).unwrap_or(&u32::MAX);
+                            if alternative_cost < current_cost {
+                                backward_costs.insert(edge.target, alternative_cost);
+                                backward_predecessor.insert(edge.target, current_node);
+                                backward_open.push(State {
+                                    key: alternative_cost,
+                                    value: edge.target,
+                                });
+                            }
+                        });
+                }
             }
         }
 
-        construct_route(meeting_node, forward_data, backward_data)
+        get_route(
+            meeting_node,
+            minimal_cost,
+            forward_predecessor,
+            backward_predecessor,
+        )
     }
 }
 
-fn construct_route(
-    contact_node: u32,
-    forward_data: &DijkstraData,
-    backward_data: &DijkstraData,
+fn get_route(
+    meeting_node: u32,
+    meeting_cost: u32,
+    forward_predecessor: HashMap<u32, u32>,
+    backward_predecessor: HashMap<u32, u32>,
 ) -> Option<Route> {
-    let mut forward_route = forward_data.get_route(contact_node)?;
-    let mut backward_route = backward_data.get_route(contact_node)?;
-    backward_route.nodes.pop();
-    backward_route.nodes.reverse();
-    forward_route.nodes.extend(backward_route.nodes);
-    forward_route.cost += backward_route.cost;
-
-    Some(forward_route)
+    if meeting_cost == u32::MAX {
+        return None;
+    }
+    let mut route = Vec::new();
+    let mut current = meeting_node;
+    route.push(current);
+    while let Some(new_current) = forward_predecessor.get(&current) {
+        current = *new_current;
+        route.insert(0, current);
+    }
+    current = meeting_node;
+    while let Some(new_current) = backward_predecessor.get(&current) {
+        current = *new_current;
+        route.push(current);
+    }
+    let route = Route {
+        nodes: route,
+        cost: meeting_cost,
+    };
+    Some(route)
 }
