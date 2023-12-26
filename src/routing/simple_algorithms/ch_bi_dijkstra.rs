@@ -1,8 +1,7 @@
-use std::collections::BinaryHeap;
-
-use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use crate::routing::{
+    ch::contractor::ContractedGraph,
     fast_graph::FastGraph,
     queue::heap_queue::State,
     route::{Route, RouteRequest},

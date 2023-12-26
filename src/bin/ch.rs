@@ -8,14 +8,14 @@ use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
     ch::{
-        contractor::{Contractor},
+        contractor::Contractor,
         graph_cleaner::{remove_edge_to_self, removing_double_edges},
     },
-    fast_graph::{FastGraph},
+    fast_graph::FastGraph,
     graph::Graph,
     naive_graph::NaiveGraph,
-    route::{RouteValidationRequest, Routing},
-    simple_algorithms::{ch_bi_dijkstra::ChDijkstra},
+    route::RouteValidationRequest,
+    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -43,8 +43,7 @@ fn main() {
     println!("contracting took {:?}", start.elapsed());
 
     let graph = FastGraph::from_graph(&contraced_graph.graph);
-    let shortcuts = contraced_graph.map.iter().cloned().collect();
-    let dijkstra = ChDijkstra::new(&graph, &shortcuts);
+    let dijkstra = ChDijkstra::new(&graph, &contraced_graph.map);
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
