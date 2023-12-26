@@ -21,8 +21,9 @@ pub struct Contractor {
 }
 
 impl Contractor {
-    pub fn new(graph: Graph) -> Self {
+    pub fn new(graph: &Graph) -> Self {
         let levels = vec![0; graph.forward_edges.len()];
+        let graph = graph.clone();
         let queue = CHQueue::new(&graph);
 
         Contractor {
@@ -30,6 +31,11 @@ impl Contractor {
             queue,
             levels,
         }
+    }
+
+    pub fn get_graph_2(graph: &Graph) -> ContractedGraph {
+        let mut contractor = Contractor::new(&graph);
+        contractor.get_graph()
     }
 
     pub fn get_graph(&mut self) -> ContractedGraph {

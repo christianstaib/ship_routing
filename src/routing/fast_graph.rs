@@ -1,6 +1,9 @@
 use crate::sphere::geometry::point::Point;
 
-use super::{graph::Edge, naive_graph::NaiveGraph};
+use super::{
+    graph::{Edge, Graph},
+    naive_graph::NaiveGraph,
+};
 
 #[derive(Clone, Debug)]
 pub struct FastEdge {
@@ -65,6 +68,26 @@ impl FastEdgeAccess {
 }
 
 impl FastGraph {
+    pub fn from_graph(graph: &Graph) -> FastGraph {
+        let num_nodes = graph.forward_edges.len() as u32;
+
+        let forward_edges = graph.forward_edges.iter().flatten().cloned().collect();
+        let forward_edges = FastEdgeAccess::new(&forward_edges);
+
+        let backward_edges = graph
+            .backward_edges
+            .iter()
+            .flatten()
+            .map(|edge| edge.get_inverted())
+            .collect();
+        let backward_edges = FastEdgeAccess::new(&backward_edges);
+
+        FastGraph {
+            num_nodes,
+            forward_edges,
+            backward_edges,
+        }
+    }
     pub fn outgoing_edges(&self, source: u32) -> &[FastEdge] {
         self.forward_edges.outgoing_edges(source)
     }

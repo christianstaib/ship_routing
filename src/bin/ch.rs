@@ -35,44 +35,15 @@ fn main() {
 
     let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
     let mut graph = Graph::from_naive_graph(&naive_graph);
-
     removing_double_edges(&mut graph);
     remove_edge_to_self(&mut graph);
 
-    let mut contractor = Contractor::new(graph);
     let start = Instant::now();
-
-    let contraced_graph = contractor.get_graph();
+    let contraced_graph = Contractor::get_graph_2(&graph);
     println!("contracting took {:?}", start.elapsed());
 
-    let num_nodes = contraced_graph.graph.backward_edges.len() as u32;
-
-    let forward_edges = FastEdgeAccess::new(
-        &contraced_graph
-            .graph
-            .forward_edges
-            .into_iter()
-            .flatten()
-            .collect(),
-    );
-    let backward_edges = FastEdgeAccess::new(
-        &contraced_graph
-            .graph
-            .backward_edges
-            .into_iter()
-            .flatten()
-            .map(|edge| edge.get_inverted())
-            .collect(),
-    );
-
-    let graph = FastGraph {
-        num_nodes,
-        forward_edges,
-        backward_edges,
-    };
-
+    let graph = FastGraph::from_graph(&contraced_graph.graph);
     let shortcuts = contraced_graph.map.iter().cloned().collect();
-
     let dijkstra = ChDijkstra::new(&graph, &shortcuts);
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
