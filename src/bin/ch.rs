@@ -7,7 +7,10 @@ use std::{
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    ch::contractor::{ContractedGraph, Contractor},
+    ch::{
+        contractor::{ContractedGraph, Contractor},
+        graph_cleaner::{remove_edge_to_self, removing_double_edges},
+    },
     fast_graph::{FastEdgeAccess, FastGraph},
     graph::Graph,
     naive_graph::NaiveGraph,
@@ -31,32 +34,16 @@ fn main() {
     let args = Args::parse();
 
     let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
-    let graph = Graph::from_naive_graph(&naive_graph);
+    let mut graph = Graph::from_naive_graph(&naive_graph);
+
+    removing_double_edges(&mut graph);
+    remove_edge_to_self(&mut graph);
 
     let mut contractor = Contractor::new(graph);
     let start = Instant::now();
-    println!("start contrating");
-    contractor.contract();
+
     let contraced_graph = contractor.get_graph();
     println!("contracting took {:?}", start.elapsed());
-
-    // let reader = BufReader::new(File::open("graph.json").unwrap());
-    // let contraced_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
-
-    println!("there are {} shortcuts", contraced_graph.map.len());
-    println!(
-        "there are {} forward edges",
-        contraced_graph.graph.forward_edges.iter().flatten().count()
-    );
-    println!(
-        "there are {} backward edges",
-        contraced_graph
-            .graph
-            .backward_edges
-            .iter()
-            .flatten()
-            .count()
-    );
 
     let num_nodes = contraced_graph.graph.backward_edges.len() as u32;
 

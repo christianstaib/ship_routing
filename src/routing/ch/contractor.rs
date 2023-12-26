@@ -34,7 +34,7 @@ impl Contractor {
 
     pub fn get_graph(&mut self) -> ContractedGraph {
         let shortcuts = self.contract();
-        println!("finished contracting");
+
         let map = shortcuts
             .into_iter()
             .map(|(shortcut, edges)| {
@@ -47,6 +47,7 @@ impl Contractor {
                 )
             })
             .collect();
+
         ContractedGraph {
             graph: self.graph.clone(),
             map,
@@ -54,9 +55,6 @@ impl Contractor {
     }
 
     pub fn contract(&mut self) -> Vec<(Edge, Vec<Edge>)> {
-        removing_double_edges(&mut self.graph);
-        remove_edge_to_self(&mut self.graph);
-        println!("start contracting node");
         let outgoing_edges = self.graph.forward_edges.clone();
         let incoming_edges = self.graph.backward_edges.clone();
 
@@ -73,17 +71,13 @@ impl Contractor {
         }
         bar.finish();
 
-        {
-            self.graph.forward_edges = outgoing_edges;
-            self.graph.backward_edges = incoming_edges;
-            for (shortcut, _) in &shortcuts {
-                self.graph.forward_edges[shortcut.source as usize].push(shortcut.clone());
-                self.graph.backward_edges[shortcut.target as usize].push(shortcut.clone());
-            }
+        self.graph.forward_edges = outgoing_edges;
+        self.graph.backward_edges = incoming_edges;
+        for (shortcut, _) in &shortcuts {
+            self.graph.forward_edges[shortcut.source as usize].push(shortcut.clone());
+            self.graph.backward_edges[shortcut.target as usize].push(shortcut.clone());
         }
 
-        removing_double_edges(&mut self.graph);
-        remove_edge_to_self(&mut self.graph);
         self.removing_level_property();
 
         shortcuts
