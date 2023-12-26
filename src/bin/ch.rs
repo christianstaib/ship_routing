@@ -49,18 +49,16 @@ fn main() {
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
     let mut times = Vec::new();
-    for _ in (0..100).progress() {
-        for test in tests.iter().take(10) {
-            let before = Instant::now();
-            let route = dijkstra.get_route(&test.request);
-            times.push(before.elapsed());
+    for test in tests.iter().progress() {
+        let before = Instant::now();
+        let route = dijkstra.get_route(&test.request);
+        times.push(before.elapsed());
 
-            let mut cost = None;
-            if let Some(route) = route {
-                cost = Some(route.cost);
-            }
-            assert_eq!(cost, test.cost);
+        let mut cost = None;
+        if let Some(route) = route {
+            cost = Some(route.cost);
         }
+        assert_eq!(cost, test.cost);
     }
 
     println!("all correct");
