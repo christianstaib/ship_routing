@@ -8,14 +8,14 @@ use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
     ch::{
-        contractor::{ContractedGraph, Contractor},
+        contractor::{Contractor},
         graph_cleaner::{remove_edge_to_self, removing_double_edges},
     },
-    fast_graph::{FastEdgeAccess, FastGraph},
+    fast_graph::{FastGraph},
     graph::Graph,
     naive_graph::NaiveGraph,
     route::{RouteValidationRequest, Routing},
-    simple_algorithms::{bi_a_star_with_zero::BiAStarWithZero, ch_bi_dijkstra::ChDijkstra},
+    simple_algorithms::{ch_bi_dijkstra::ChDijkstra},
 };
 
 /// Starts a routing service on localhost:3030/route

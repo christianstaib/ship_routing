@@ -19,6 +19,12 @@ impl PriorityTerm for EdgeDifferencePriority {
     fn update(&mut self, v: u32) {}
 }
 
+impl Default for EdgeDifferencePriority {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EdgeDifferencePriority {
     pub fn new() -> Self {
         Self {}

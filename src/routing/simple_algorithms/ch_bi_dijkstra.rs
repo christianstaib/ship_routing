@@ -5,7 +5,7 @@ use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 use crate::routing::{
     fast_graph::FastGraph,
     queue::heap_queue::State,
-    route::{Route, RouteRequest, RouteResponse},
+    route::{Route, RouteRequest},
 };
 
 #[derive(Clone)]

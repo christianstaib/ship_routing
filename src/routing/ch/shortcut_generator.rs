@@ -20,7 +20,7 @@ impl<'a> ShortcutGenerator<'a> {
         uv_edges
             .iter()
             // .par_bridge()
-            .map(|uv_edge| {
+            .flat_map(|uv_edge| {
                 let mut shortcuts = Vec::new();
                 let u = uv_edge.source;
                 let uv_cost = uv_edge.cost;
@@ -43,7 +43,6 @@ impl<'a> ShortcutGenerator<'a> {
                 });
                 shortcuts
             })
-            .flatten()
             .collect()
     }
 }

@@ -48,7 +48,7 @@ pub trait Routing {
 }
 
 impl Route {
-    pub fn is_valid(&self, graph: &FastGraph, request: &RouteRequest) -> bool {
+    pub fn is_valid(&self, _graph: &FastGraph, _request: &RouteRequest) -> bool {
         // let mut true_cost = 0;
         // for (source, target) in self.nodes.windows(2).map(|vec| (vec[0], vec[1])) {
         //     true_cost += graph
@@ -61,7 +61,7 @@ impl Route {
         // (true_cost == self.cost)
         //     && (self.nodes.first().unwrap() == &request.source)
         //     && (self.nodes.last().unwrap() == &request.target)
-        return true;
+        true
     }
 }
 

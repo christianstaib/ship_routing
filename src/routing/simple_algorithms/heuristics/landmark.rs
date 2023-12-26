@@ -20,7 +20,7 @@ impl LandmarkCollection {
             .par_bridge()
             .map(|_| {
                 let mut rng = rand::thread_rng();
-                Landmark::new(rng.gen_range(0..graph.num_nodes as u32), graph)
+                Landmark::new(rng.gen_range(0..graph.num_nodes), graph)
             })
             .collect();
         LandmarkCollection {

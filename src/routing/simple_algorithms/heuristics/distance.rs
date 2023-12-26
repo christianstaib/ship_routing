@@ -1,6 +1,5 @@
 use crate::{
     routing::fast_graph::FastGraph,
-    sphere::geometry::{arc::Arc, point::radians_to_meter},
 };
 
 use super::Heuristic;
@@ -21,7 +20,7 @@ impl Distance {
 }
 
 impl Heuristic for Distance {
-    fn lower_bound(&self, target: u32) -> u32 {
+    fn lower_bound(&self, _target: u32) -> u32 {
         // radians_to_meter(
         //     Arc::new(
         //         &self.graph.nodes[self.source as usize],

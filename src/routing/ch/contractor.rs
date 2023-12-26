@@ -2,7 +2,6 @@ use indicatif::ProgressBar;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::routing::{
-    ch::graph_cleaner::{remove_edge_to_self, removing_double_edges},
     graph::{Edge, Graph},
 };
 
@@ -34,7 +33,7 @@ impl Contractor {
     }
 
     pub fn get_graph_2(graph: &Graph) -> ContractedGraph {
-        let mut contractor = Contractor::new(&graph);
+        let mut contractor = Contractor::new(graph);
         contractor.get_graph()
     }
 
