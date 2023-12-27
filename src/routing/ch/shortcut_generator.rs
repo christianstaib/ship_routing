@@ -1,3 +1,5 @@
+use rayon::iter::{ParallelBridge, ParallelIterator};
+
 use crate::routing::graph::{Edge, Graph};
 
 use super::dijkstra_helper::DijkstraHelper;
@@ -19,7 +21,7 @@ impl<'a> ShortcutGenerator<'a> {
 
         uv_edges
             .iter()
-            // .par_bridge()
+            .par_bridge()
             .flat_map(|uv_edge| {
                 let mut shortcuts = Vec::new();
                 let u = uv_edge.source;
