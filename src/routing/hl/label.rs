@@ -1,13 +1,26 @@
 use std::collections::HashMap;
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+use indicatif::ProgressIterator;
+use rayon::iter::{ParallelBridge, ParallelIterator};
+use serde_derive::{Deserialize, Serialize};
+
+use crate::routing::{route::RouteRequest, simple_algorithms::ch_bi_dijkstra::ChDijkstra};
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct LabelEntry {
     pub id: u32,
     pub cost: u32,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Label {
-    labels: Vec<LabelEntry>,
+    label: Vec<LabelEntry>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct HubGraph {
+    forward_labels: Vec<Label>,
+    backward_labels: Vec<Label>,
 }
 
 impl Label {
@@ -20,8 +33,9 @@ impl Label {
             })
             .collect();
         labels.sort_unstable();
+        labels.shrink_to_fit();
 
-        Label { labels }
+        Label { label: labels }
     }
 
     pub fn minimal_overlapp(&self, other: &Label) -> Option<LabelEntry> {
@@ -31,9 +45,9 @@ impl Label {
         let mut id = u32::MAX;
         let mut cost = u32::MAX;
 
-        while i_self < self.labels.len() && i_other < other.labels.len() {
-            let self_entry = &self.labels[i_self];
-            let other_entry = &self.labels[i_other];
+        while i_self < self.label.len() && i_other < other.label.len() {
+            let self_entry = &self.label[i_self];
+            let other_entry = &self.label[i_other];
 
             match self_entry.cmp(other_entry) {
                 std::cmp::Ordering::Less => i_self += 1,
@@ -56,5 +70,32 @@ impl Label {
         }
 
         None
+    }
+}
+
+impl HubGraph {
+    pub fn new(dijkstra: &ChDijkstra, depth_limit: u32) -> HubGraph {
+        let mut forward_labels: Vec<_> = (0..dijkstra.graph.num_nodes)
+            .progress()
+            .par_bridge()
+            .map(|id| Label::new(&dijkstra.get_forward_label(id, depth_limit)))
+            .collect();
+        let mut backward_labels: Vec<_> = (0..dijkstra.graph.num_nodes)
+            .progress()
+            .par_bridge()
+            .map(|id| Label::new(&dijkstra.get_backward_label(id, depth_limit)))
+            .collect();
+        forward_labels.shrink_to_fit();
+        backward_labels.shrink_to_fit();
+        HubGraph {
+            forward_labels,
+            backward_labels,
+        }
+    }
+
+    pub fn get_route(&self, request: &RouteRequest) -> Option<LabelEntry> {
+        let forward_label = self.forward_labels.get(request.source as usize)?;
+        let backward_label = self.backward_labels.get(request.target as usize)?;
+        forward_label.minimal_overlapp(&backward_label)
     }
 }

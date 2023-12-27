@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::BufReader,
+    io::{BufReader, BufWriter, Write},
     time::{Duration, Instant},
 };
 
@@ -13,7 +13,7 @@ use osm_test::routing::{
     },
     fast_graph::FastGraph,
     graph::Graph,
-    hl::label::{self, Label},
+    hl::label::{self, HubGraph, Label},
     naive_graph::NaiveGraph,
     route::RouteValidationRequest,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
@@ -49,7 +49,14 @@ fn main() {
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
-    let mut avg_label_size = 2;
+    let start = Instant::now();
+    let hub_graph = HubGraph::new(&dijkstra, 2);
+    println!("getting labels took {:?}", start.elapsed());
+
+    {
+        let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
+        serde_json::to_writer(writer, &hub_graph).unwrap();
+    }
 
     let mut times = Vec::new();
     for test in tests.iter().progress() {
@@ -57,34 +64,20 @@ fn main() {
         let route = dijkstra.get_route(&test.request);
         // times.push(before.elapsed());
 
-        let max_depth = 0;
-        let forward_label = dijkstra.get_backward_label(test.request.target, max_depth);
-        avg_label_size += forward_label.len();
-        let backward_label = dijkstra.get_backward_label(test.request.target, max_depth);
-        avg_label_size += backward_label.len();
-
         let mut cost = None;
         if let Some(route) = route {
             cost = Some(route.cost);
 
-            assert!(forward_label.contains_key(route.nodes.first().unwrap()));
-            assert!(backward_label.contains_key(route.nodes.first().unwrap()));
-            let forward_label = Label::new(&forward_label);
-            let backward_label = Label::new(&backward_label);
-
             let before = Instant::now();
-            assert!(forward_label.minimal_overlapp(&backward_label).is_some());
+            let minimal_overlapp = hub_graph.get_route(&test.request);
             times.push(before.elapsed());
+            assert!(minimal_overlapp.is_some());
             // println!("correct =)");
         }
         assert_eq!(cost, test.cost);
     }
 
     println!("all correct");
-    println!(
-        "avg label size {}",
-        avg_label_size as f32 / (2 * times.len()) as f32
-    );
     println!(
         "average time was {:?}",
         times.iter().sum::<Duration>() / times.len() as u32
