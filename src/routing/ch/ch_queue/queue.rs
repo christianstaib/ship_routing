@@ -1,4 +1,4 @@
-use std::collections::BinaryHeap;
+use std::{collections::BinaryHeap, time::Instant};
 
 use indicatif::ProgressIterator;
 use rand::seq::SliceRandom;
@@ -69,7 +69,8 @@ impl CHQueue {
         let mut order: Vec<u32> = (0..graph.forward_edges.len()).map(|x| x as u32).collect();
         order.shuffle(&mut rand::thread_rng());
 
-        let states: Vec<_> = order
+        let start = Instant::now();
+        self.queue = order
             .iter()
             .progress()
             .par_bridge()
@@ -78,9 +79,6 @@ impl CHQueue {
                 node_id: v,
             })
             .collect();
-
-        for state in states.into_iter() {
-            self.queue.push(state);
-        }
+        println!("took {:?} to initialize", start.elapsed());
     }
 }
