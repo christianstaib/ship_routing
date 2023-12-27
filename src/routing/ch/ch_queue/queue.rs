@@ -2,6 +2,7 @@ use std::collections::BinaryHeap;
 
 use indicatif::ProgressIterator;
 use rand::seq::SliceRandom;
+use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::routing::graph::Graph;
 
@@ -14,7 +15,7 @@ pub trait PriorityTerm {
 
 pub struct CHQueue {
     queue: BinaryHeap<CHState>,
-    priority_terms: Vec<(i32, Box<dyn PriorityTerm>)>,
+    priority_terms: Vec<(i32, Box<dyn PriorityTerm + Sync>)>,
 }
 
 impl CHQueue {
@@ -30,7 +31,7 @@ impl CHQueue {
         queue
     }
 
-    fn register(&mut self, weight: i32, term: impl PriorityTerm + 'static) {
+    fn register(&mut self, weight: i32, term: impl PriorityTerm + 'static + Sync) {
         self.priority_terms.push((weight, Box::new(term)));
     }
 
@@ -68,11 +69,18 @@ impl CHQueue {
         let mut order: Vec<u32> = (0..graph.forward_edges.len()).map(|x| x as u32).collect();
         order.shuffle(&mut rand::thread_rng());
 
-        for &v in order.iter().progress() {
-            self.queue.push(CHState {
+        let states: Vec<_> = order
+            .iter()
+            .progress()
+            .par_bridge()
+            .map(|&v| CHState {
                 priority: self.get_priority(v, graph),
                 node_id: v,
-            });
+            })
+            .collect();
+
+        for state in states.into_iter() {
+            self.queue.push(state);
         }
     }
 }
