@@ -23,7 +23,7 @@ impl<'a> ChDijkstra<'a> {
 
     ///
     /// (contact_node, cost)
-    pub fn get_forward_label(&self, source: u32) -> HashMap<u32, u32> {
+    pub fn get_forward_label(&self, source: u32, depth_limit: u32) -> HashMap<u32, u32> {
         let mut costs = HashMap::new();
         let mut open = BinaryHeap::new();
         let mut expanded = HashSet::new();
@@ -39,11 +39,31 @@ impl<'a> ChDijkstra<'a> {
             if !expanded.contains(&current_node) {
                 expanded.insert(current_node);
 
+                let current_node_cost = *costs.get(&current_node).unwrap();
+
+                let backward_search = self.backward_search(current_node, depth_limit);
+                let incoming_min = backward_search
+                    .iter()
+                    .map(|(node, cost)| {
+                        costs
+                            .get(&node)
+                            .unwrap_or(&u32::MAX)
+                            .checked_add(*cost)
+                            .unwrap_or(u32::MAX)
+                    })
+                    .min()
+                    .unwrap_or(u32::MAX);
+
+                if current_node_cost > incoming_min {
+                    costs.remove(&current_node);
+                    continue;
+                }
+
                 self.graph
                     .outgoing_edges(state.value)
                     .iter()
                     .for_each(|edge| {
-                        let alternative_cost = costs.get(&current_node).unwrap() + edge.cost;
+                        let alternative_cost = current_node_cost + edge.cost;
                         let current_cost = *costs.get(&edge.target).unwrap_or(&u32::MAX);
                         if alternative_cost < current_cost {
                             costs.insert(edge.target, alternative_cost);
@@ -61,8 +81,67 @@ impl<'a> ChDijkstra<'a> {
 
     ///
     /// (contact_node, cost)
-    pub fn get_backward_label(&self, target: u32) -> HashMap<u32, u32> {
+    pub fn get_backward_label(&self, source: u32, depth_limit: u32) -> HashMap<u32, u32> {
         let mut costs = HashMap::new();
+        let mut open = BinaryHeap::new();
+        let mut expanded = HashSet::new();
+
+        open.push(State {
+            key: 0,
+            value: source,
+        });
+        costs.insert(source, 0);
+
+        while let Some(state) = open.pop() {
+            let current_node = state.value;
+            if !expanded.contains(&current_node) {
+                expanded.insert(current_node);
+
+                let current_node_cost = *costs.get(&current_node).unwrap();
+
+                let backward_search = self.forward_search(current_node, depth_limit);
+                let incoming_min = backward_search
+                    .iter()
+                    .map(|(node, cost)| {
+                        costs
+                            .get(&node)
+                            .unwrap_or(&u32::MAX)
+                            .checked_add(*cost)
+                            .unwrap_or(u32::MAX)
+                    })
+                    .min()
+                    .unwrap_or(u32::MAX);
+
+                if current_node_cost > incoming_min {
+                    costs.remove(&current_node);
+                    continue;
+                }
+
+                self.graph
+                    .incoming_edges(state.value)
+                    .iter()
+                    .for_each(|edge| {
+                        let alternative_cost = current_node_cost + edge.cost;
+                        let current_cost = *costs.get(&edge.target).unwrap_or(&u32::MAX);
+                        if alternative_cost < current_cost {
+                            costs.insert(edge.target, alternative_cost);
+                            open.push(State {
+                                key: alternative_cost,
+                                value: edge.target,
+                            });
+                        }
+                    });
+            }
+        }
+
+        costs
+    }
+
+    ///
+    /// (contact_node, cost)
+    pub fn forward_search(&self, target: u32, depth_limit: u32) -> HashMap<u32, u32> {
+        let mut costs = HashMap::new();
+        let mut depth = HashMap::new();
         let mut open = BinaryHeap::new();
         let mut expanded = HashSet::new();
 
@@ -71,20 +150,66 @@ impl<'a> ChDijkstra<'a> {
             value: target,
         });
         costs.insert(target, 0);
+        depth.insert(target, 0);
 
         while let Some(state) = open.pop() {
             let current_node = state.value;
-            if !expanded.contains(&current_node) {
+            let current_node_cost = *costs.get(&current_node).unwrap();
+            let new_depth = depth.get(&current_node).unwrap() + 1;
+            if !expanded.contains(&current_node) && (new_depth <= depth_limit) {
+                expanded.insert(current_node);
+
+                self.graph
+                    .outgoing_edges(state.value)
+                    .iter()
+                    .for_each(|edge| {
+                        let alternative_cost = current_node_cost + edge.cost;
+                        let current_cost = *costs.get(&edge.target).unwrap_or(&u32::MAX);
+                        if alternative_cost < current_cost {
+                            costs.insert(edge.target, alternative_cost);
+                            depth.insert(edge.target, new_depth);
+                            open.push(State {
+                                key: alternative_cost,
+                                value: edge.target,
+                            });
+                        }
+                    });
+            }
+        }
+        costs
+    }
+
+    ///
+    /// (contact_node, cost)
+    pub fn backward_search(&self, target: u32, depth_limit: u32) -> HashMap<u32, u32> {
+        let mut costs = HashMap::new();
+        let mut depth = HashMap::new();
+        let mut open = BinaryHeap::new();
+        let mut expanded = HashSet::new();
+
+        open.push(State {
+            key: 0,
+            value: target,
+        });
+        costs.insert(target, 0);
+        depth.insert(target, 0);
+
+        while let Some(state) = open.pop() {
+            let current_node = state.value;
+            let current_node_cost = *costs.get(&current_node).unwrap();
+            let new_depth = depth.get(&current_node).unwrap() + 1;
+            if !expanded.contains(&current_node) && (new_depth <= depth_limit) {
                 expanded.insert(current_node);
 
                 self.graph
                     .incoming_edges(state.value)
                     .iter()
                     .for_each(|edge| {
-                        let alternative_cost = costs.get(&current_node).unwrap() + edge.cost;
+                        let alternative_cost = current_node_cost + edge.cost;
                         let current_cost = *costs.get(&edge.target).unwrap_or(&u32::MAX);
                         if alternative_cost < current_cost {
                             costs.insert(edge.target, alternative_cost);
+                            depth.insert(edge.target, new_depth);
                             open.push(State {
                                 key: alternative_cost,
                                 value: edge.target,
@@ -218,12 +343,12 @@ fn get_route(
     route.push(current);
     while let Some(new_current) = forward_predecessor.get(&current) {
         current = *new_current;
-        route.insert(0, current);
+        // route.insert(0, current);
     }
     current = meeting_node;
     while let Some(new_current) = backward_predecessor.get(&current) {
         current = *new_current;
-        route.push(current);
+        // route.push(current);
     }
     let route = Route {
         nodes: route,
