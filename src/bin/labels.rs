@@ -43,6 +43,11 @@ fn main() {
     let contraced_graph = Contractor::get_graph_2(&graph);
     println!("contracting took {:?}", start.elapsed());
 
+    {
+        let writer = BufWriter::new(File::create("contraced_graph.json").unwrap());
+        serde_json::to_writer(writer, &contraced_graph).unwrap();
+    }
+
     let graph = FastGraph::from_graph(&contraced_graph.graph);
     let dijkstra = ChDijkstra::new(&graph, &contraced_graph.map);
 
