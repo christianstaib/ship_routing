@@ -32,6 +32,10 @@ struct Args {
 }
 
 fn main() {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(40)
+        .build_global()
+        .unwrap();
     println!("there are {} threads", rayon::current_num_threads());
     let args = Args::parse();
 
