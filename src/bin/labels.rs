@@ -32,6 +32,7 @@ struct Args {
 }
 
 fn main() {
+    println!("there are {} threads", rayon::current_num_threads());
     let args = Args::parse();
 
     let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
