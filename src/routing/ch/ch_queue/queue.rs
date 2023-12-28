@@ -14,6 +14,7 @@ pub trait PriorityTerm {
 }
 
 pub struct CHQueue {
+    i: u32,
     queue: BinaryHeap<CHState>,
     priority_terms: Vec<(i32, Box<dyn PriorityTerm + Sync>)>,
 }
@@ -23,11 +24,14 @@ impl CHQueue {
         let queue = BinaryHeap::new();
         let priority_terms = Vec::new();
         let mut queue = Self {
+            i: 0,
             queue,
             priority_terms,
         };
         queue.register(1, EdgeDifferencePriority::new());
+        let start = Instant::now();
         queue.initialize(graph);
+        println!("took {:?} to initialize", start.elapsed());
         queue
     }
 
@@ -36,6 +40,11 @@ impl CHQueue {
     }
 
     pub fn lazy_pop(&mut self, graph: &Graph) -> Option<u32> {
+        if self.i > 100_000 {
+            self.update_queue(graph);
+            self.i = 0;
+        }
+        self.i += 1;
         while let Some(state) = self.queue.pop() {
             let v = state.node_id;
             if self.get_priority(v, graph) > state.priority {
@@ -65,11 +74,22 @@ impl CHQueue {
         priorities.iter().sum()
     }
 
+    fn update_queue(&mut self, graph: &Graph) {
+        self.queue = self
+            .queue
+            .iter()
+            .par_bridge()
+            .map(|&state| CHState {
+                priority: self.get_priority(state.node_id, graph),
+                node_id: state.node_id,
+            })
+            .collect();
+    }
+
     fn initialize(&mut self, graph: &Graph) {
         let mut order: Vec<u32> = (0..graph.forward_edges.len()).map(|x| x as u32).collect();
         order.shuffle(&mut rand::thread_rng());
 
-        let start = Instant::now();
         self.queue = order
             .iter()
             .progress()
@@ -79,6 +99,5 @@ impl CHQueue {
                 node_id: v,
             })
             .collect();
-        println!("took {:?} to initialize", start.elapsed());
     }
 }
