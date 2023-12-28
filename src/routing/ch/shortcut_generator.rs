@@ -19,7 +19,7 @@ impl<'a> ShortcutGenerator<'a> {
         let uv_edges = &self.graph.backward_edges[v as usize];
         let vw_edges = &self.graph.forward_edges[v as usize];
 
-        let max_depth = 10;
+        let max_depth = 3;
 
         if uv_edges.len() < 8 {
             uv_edges

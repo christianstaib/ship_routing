@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use indicatif::ProgressBar;
 use serde_derive::{Deserialize, Serialize};
 
@@ -10,7 +8,7 @@ use super::{ch_queue::queue::CHQueue, shortcut_generator::ShortcutGenerator};
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ContractedGraph {
     pub graph: Graph,
-    pub map: HashMap<(u32, u32), Vec<(u32, u32)>>,
+    pub map: Vec<((u32, u32), Vec<(u32, u32)>)>,
 }
 
 pub struct Contractor {

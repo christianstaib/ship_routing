@@ -48,8 +48,10 @@ fn main() {
         serde_json::to_writer(writer, &contraced_graph).unwrap();
     }
 
+    let shortcuts = &contraced_graph.map.into_iter().collect();
+
     let graph = FastGraph::from_graph(&contraced_graph.graph);
-    let dijkstra = ChDijkstra::new(&graph, &contraced_graph.map);
+    let dijkstra = ChDijkstra::new(&graph, shortcuts);
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
