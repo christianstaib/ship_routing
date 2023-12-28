@@ -19,6 +19,8 @@ impl<'a> ShortcutGenerator<'a> {
         let uv_edges = &self.graph.backward_edges[v as usize];
         let vw_edges = &self.graph.forward_edges[v as usize];
 
+        let max_depth = 10;
+
         if uv_edges.len() < 8 {
             uv_edges
                 .iter()
@@ -30,7 +32,8 @@ impl<'a> ShortcutGenerator<'a> {
                     let max_cost =
                         uv_cost + vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
 
-                    let costs = dijkstra_helper.single_source_cost_without(u, v, max_cost);
+                    let costs =
+                        dijkstra_helper.single_source_cost_without(u, v, max_cost, max_depth);
                     vw_edges.iter().for_each(|vw_ede| {
                         let w = vw_ede.target;
                         let vw_cost = vw_ede.cost;
@@ -59,7 +62,8 @@ impl<'a> ShortcutGenerator<'a> {
                     let max_cost =
                         uv_cost + vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
 
-                    let costs = dijkstra_helper.single_source_cost_without(u, v, max_cost);
+                    let costs =
+                        dijkstra_helper.single_source_cost_without(u, v, max_cost, max_depth);
                     vw_edges.iter().for_each(|vw_ede| {
                         let w = vw_ede.target;
                         let vw_cost = vw_ede.cost;
