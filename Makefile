@@ -32,5 +32,8 @@ test_ch:
 test_labels:
 	cargo run --bin labels --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --test-path tests/data/fmi/stgtregbz_tests.json
 
+test_better_labels:
+	cargo run --bin better_labels --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --test-path tests/data/fmi/stgtregbz_tests.json
+
 test_labels_network:
 	cargo run --bin labels --release -- --fmi-path tests/data/fmi/network.fmi --test-path tests/data/fmi/tests.json

@@ -1,11 +1,12 @@
 use indicatif::ProgressBar;
 use serde_derive::{Deserialize, Serialize};
+use speedy::{Readable, Writable};
 
 use crate::routing::graph::{Edge, Graph};
 
 use super::{ch_queue::queue::CHQueue, shortcut_generator::ShortcutGenerator};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Readable, Writable)]
 pub struct ContractedGraph {
     pub graph: Graph,
     pub map: Vec<((u32, u32), Vec<(u32, u32)>)>,

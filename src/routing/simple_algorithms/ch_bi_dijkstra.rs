@@ -1,4 +1,7 @@
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::{
+    collections::{BinaryHeap, HashMap, HashSet},
+    usize,
+};
 
 use crate::routing::{
     ch::contractor::ContractedGraph,
@@ -19,6 +22,60 @@ impl<'a> ChDijkstra<'a> {
         shortcuts: &'a HashMap<(u32, u32), Vec<(u32, u32)>>,
     ) -> ChDijkstra<'a> {
         ChDijkstra { graph, shortcuts }
+    }
+
+    ///
+    /// (contact_node, cost)
+    pub fn get_forward_label_vec(&self, source: u32, depth_limit: u32) -> Vec<u32> {
+        let mut costs = vec![u32::MAX; self.graph.num_nodes as usize];
+        let mut open = BinaryHeap::new();
+        let mut expanded = vec![false; self.graph.num_nodes as usize];
+
+        open.push(State {
+            key: 0,
+            value: source,
+        });
+        costs[source as usize] = 0;
+
+        while let Some(state) = open.pop() {
+            let current_node = state.value;
+            if !expanded[current_node as usize] {
+                expanded[current_node as usize] = true;
+
+                let current_node_cost = costs[current_node as usize];
+
+                let backward_search = self.backward_search(current_node, depth_limit);
+                let incoming_min = backward_search
+                    .iter()
+                    .map(|(node, cost)| {
+                        costs[*node as usize].checked_add(*cost).unwrap_or(u32::MAX)
+                    })
+                    .min()
+                    .unwrap_or(u32::MAX);
+
+                if current_node_cost > incoming_min {
+                    costs[current_node as usize] = u32::MAX;
+                    continue;
+                }
+
+                self.graph
+                    .outgoing_edges(state.value)
+                    .iter()
+                    .for_each(|edge| {
+                        let alternative_cost = current_node_cost + edge.cost;
+                        let current_cost = costs[edge.target as usize];
+                        if alternative_cost < current_cost {
+                            costs[edge.target as usize] = alternative_cost;
+                            open.push(State {
+                                key: alternative_cost,
+                                value: edge.target,
+                            });
+                        }
+                    });
+            }
+        }
+
+        costs
     }
 
     ///
@@ -44,13 +101,7 @@ impl<'a> ChDijkstra<'a> {
                 let backward_search = self.backward_search(current_node, depth_limit);
                 let incoming_min = backward_search
                     .iter()
-                    .map(|(node, cost)| {
-                        costs
-                            .get(&node)
-                            .unwrap_or(&u32::MAX)
-                            .checked_add(*cost)
-                            .unwrap_or(u32::MAX)
-                    })
+                    .filter_map(|(node, cost)| Some(costs.get(&node)? + *cost))
                     .min()
                     .unwrap_or(u32::MAX);
 
@@ -99,6 +150,7 @@ impl<'a> ChDijkstra<'a> {
 
                 let current_node_cost = *costs.get(&current_node).unwrap();
 
+                // TODO this is not working, but get_forward_label is working.
                 let backward_search = self.forward_search(current_node, depth_limit);
                 let incoming_min = backward_search
                     .iter()
@@ -116,6 +168,7 @@ impl<'a> ChDijkstra<'a> {
                     costs.remove(&current_node);
                     continue;
                 }
+                //
 
                 self.graph
                     .incoming_edges(state.value)
@@ -160,7 +213,7 @@ impl<'a> ChDijkstra<'a> {
                 expanded.insert(current_node);
 
                 self.graph
-                    .incoming_edges(state.value)
+                    .outgoing_edges(state.value)
                     .iter()
                     .for_each(|edge| {
                         let alternative_cost = current_node_cost + edge.cost;

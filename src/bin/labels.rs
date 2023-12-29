@@ -61,38 +61,54 @@ fn main() {
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
-    // let start = Instant::now();
     // let hub_graph = HubGraph::new(&dijkstra, 2);
-    // println!("getting labels took {:?}", start.elapsed());
 
     // {
     //     let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
     //     serde_json::to_writer(writer, &hub_graph).unwrap();
     // }
 
+    let hop_limit = 0;
+    let mut avg_label_size = 0;
     let mut time_hl = Vec::new();
     let mut label_creation = Vec::new();
-    tests.iter().take(10).progress().for_each(|test| {
+    tests.iter().progress().for_each(|test| {
         // let before = Instant::now();
         // let route = dijkstra.get_route(&test.request);
         // times.push(before.elapsed());
 
         let start = Instant::now();
-        let forward_label = dijkstra.get_forward_label(test.request.source, 2);
-        let backward_label = dijkstra.get_backward_label(test.request.target, 2);
+        let forward_label = dijkstra.get_forward_label(test.request.source, hop_limit);
+        let backward_label = dijkstra.get_backward_label(test.request.target, hop_limit);
+        avg_label_size += forward_label.len() + backward_label.len();
         let forward_label = Label::new(&forward_label);
         let backward_label = Label::new(&backward_label);
         label_creation.push(start.elapsed());
         // let minimal_overlapp = forward_label.minimal_overlapp(&backward_label);
 
+        let start = Instant::now();
+        let minimal_overlapp = forward_label.minimal_overlapp(&backward_label);
+        time_hl.push(start.elapsed());
         if let Some(true_cost) = test.cost {
-            let start = Instant::now();
-            let minimal_overlapp = forward_label.minimal_overlapp(&backward_label).unwrap();
-            time_hl.push(start.elapsed());
-            let my_cost = minimal_overlapp.cost;
-            assert_eq!(my_cost, true_cost);
+            let my_cost = minimal_overlapp.unwrap().cost;
+            assert_eq!(
+                my_cost, true_cost,
+                "should be {} but is {}",
+                true_cost, my_cost
+            );
+
+            // let minimal_overlapp = hub_graph.get_route(&test.request).unwrap();
+            // let my_cost = minimal_overlapp.cost;
+            // assert_eq!(my_cost, true_cost);
+        } else {
+            assert!(minimal_overlapp.is_none());
         }
     });
+
+    println!(
+        "avg label size is {}",
+        avg_label_size / (2 * label_creation.len())
+    );
 
     println!(
         "took {:?} per search",

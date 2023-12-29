@@ -1,12 +1,11 @@
-use std::{usize};
+use std::usize;
 
 use serde_derive::{Deserialize, Serialize};
-
-
+use speedy::{Readable, Writable};
 
 use super::{fast_graph::FastEdge, naive_graph::NaiveGraph};
 
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Readable, Writable)]
 pub struct Edge {
     pub source: u32,
     pub target: u32,
@@ -40,7 +39,7 @@ impl Edge {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Readable, Writable)]
 pub struct Graph {
     //pub nodes: Vec<Point>,
     pub forward_edges: Vec<Vec<Edge>>,
