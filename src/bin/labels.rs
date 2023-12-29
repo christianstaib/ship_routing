@@ -50,7 +50,7 @@ fn main() {
     //     serde_json::to_writer(writer, &contraced_graph).unwrap();
     // }
 
-    let reader = BufReader::new(File::open("contraced_graph.json").unwrap());
+    let reader = BufReader::new(File::open("contraced_graph_network.json").unwrap());
     let contraced_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
 
     let shortcuts = &contraced_graph.map.into_iter().collect();
@@ -61,7 +61,9 @@ fn main() {
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
+    let start = Instant::now();
     let hub_graph = HubGraph::new(&dijkstra, 1);
+    println!("took {:?} to get hub graph", start.elapsed());
 
     {
         let writer = BufWriter::new(File::create("hub_graph.json").unwrap());

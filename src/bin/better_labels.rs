@@ -56,17 +56,28 @@ fn main() {
         .collect();
 
     let start = Instant::now();
-    rand_nums.iter().progress().par_bridge().for_each(|&test| {
-        let _ = dijkstra.get_forward_label(test as u32, hop_limit);
-    });
+    let all_labels_f: Vec<_> = rand_nums
+        .iter()
+        .progress()
+        .par_bridge()
+        .map(|&test| dijkstra.get_forward_label(test as u32, hop_limit))
+        .collect();
     let label = start.elapsed();
 
     let start = Instant::now();
-    rand_nums.iter().progress().par_bridge().for_each(|&test| {
-        let _ = dijkstra.get_forward_label_vec(test as u32, hop_limit);
-    });
+    let all_labels_b: Vec<_> = rand_nums
+        .iter()
+        .progress()
+        .par_bridge()
+        .map(|&test| dijkstra.get_backward_label(test as u32, hop_limit))
+        .collect();
     let label_vec = start.elapsed();
 
+    println!(
+        "there are {:?} nodes in an average label",
+        (all_labels_f.iter().flatten().count() + all_labels_b.iter().flatten().count())
+            / (2 * n as usize)
+    );
     println!("took {:?} per label creation", label / n);
 
     println!("took {:?} per label creation vec", label_vec / n);
