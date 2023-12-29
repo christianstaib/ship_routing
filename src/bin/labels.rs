@@ -60,16 +60,6 @@ fn main() {
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
-
-    let start = Instant::now();
-    let hub_graph = HubGraph::new(&dijkstra, 2);
-    println!("getting labels took {:?}", start.elapsed());
-
-    {
-        let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
-        serde_json::to_writer(writer, &hub_graph).unwrap();
-    }
-
     let start = Instant::now();
     let f_labels: Vec<_> = tests
         .iter()
@@ -84,6 +74,15 @@ fn main() {
         .map(|test| dijkstra.get_backward_label(test.request.source, 0))
         .collect();
     println!("took {:?} per node", start.elapsed() / tests.len() as u32);
+
+    let start = Instant::now();
+    let hub_graph = HubGraph::new(&dijkstra, 2);
+    println!("getting labels took {:?}", start.elapsed());
+
+    {
+        let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
+        serde_json::to_writer(writer, &hub_graph).unwrap();
+    }
 
     let mut time_hl = Vec::new();
     let mut label_creation = Vec::new();
