@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use ahash::HashMap;
 use indicatif::ProgressIterator;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};

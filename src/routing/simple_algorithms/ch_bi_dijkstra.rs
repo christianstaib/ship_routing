@@ -1,4 +1,6 @@
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::BinaryHeap;
+
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 
 use crate::routing::{
     ch::contractor::ContractedGraph,
@@ -24,9 +26,9 @@ impl<'a> ChDijkstra<'a> {
     ///
     /// (contact_node, cost)
     pub fn get_forward_label(&self, source: u32, depth_limit: u32) -> HashMap<u32, u32> {
-        let mut costs = HashMap::new();
-        let mut open = BinaryHeap::new();
-        let mut expanded = HashSet::new();
+        let mut costs = HashMap::with_capacity(5000);
+        let mut open = BinaryHeap::with_capacity(5000);
+        let mut expanded = HashSet::with_capacity(5000);
 
         open.push(State {
             key: 0,
@@ -82,9 +84,9 @@ impl<'a> ChDijkstra<'a> {
     ///
     /// (contact_node, cost)
     pub fn get_backward_label(&self, source: u32, depth_limit: u32) -> HashMap<u32, u32> {
-        let mut costs = HashMap::new();
-        let mut open = BinaryHeap::new();
-        let mut expanded = HashSet::new();
+        let mut costs = HashMap::with_capacity(5000);
+        let mut open = BinaryHeap::with_capacity(5000);
+        let mut expanded = HashSet::with_capacity(5000);
 
         open.push(State {
             key: 0,
@@ -140,10 +142,10 @@ impl<'a> ChDijkstra<'a> {
     ///
     /// (contact_node, cost)
     pub fn forward_search(&self, target: u32, depth_limit: u32) -> HashMap<u32, u32> {
-        let mut costs = HashMap::new();
-        let mut depth = HashMap::new();
-        let mut open = BinaryHeap::new();
-        let mut expanded = HashSet::new();
+        let mut costs = HashMap::with_capacity(5000);
+        let mut depth = HashMap::with_capacity(5000);
+        let mut open = BinaryHeap::with_capacity(5000);
+        let mut expanded = HashSet::with_capacity(5000);
 
         open.push(State {
             key: 0,
@@ -182,10 +184,10 @@ impl<'a> ChDijkstra<'a> {
     ///
     /// (contact_node, cost)
     pub fn backward_search(&self, target: u32, depth_limit: u32) -> HashMap<u32, u32> {
-        let mut costs = HashMap::new();
-        let mut depth = HashMap::new();
-        let mut open = BinaryHeap::new();
-        let mut expanded = HashSet::new();
+        let mut costs = HashMap::with_capacity(5000);
+        let mut depth = HashMap::with_capacity(5000);
+        let mut open = BinaryHeap::with_capacity(5000);
+        let mut expanded = HashSet::with_capacity(5000);
 
         open.push(State {
             key: 0,
@@ -223,17 +225,17 @@ impl<'a> ChDijkstra<'a> {
 
     /// (contact_node, cost)
     pub fn get_route(&self, request: &RouteRequest) -> Option<Route> {
-        let mut forward_costs = HashMap::new();
-        let mut backward_costs = HashMap::new();
+        let mut forward_costs = HashMap::with_capacity(5000);
+        let mut backward_costs = HashMap::with_capacity(5000);
 
-        let mut forward_predecessor = HashMap::new();
-        let mut backward_predecessor = HashMap::new();
+        let mut forward_predecessor = HashMap::with_capacity(5000);
+        let mut backward_predecessor = HashMap::with_capacity(5000);
 
-        let mut forward_open = BinaryHeap::new();
-        let mut backward_open = BinaryHeap::new();
+        let mut forward_open = BinaryHeap::with_capacity(5000);
+        let mut backward_open = BinaryHeap::with_capacity(5000);
 
-        let mut forward_expanded = HashSet::new();
-        let mut backward_expaned = HashSet::new();
+        let mut forward_expanded = HashSet::with_capacity(5000);
+        let mut backward_expaned = HashSet::with_capacity(5000);
 
         forward_open.push(State {
             key: 0,

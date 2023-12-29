@@ -61,18 +61,33 @@ fn main() {
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
-    // let start = Instant::now();
-    // let hub_graph = HubGraph::new(&dijkstra, 2);
-    // println!("getting labels took {:?}", start.elapsed());
+    let start = Instant::now();
+    let hub_graph = HubGraph::new(&dijkstra, 2);
+    println!("getting labels took {:?}", start.elapsed());
 
-    // {
-    //     let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
-    //     serde_json::to_writer(writer, &hub_graph).unwrap();
-    // }
+    {
+        let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
+        serde_json::to_writer(writer, &hub_graph).unwrap();
+    }
+
+    let start = Instant::now();
+    let f_labels: Vec<_> = tests
+        .iter()
+        .progress()
+        .par_bridge()
+        .map(|test| dijkstra.get_forward_label(test.request.source, 0))
+        .collect();
+    let b_labels: Vec<_> = tests
+        .iter()
+        .progress()
+        .par_bridge()
+        .map(|test| dijkstra.get_backward_label(test.request.source, 0))
+        .collect();
+    println!("took {:?} per node", start.elapsed() / tests.len() as u32);
 
     let mut time_hl = Vec::new();
     let mut label_creation = Vec::new();
-    tests.iter().take(10).progress().for_each(|test| {
+    tests.iter().progress().for_each(|test| {
         // let before = Instant::now();
         // let route = dijkstra.get_route(&test.request);
         // times.push(before.elapsed());
@@ -100,6 +115,6 @@ fn main() {
     );
     println!(
         "took {:?} per label creation",
-        time_hl.iter().sum::<Duration>() / (2 * time_hl.len()) as u32
+        label_creation.iter().sum::<Duration>() / (2 * label_creation.len()) as u32
     );
 }
