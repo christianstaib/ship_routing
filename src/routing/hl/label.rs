@@ -6,7 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::routing::{route::RouteRequest, simple_algorithms::ch_bi_dijkstra::ChDijkstra};
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LabelEntry {
     pub id: u32,
     pub cost: u32,
@@ -32,7 +32,7 @@ impl Label {
                 cost: *cost,
             })
             .collect();
-        labels.sort_unstable();
+        labels.sort_unstable_by_key(|entry| entry.id);
         labels.shrink_to_fit();
 
         Label { label: labels }
@@ -47,9 +47,9 @@ impl Label {
 
         while i_self < self.label.len() && i_other < other.label.len() {
             let self_entry = &self.label[i_self];
-            let other_entry = &self.label[i_other];
+            let other_entry = &other.label[i_other];
 
-            match self_entry.cmp(other_entry) {
+            match self_entry.id.cmp(&other_entry.id) {
                 std::cmp::Ordering::Less => i_self += 1,
                 std::cmp::Ordering::Equal => {
                     i_self += 1;

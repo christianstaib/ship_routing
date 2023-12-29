@@ -160,7 +160,7 @@ impl<'a> ChDijkstra<'a> {
                 expanded.insert(current_node);
 
                 self.graph
-                    .outgoing_edges(state.value)
+                    .incoming_edges(state.value)
                     .iter()
                     .for_each(|edge| {
                         let alternative_cost = current_node_cost + edge.cost;
