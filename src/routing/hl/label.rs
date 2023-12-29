@@ -81,7 +81,10 @@ impl HubGraph {
             .map(|id| Label::new(&dijkstra.get_forward_label(id, depth_limit)))
             .collect();
         let mut backward_labels: Vec<_> = (0..dijkstra.graph.num_nodes)
-            .progress_with_style(ProgressStyle::with_template("{wide_bar} {eta}").unwrap())
+            .progress_with_style(
+                ProgressStyle::with_template("{wide_bar} {human_pos}/{human_len} {eta_precise}")
+                    .unwrap(),
+            )
             .par_bridge()
             .map(|id| Label::new(&dijkstra.get_backward_label(id, depth_limit)))
             .collect();
