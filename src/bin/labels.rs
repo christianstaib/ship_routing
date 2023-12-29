@@ -61,6 +61,7 @@ fn main() {
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
+    println!("starting hub label calculation");
     let start = Instant::now();
     let hub_graph = HubGraph::new(&dijkstra, 1);
     println!("took {:?} to get hub graph", start.elapsed());
