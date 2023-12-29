@@ -61,12 +61,12 @@ fn main() {
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
-    // let hub_graph = HubGraph::new(&dijkstra, 2);
+    let hub_graph = HubGraph::new(&dijkstra, 1);
 
-    // {
-    //     let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
-    //     serde_json::to_writer(writer, &hub_graph).unwrap();
-    // }
+    {
+        let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
+        serde_json::to_writer(writer, &hub_graph).unwrap();
+    }
 
     let hop_limit = 0;
     let mut avg_label_size = 0;

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indicatif::ProgressIterator;
+use indicatif::{ProgressBar, ProgressIterator};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
