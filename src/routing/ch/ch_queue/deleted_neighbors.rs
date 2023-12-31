@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use rayon::prelude::{ParallelBridge, ParallelIterator};
+
 use crate::routing::graph::Graph;
 
 use super::queue::PriorityTerm;
@@ -16,6 +18,7 @@ impl PriorityTerm for DeletedNeighbors {
             .collect();
         neighbors
             .iter()
+            .par_bridge()
             .filter(|&&neighbor| self.deleted[neighbor as usize] == true)
             .count() as i32
     }

@@ -58,6 +58,45 @@ impl Contractor {
         }
     }
 
+    pub fn contract_parallel(&mut self) -> Vec<(Edge, Vec<Edge>)> {
+        let outgoing_edges = self.graph.forward_edges.clone();
+        let incoming_edges = self.graph.backward_edges.clone();
+
+        let mut shortcuts = Vec::new();
+
+        let bar = ProgressBar::new(self.graph.forward_edges.len() as u64);
+        let mut level = 0;
+
+        while let Some(v) = self.queue.lazy_pop(&self.graph) {
+            shortcuts.append(&mut self.contract_node(v));
+            self.levels[v as usize] = level;
+
+            level += 1;
+            bar.inc(1);
+        }
+        bar.finish();
+
+        self.graph.forward_edges = outgoing_edges;
+        self.graph.backward_edges = incoming_edges;
+        for (shortcut, _) in &shortcuts {
+            self.graph.forward_edges[shortcut.source as usize].push(shortcut.clone());
+            self.graph.backward_edges[shortcut.target as usize].push(shortcut.clone());
+        }
+
+        self.removing_level_property();
+
+        shortcuts
+    }
+
+    fn contract_node_parallel(&mut self, v: u32) -> Vec<(Edge, Vec<Edge>)> {
+        // U --> v --> W
+        let shortcut_generator = ContractionHelper::new(&self.graph);
+        let shortcuts = shortcut_generator.generate_shortcuts(v, 10);
+        self.add_shortcuts(&shortcuts);
+        self.disconnect(v);
+        shortcuts
+    }
+
     pub fn contract(&mut self) -> Vec<(Edge, Vec<Edge>)> {
         let outgoing_edges = self.graph.forward_edges.clone();
         let incoming_edges = self.graph.backward_edges.clone();
