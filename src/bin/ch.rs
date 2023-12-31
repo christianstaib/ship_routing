@@ -43,7 +43,8 @@ fn main() {
     println!("contracting took {:?}", start.elapsed());
 
     let graph = FastGraph::from_graph(&contraced_graph.graph);
-    let dijkstra = ChDijkstra::new(&graph, &contraced_graph.map);
+    let shortcuts = &contraced_graph.map.into_iter().collect();
+    let dijkstra = ChDijkstra::new(&graph, &shortcuts);
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
