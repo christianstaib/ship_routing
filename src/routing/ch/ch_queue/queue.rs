@@ -4,7 +4,7 @@ use indicatif::ProgressIterator;
 use rand::seq::SliceRandom;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 
-use crate::routing::graph::Graph;
+use crate::routing::{ch::ch_queue::deleted_neighbors::DeletedNeighbors, graph::Graph};
 
 use super::{edge_difference::EdgeDifferencePriority, state::CHState};
 
@@ -29,6 +29,7 @@ impl CHQueue {
             priority_terms,
         };
         queue.register(1, EdgeDifferencePriority::new());
+        queue.register(1, DeletedNeighbors::new(graph.forward_edges.len() as u32));
         let start = Instant::now();
         queue.initialize(graph);
         println!("took {:?} to initialize", start.elapsed());
