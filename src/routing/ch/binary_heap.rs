@@ -2,13 +2,16 @@ use std::cmp::Ordering;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct MinimumItem {
-    pub priority: u32,
-    pub item: u32,
+    pub cost: u32,
+    pub node: u32,
 }
 
 impl MinimumItem {
     pub fn new(priority: u32, item: u32) -> Self {
-        Self { priority, item }
+        Self {
+            cost: priority,
+            node: item,
+        }
     }
 }
 
@@ -18,9 +21,9 @@ impl Ord for MinimumItem {
         // In case of a tie we compare positions - this step is necessary
         // to make implementations of `PartialEq` and `Ord` consistent.
         other
-            .priority
-            .cmp(&self.priority)
-            .then_with(|| self.item.cmp(&other.item))
+            .cost
+            .cmp(&self.cost)
+            .then_with(|| self.node.cmp(&other.node))
     }
 }
 
