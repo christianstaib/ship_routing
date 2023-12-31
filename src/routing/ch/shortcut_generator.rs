@@ -2,7 +2,7 @@ use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::routing::graph::{Edge, Graph};
 
-use super::dijkstra_helper::DijkstraHelper;
+use super::witness_dijkstra::WitnessDijkstra;
 
 pub struct ShortcutGenerator<'a> {
     graph: &'a Graph,
@@ -13,8 +13,8 @@ impl<'a> ShortcutGenerator<'a> {
         Self { graph }
     }
 
-    pub fn naive_shortcuts(&self, v: u32) -> Vec<(Edge, Vec<Edge>)> {
-        let dijkstra_helper = DijkstraHelper::new(self.graph);
+    pub fn generate_shortcuts(&self, v: u32) -> Vec<(Edge, Vec<Edge>)> {
+        let dijkstra = WitnessDijkstra::new(self.graph);
 
         let uv_edges = &self.graph.backward_edges[v as usize];
         let vw_edges = &self.graph.forward_edges[v as usize];
@@ -31,7 +31,7 @@ impl<'a> ShortcutGenerator<'a> {
 
                 let max_cost = uv_cost + vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
 
-                let costs = dijkstra_helper.witness_search(u, v, max_cost, max_depth);
+                let costs = dijkstra.witness_search(u, v, max_cost, max_depth);
                 vw_edges.iter().for_each(|vw_ede| {
                     let w = vw_ede.target;
                     let vw_cost = vw_ede.cost;

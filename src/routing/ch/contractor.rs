@@ -90,7 +90,7 @@ impl Contractor {
     fn contract_node(&mut self, v: u32) -> Vec<(Edge, Vec<Edge>)> {
         // U --> v --> W
         let shortcut_generator = ShortcutGenerator::new(&self.graph);
-        let shortcuts = shortcut_generator.naive_shortcuts(v);
+        let shortcuts = shortcut_generator.generate_shortcuts(v);
         self.add_shortcuts(&shortcuts);
         self.disconnect(v);
         shortcuts
