@@ -3,4 +3,3 @@ pub mod ch_queue;
 pub mod contractor;
 pub mod graph_cleaner;
 pub mod shortcut_generator;
-pub mod witness_dijkstra;
