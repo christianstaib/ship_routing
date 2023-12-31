@@ -1,4 +1,4 @@
-use crate::routing::{ch::shortcut_generator::ShortcutGenerator, graph::Graph};
+use crate::routing::{ch::contraction_helper::ContractionHelper, graph::Graph};
 
 use super::queue::PriorityTerm;
 
@@ -6,7 +6,7 @@ pub struct EdgeDifferencePriority {}
 
 impl PriorityTerm for EdgeDifferencePriority {
     fn priority(&self, v: u32, graph: &Graph) -> i32 {
-        let shortcut_generator = ShortcutGenerator::new(graph);
+        let shortcut_generator = ContractionHelper::new(graph);
         let shortcuts = shortcut_generator.generate_shortcuts(v, 10);
 
         let current_pairs =

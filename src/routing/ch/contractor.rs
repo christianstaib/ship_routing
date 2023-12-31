@@ -4,7 +4,7 @@ use speedy::{Readable, Writable};
 
 use crate::routing::graph::{Edge, Graph};
 
-use super::{ch_queue::queue::CHQueue, shortcut_generator::ShortcutGenerator};
+use super::{ch_queue::queue::CHQueue, contraction_helper::ContractionHelper};
 
 #[derive(Clone, Serialize, Deserialize, Readable, Writable)]
 pub struct ContractedGraph {
@@ -89,7 +89,7 @@ impl Contractor {
 
     fn contract_node(&mut self, v: u32) -> Vec<(Edge, Vec<Edge>)> {
         // U --> v --> W
-        let shortcut_generator = ShortcutGenerator::new(&self.graph);
+        let shortcut_generator = ContractionHelper::new(&self.graph);
         let shortcuts = shortcut_generator.generate_shortcuts(v, 10);
         self.add_shortcuts(&shortcuts);
         self.disconnect(v);

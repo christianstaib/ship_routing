@@ -6,11 +6,11 @@ use crate::routing::graph::{Edge, Graph};
 
 use super::binary_heap::MinimumItem;
 
-pub struct ShortcutGenerator<'a> {
+pub struct ContractionHelper<'a> {
     graph: &'a Graph,
 }
 
-impl<'a> ShortcutGenerator<'a> {
+impl<'a> ContractionHelper<'a> {
     pub fn new(graph: &'a Graph) -> Self {
         Self { graph }
     }
