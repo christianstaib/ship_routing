@@ -45,11 +45,6 @@ fn main() {
     let contraced_graph = Contractor::get_graph_2(&graph);
     println!("contracting took {:?}", start.elapsed());
 
-    let shortcuts = &contraced_graph.map.into_iter().collect();
-
-    let graph = FastGraph::from_graph(&contraced_graph.graph);
-    let dijkstra = ChDijkstra::new(&graph, shortcuts);
-
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
@@ -63,15 +58,19 @@ fn main() {
     //     serde_json::to_writer(writer, &hub_graph).unwrap();
     // }
 
-    // {
-    //     let writer = BufWriter::new(File::create("contraced_graph.json").unwrap());
-    //     serde_json::to_writer(writer, &contraced_graph).unwrap();
-    // }
-    //
+    {
+        let writer = BufWriter::new(File::create("contraced_graph.json").unwrap());
+        serde_json::to_writer(writer, &contraced_graph).unwrap();
+    }
+
     // let reader = BufReader::new(File::open("contraced_graph_network.json").unwrap());
     // let contraced_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
 
-    let hop_limit = 0;
+    let shortcuts = &contraced_graph.map.into_iter().collect();
+    let graph = FastGraph::from_graph(&contraced_graph.graph);
+    let dijkstra = ChDijkstra::new(&graph, shortcuts);
+
+    let hop_limit = 2;
     let mut avg_label_size = 0;
     let mut time_hl = Vec::new();
     let mut label_creation = Vec::new();
@@ -95,10 +94,6 @@ fn main() {
                 "should be {} but is {}",
                 true_cost, my_cost
             );
-
-            // let minimal_overlapp = hub_graph.get_route(&test.request).unwrap();
-            // let my_cost = minimal_overlapp.cost;
-            // assert_eq!(my_cost, true_cost);
         } else {
             assert!(minimal_overlapp.is_none());
         }
