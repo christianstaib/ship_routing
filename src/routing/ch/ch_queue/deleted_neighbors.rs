@@ -24,7 +24,7 @@ impl PriorityTerm for DeletedNeighbors {
     }
 
     #[allow(unused_variables)]
-    fn update_before_contraction(&mut self, v: u32) {
+    fn update_before_contraction(&mut self, v: u32, graph: &Graph) {
         self.deleted[v as usize] = true;
     }
 }

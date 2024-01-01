@@ -6,7 +6,9 @@ use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::routing::{ch::ch_queue::deleted_neighbors::DeletedNeighbors, graph::Graph};
 
-use super::{edge_difference::EdgeDifferencePriority, state::CHState};
+use super::{
+    cost_of_queries::CostOfQueries, edge_difference::EdgeDifferencePriority, state::CHState,
+};
 
 pub trait PriorityTerm {
     /// Gets the priority of node v in the graph
@@ -14,7 +16,7 @@ pub trait PriorityTerm {
 
     /// Gets called just before a v is contracted. Gives priority terms the oppernunity to updated
     /// neighboring nodes priorities.
-    fn update_before_contraction(&mut self, v: u32);
+    fn update_before_contraction(&mut self, v: u32, graph: &Graph);
 }
 
 pub struct CHQueue {
@@ -32,6 +34,7 @@ impl CHQueue {
         };
         queue.register(1, EdgeDifferencePriority::new());
         queue.register(1, DeletedNeighbors::new(graph.forward_edges.len() as u32));
+        queue.register(1, CostOfQueries::new(graph.forward_edges.len() as u32));
         queue.initialize(graph);
         queue
     }
@@ -48,7 +51,7 @@ impl CHQueue {
                 self.queue.push(CHState::new(new_priority, v));
                 continue;
             }
-            self.update_before_contraction(v);
+            self.update_before_contraction(v, graph);
             return Some(v);
         }
         None
@@ -56,10 +59,10 @@ impl CHQueue {
 
     /// Gets called just before a v is contracted. Gives priority terms the oppernunity to updated
     /// neighboring nodes priorities.
-    fn update_before_contraction(&mut self, v: u32) {
+    fn update_before_contraction(&mut self, v: u32, graph: &Graph) {
         self.priority_terms
             .iter_mut()
-            .for_each(|priority_term| priority_term.1.update_before_contraction(v));
+            .for_each(|priority_term| priority_term.1.update_before_contraction(v, graph));
     }
 
     pub fn get_priority(&self, v: u32, graph: &Graph) -> i32 {

@@ -106,7 +106,7 @@ fn main() {
 
     println!(
         "avg label size is {}",
-        avg_label_size / (2 * label_creation.len())
+        avg_label_size as f32 / (2 * label_creation.len()) as f32
     );
 
     println!(

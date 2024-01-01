@@ -1,4 +1,4 @@
-use std::usize;
+use std::{collections::HashSet, usize};
 
 use serde_derive::{Deserialize, Serialize};
 use speedy::{Readable, Writable};
@@ -66,6 +66,25 @@ impl Graph {
             forward_edges,
             backward_edges,
         }
+    }
+
+    pub fn get_neighborhood(&self, node: u32, hops: u32) -> HashSet<u32> {
+        let mut neighbors = HashSet::new();
+        neighbors.insert(node);
+
+        for _ in 0..hops {
+            let mut new_neighsbors = HashSet::new();
+            for &node in neighbors.iter() {
+                new_neighsbors.extend(
+                    self.forward_edges[node as usize]
+                        .iter()
+                        .map(|edge| edge.target),
+                );
+            }
+            neighbors.extend(new_neighsbors);
+        }
+
+        neighbors
     }
 
     /// Adds an edge to the graph.

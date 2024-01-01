@@ -75,19 +75,16 @@ impl Label {
 
 impl HubGraph {
     pub fn new(dijkstra: &ChDijkstra, depth_limit: u32) -> HubGraph {
+        let style =
+            ProgressStyle::with_template("{wide_bar} {human_pos}/{human_len} {eta_precise}")
+                .unwrap();
         let mut forward_labels: Vec<_> = (0..dijkstra.graph.num_nodes)
-            .progress_with_style(
-                ProgressStyle::with_template("{wide_bar} {human_pos}/{human_len} {eta_precise}")
-                    .unwrap(),
-            )
+            .progress_with_style(style.clone())
             .par_bridge()
             .map(|id| Label::new(&dijkstra.get_forward_label(id, depth_limit)))
             .collect();
         let mut backward_labels: Vec<_> = (0..dijkstra.graph.num_nodes)
-            .progress_with_style(
-                ProgressStyle::with_template("{wide_bar} {human_pos}/{human_len} {eta_precise}")
-                    .unwrap(),
-            )
+            .progress_with_style(style)
             .par_bridge()
             .map(|id| Label::new(&dijkstra.get_backward_label(id, depth_limit)))
             .collect();
