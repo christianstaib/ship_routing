@@ -31,64 +31,33 @@ impl<'a> ContractionHelper<'a> {
         let vw_edges = &self.graph.forward_edges[v as usize];
         let max_vw_cost = vw_edges.iter().map(|edge| edge.cost).max().unwrap_or(0);
 
-        if uv_edges.len() < 10 {
-            uv_edges
-                .iter()
-                .flat_map(|uv_edge| {
-                    let mut shortcuts = Vec::new();
-                    let u = uv_edge.source;
-                    let uv_cost = uv_edge.cost;
+        uv_edges
+            .iter()
+            .par_bridge()
+            .flat_map(|uv_edge| {
+                let mut shortcuts = Vec::new();
+                let u = uv_edge.source;
+                let uv_cost = uv_edge.cost;
 
-                    let max_cost = uv_cost + max_vw_cost;
-                    let witness_cost =
-                        self.witness_search(u, v, max_cost, max_hops_in_witness_search);
+                let max_cost = uv_cost + max_vw_cost;
+                let witness_cost = self.witness_search(u, v, max_cost, max_hops_in_witness_search);
 
-                    for vw_ede in vw_edges.iter() {
-                        let w = vw_ede.target;
-                        let vw_cost = vw_ede.cost;
-                        let uw_cost = uv_cost + vw_cost;
-                        if &uw_cost < witness_cost.get(&w).unwrap_or(&u32::MAX) {
-                            let shortcut = Edge {
-                                source: u,
-                                target: w,
-                                cost: uw_cost,
-                            };
-                            shortcuts.push((shortcut, vec![uv_edge.clone(), vw_ede.clone()]));
-                        }
+                for vw_ede in vw_edges.iter() {
+                    let w = vw_ede.target;
+                    let vw_cost = vw_ede.cost;
+                    let uw_cost = uv_cost + vw_cost;
+                    if &uw_cost < witness_cost.get(&w).unwrap_or(&u32::MAX) {
+                        let shortcut = Edge {
+                            source: u,
+                            target: w,
+                            cost: uw_cost,
+                        };
+                        shortcuts.push((shortcut, vec![uv_edge.clone(), vw_ede.clone()]));
                     }
-                    shortcuts
-                })
-                .collect()
-        } else {
-            uv_edges
-                .iter()
-                .par_bridge()
-                .flat_map(|uv_edge| {
-                    let mut shortcuts = Vec::new();
-                    let u = uv_edge.source;
-                    let uv_cost = uv_edge.cost;
-
-                    let max_cost = uv_cost + max_vw_cost;
-                    let witness_cost =
-                        self.witness_search(u, v, max_cost, max_hops_in_witness_search);
-
-                    for vw_ede in vw_edges.iter() {
-                        let w = vw_ede.target;
-                        let vw_cost = vw_ede.cost;
-                        let uw_cost = uv_cost + vw_cost;
-                        if &uw_cost < witness_cost.get(&w).unwrap_or(&u32::MAX) {
-                            let shortcut = Edge {
-                                source: u,
-                                target: w,
-                                cost: uw_cost,
-                            };
-                            shortcuts.push((shortcut, vec![uv_edge.clone(), vw_ede.clone()]));
-                        }
-                    }
-                    shortcuts
-                })
-                .collect()
-        }
+                }
+                shortcuts
+            })
+            .collect()
     }
 
     /// Performs a forward search from `source` node.
