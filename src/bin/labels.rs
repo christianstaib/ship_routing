@@ -7,16 +7,10 @@ use std::{
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    ch::{
-        contractor::{ContractedGraph},
-    },
-    fast_graph::FastGraph,
-    hl::label::{HubGraph},
-    route::RouteValidationRequest,
-    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
+    ch::contractor::ContractedGraph, fast_graph::FastGraph, hl::label::HubGraph,
+    route::RouteValidationRequest, simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
-use rayon::iter::{ParallelIterator};
-
+use rayon::iter::ParallelIterator;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

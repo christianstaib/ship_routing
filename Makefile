@@ -41,7 +41,7 @@ test_labels_stgt:
 	cargo run --bin labels --release -- --contracted-graph tests/data/fmi/stgtregbz_contracted.json --test-path tests/data/fmi/stgtregbz_tests.json
 
 test_labels:
-	cargo run --bin labels --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --test-path tests/data/fmi/stgtregbz_tests.json
+	cargo run --bin labels --release -- --contracted-graph tests/data/fmi/network_contracted.json --test-path tests/data/fmi/network_tests.json
 
 
 test_better_labels:
