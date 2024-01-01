@@ -37,21 +37,13 @@ fn main() {
     let args = Args::parse();
 
     let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
-    let graph = Graph::from_naive_graph(&naive_graph);
-    // removing_double_edges(&mut graph);
-    // remove_edge_to_self(&mut graph);
+    let mut graph = Graph::from_naive_graph(&naive_graph);
+    removing_double_edges(&mut graph);
+    remove_edge_to_self(&mut graph);
 
-    // let start = Instant::now();
-    // let contraced_graph = Contractor::get_graph_2(&graph);
-    // println!("contracting took {:?}", start.elapsed());
-
-    // {
-    //     let writer = BufWriter::new(File::create("contraced_graph.json").unwrap());
-    //     serde_json::to_writer(writer, &contraced_graph).unwrap();
-    // }
-
-    let reader = BufReader::new(File::open("contraced_graph_network.json").unwrap());
-    let contraced_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
+    let start = Instant::now();
+    let contraced_graph = Contractor::get_graph_2(&graph);
+    println!("contracting took {:?}", start.elapsed());
 
     let shortcuts = &contraced_graph.map.into_iter().collect();
 
@@ -61,25 +53,29 @@ fn main() {
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
-    println!("starting hub label calculation");
-    let start = Instant::now();
-    let hub_graph = HubGraph::new(&dijkstra, 1);
-    println!("took {:?} to get hub graph", start.elapsed());
+    // println!("starting hub label calculation");
+    // let start = Instant::now();
+    // let hub_graph = HubGraph::new(&dijkstra, 1);
+    // println!("took {:?} to get hub graph", start.elapsed());
 
-    {
-        let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
-        serde_json::to_writer(writer, &hub_graph).unwrap();
-    }
+    // {
+    //     let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
+    //     serde_json::to_writer(writer, &hub_graph).unwrap();
+    // }
+
+    // {
+    //     let writer = BufWriter::new(File::create("contraced_graph.json").unwrap());
+    //     serde_json::to_writer(writer, &contraced_graph).unwrap();
+    // }
+    //
+    // let reader = BufReader::new(File::open("contraced_graph_network.json").unwrap());
+    // let contraced_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
 
     let hop_limit = 0;
     let mut avg_label_size = 0;
     let mut time_hl = Vec::new();
     let mut label_creation = Vec::new();
     tests.iter().progress().for_each(|test| {
-        // let before = Instant::now();
-        // let route = dijkstra.get_route(&test.request);
-        // times.push(before.elapsed());
-
         let start = Instant::now();
         let forward_label = dijkstra.get_forward_label(test.request.source, hop_limit);
         let backward_label = dijkstra.get_backward_label(test.request.target, hop_limit);

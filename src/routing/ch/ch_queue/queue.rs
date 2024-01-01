@@ -9,12 +9,15 @@ use crate::routing::{ch::ch_queue::deleted_neighbors::DeletedNeighbors, graph::G
 use super::{edge_difference::EdgeDifferencePriority, state::CHState};
 
 pub trait PriorityTerm {
+    /// Gets the priority of node v in the graph
     fn priority(&self, v: u32, graph: &Graph) -> i32;
-    fn update(&mut self, v: u32);
+
+    /// Gets called just before a v is contracted. Gives priority terms the oppernunity to updated
+    /// neighboring nodes priorities.
+    fn update_before_contraction(&mut self, v: u32);
 }
 
 pub struct CHQueue {
-    i: u32,
     queue: BinaryHeap<CHState>,
     priority_terms: Vec<(i32, Box<dyn PriorityTerm + Sync>)>,
 }
@@ -24,15 +27,12 @@ impl CHQueue {
         let queue = BinaryHeap::new();
         let priority_terms = Vec::new();
         let mut queue = Self {
-            i: 0,
             queue,
             priority_terms,
         };
         queue.register(1, EdgeDifferencePriority::new());
         queue.register(1, DeletedNeighbors::new(graph.forward_edges.len() as u32));
-        let start = Instant::now();
         queue.initialize(graph);
-        println!("took {:?} to initialize", start.elapsed());
         queue
     }
 
@@ -41,28 +41,25 @@ impl CHQueue {
     }
 
     pub fn lazy_pop(&mut self, graph: &Graph) -> Option<u32> {
-        if self.i > 100_000 {
-            self.update_queue(graph);
-            self.i = 0;
-        }
-        self.i += 1;
         while let Some(state) = self.queue.pop() {
             let v = state.node_id;
-            if self.get_priority(v, graph) > state.priority {
-                self.queue
-                    .push(CHState::new(self.get_priority(v, graph), v));
+            let new_priority = self.get_priority(v, graph);
+            if new_priority > state.priority {
+                self.queue.push(CHState::new(new_priority, v));
                 continue;
             }
-            self.update_priority(v);
+            self.update_before_contraction(v);
             return Some(v);
         }
         None
     }
 
-    fn update_priority(&mut self, v: u32) {
+    /// Gets called just before a v is contracted. Gives priority terms the oppernunity to updated
+    /// neighboring nodes priorities.
+    fn update_before_contraction(&mut self, v: u32) {
         self.priority_terms
             .iter_mut()
-            .for_each(|priority_term| priority_term.1.update(v));
+            .for_each(|priority_term| priority_term.1.update_before_contraction(v));
     }
 
     pub fn get_priority(&self, v: u32, graph: &Graph) -> i32 {
@@ -73,18 +70,6 @@ impl CHQueue {
             .collect();
 
         priorities.iter().sum()
-    }
-
-    fn update_queue(&mut self, graph: &Graph) {
-        self.queue = self
-            .queue
-            .iter()
-            .par_bridge()
-            .map(|&state| CHState {
-                priority: self.get_priority(state.node_id, graph),
-                node_id: state.node_id,
-            })
-            .collect();
     }
 
     fn initialize(&mut self, graph: &Graph) {

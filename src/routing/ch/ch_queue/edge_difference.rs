@@ -16,7 +16,7 @@ impl PriorityTerm for EdgeDifferencePriority {
     }
 
     #[allow(unused_variables)]
-    fn update(&mut self, v: u32) {}
+    fn update_before_contraction(&mut self, v: u32) {}
 }
 
 impl Default for EdgeDifferencePriority {
