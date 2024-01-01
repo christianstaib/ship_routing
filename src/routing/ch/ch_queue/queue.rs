@@ -1,4 +1,4 @@
-use std::{collections::BinaryHeap, time::Instant};
+use std::collections::BinaryHeap;
 
 use indicatif::ProgressIterator;
 use rand::seq::SliceRandom;
@@ -8,6 +8,7 @@ use crate::routing::{ch::ch_queue::deleted_neighbors::DeletedNeighbors, graph::G
 
 use super::{
     cost_of_queries::CostOfQueries, edge_difference::EdgeDifferencePriority, state::CHState,
+    voronoi_region::VoronoiRegion,
 };
 
 pub trait PriorityTerm {
@@ -33,6 +34,7 @@ impl CHQueue {
             priority_terms,
         };
         queue.register(1, EdgeDifferencePriority::new());
+        // queue.register(1, VoronoiRegion::new());
         queue.register(1, DeletedNeighbors::new(graph.forward_edges.len() as u32));
         queue.register(1, CostOfQueries::new(graph.forward_edges.len() as u32));
         queue.initialize(graph);
