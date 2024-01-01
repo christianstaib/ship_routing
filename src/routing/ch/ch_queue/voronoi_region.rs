@@ -30,6 +30,12 @@ impl PriorityTerm for VoronoiRegion {
     fn update_before_contraction(&mut self, v: u32, graph: &Graph) {}
 }
 
+impl Default for VoronoiRegion {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VoronoiRegion {
     pub fn new() -> Self {
         Self {}

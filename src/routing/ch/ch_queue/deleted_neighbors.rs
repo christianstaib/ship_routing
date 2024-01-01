@@ -19,7 +19,7 @@ impl PriorityTerm for DeletedNeighbors {
         neighbors
             .iter()
             .par_bridge()
-            .filter(|&&neighbor| self.deleted[neighbor as usize] == true)
+            .filter(|&&neighbor| self.deleted[neighbor as usize])
             .count() as i32
     }
 

@@ -8,7 +8,6 @@ use crate::routing::{ch::ch_queue::deleted_neighbors::DeletedNeighbors, graph::G
 
 use super::{
     cost_of_queries::CostOfQueries, edge_difference::EdgeDifferencePriority, state::CHState,
-    voronoi_region::VoronoiRegion,
 };
 
 pub trait PriorityTerm {

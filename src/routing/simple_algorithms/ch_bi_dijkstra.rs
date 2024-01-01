@@ -4,7 +4,6 @@ use std::{
 };
 
 use crate::routing::{
-    ch::contractor::ContractedGraph,
     fast_graph::FastGraph,
     queue::heap_queue::State,
     route::{Route, RouteRequest},
@@ -101,7 +100,7 @@ impl<'a> ChDijkstra<'a> {
                 let backward_search = self.backward_search(current_node, depth_limit);
                 let incoming_min = backward_search
                     .iter()
-                    .filter_map(|(node, cost)| Some(costs.get(&node)? + *cost))
+                    .filter_map(|(node, cost)| Some(costs.get(node)? + *cost))
                     .min()
                     .unwrap_or(u32::MAX);
 
@@ -156,7 +155,7 @@ impl<'a> ChDijkstra<'a> {
                     .iter()
                     .map(|(node, cost)| {
                         costs
-                            .get(&node)
+                            .get(node)
                             .unwrap_or(&u32::MAX)
                             .checked_add(*cost)
                             .unwrap_or(u32::MAX)

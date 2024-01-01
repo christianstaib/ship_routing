@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{BufReader, BufWriter, Write},
+    io::{BufReader, BufWriter},
     time::{Duration, Instant},
 };
 
@@ -8,18 +8,15 @@ use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
     ch::{
-        contractor::{ContractedGraph, Contractor},
-        graph_cleaner::{remove_edge_to_self, removing_double_edges},
+        contractor::{ContractedGraph},
     },
     fast_graph::FastGraph,
-    graph::Graph,
-    hl::label::{self, HubGraph, Label},
-    naive_graph::NaiveGraph,
+    hl::label::{HubGraph},
     route::RouteValidationRequest,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
-use rayon::iter::{ParallelBridge, ParallelIterator};
-use warp::filters::trace::request;
+use rayon::iter::{ParallelIterator};
+
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
