@@ -29,14 +29,20 @@ create_tests:
 create_tests_stgt:
 	cargo run --bin create_test --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --tests-path tests/data/fmi/stgtregbz_tests.json --number-of-tests 1000
 
+
 test_ch_stgt:
-	cargo run --bin ch --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --test-path tests/data/fmi/stgtregbz_tests.json
+	cargo run --bin ch --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --contracted-graph tests/data/fmi/stgtregbz_contracted.json --test-path tests/data/fmi/stgtregbz_tests.json
 
 test_ch:
-	cargo run --bin ch --release -- --fmi-path tests/data/fmi/network.fmi --test-path tests/data/fmi/network_tests.json
+	cargo run --bin ch --release -- --fmi-path tests/data/fmi/network.fmi --contracted-graph tests/data/fmi/network_contracted.json --test-path tests/data/fmi/network_tests.json
+
+
+test_labels_stgt:
+	cargo run --bin labels --release -- --contracted-graph tests/data/fmi/stgtregbz_contracted.json --test-path tests/data/fmi/stgtregbz_tests.json
 
 test_labels:
 	cargo run --bin labels --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --test-path tests/data/fmi/stgtregbz_tests.json
+
 
 test_better_labels:
 	cargo run --bin better_labels --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --test-path tests/data/fmi/stgtregbz_tests.json

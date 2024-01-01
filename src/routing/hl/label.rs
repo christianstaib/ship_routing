@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use indicatif::{ProgressBar, ProgressIterator, ProgressStyle};
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator, ProgressStyle};
+use rayon::iter::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::routing::{route::RouteRequest, simple_algorithms::ch_bi_dijkstra::ChDijkstra};
@@ -14,13 +14,13 @@ pub struct LabelEntry {
 
 #[derive(Serialize, Deserialize)]
 pub struct Label {
-    label: Vec<LabelEntry>,
+    pub label: Vec<LabelEntry>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct HubGraph {
-    forward_labels: Vec<Label>,
-    backward_labels: Vec<Label>,
+    pub forward_labels: Vec<Label>,
+    pub backward_labels: Vec<Label>,
 }
 
 impl Label {
@@ -75,21 +75,18 @@ impl Label {
 
 impl HubGraph {
     pub fn new(dijkstra: &ChDijkstra, depth_limit: u32) -> HubGraph {
-        let style =
-            ProgressStyle::with_template("{wide_bar} {human_pos}/{human_len} {eta_precise}")
-                .unwrap();
-        let mut forward_labels: Vec<_> = (0..dijkstra.graph.num_nodes)
-            .progress_with_style(style.clone())
-            .par_bridge()
+        let pb = ProgressBar::new((dijkstra.graph.num_nodes * 2) as u64);
+        let forward_labels: Vec<_> = (0..dijkstra.graph.num_nodes)
+            .into_par_iter()
+            .progress_with(pb.clone())
             .map(|id| Label::new(&dijkstra.get_forward_label(id, depth_limit)))
             .collect();
-        let mut backward_labels: Vec<_> = (0..dijkstra.graph.num_nodes)
-            .progress_with_style(style)
-            .par_bridge()
+        pb.set_position(dijkstra.graph.num_nodes as u64);
+        let backward_labels: Vec<_> = (0..dijkstra.graph.num_nodes)
+            .into_par_iter()
+            .progress_with(pb)
             .map(|id| Label::new(&dijkstra.get_backward_label(id, depth_limit)))
             .collect();
-        forward_labels.shrink_to_fit();
-        backward_labels.shrink_to_fit();
         HubGraph {
             forward_labels,
             backward_labels,

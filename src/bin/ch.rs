@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::BufReader,
+    io::{BufReader, BufWriter},
     time::{Duration, Instant},
 };
 
@@ -25,6 +25,9 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     fmi_path: String,
+    /// Path of contracted_graph (output)
+    #[arg(short, long)]
+    contracted_graph: String,
     /// Path of .fmi file
     #[arg(short, long)]
     test_path: String,
@@ -41,6 +44,9 @@ fn main() {
     let start = Instant::now();
     let contraced_graph = Contractor::get_graph_2(&graph);
     println!("contracting took {:?}", start.elapsed());
+
+    let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
+    serde_json::to_writer(writer, &contraced_graph).unwrap();
 
     let graph = FastGraph::from_graph(&contraced_graph.graph);
     let shortcuts = &contraced_graph.map.into_iter().collect();
