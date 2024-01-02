@@ -3,6 +3,11 @@ OSM_DIR := $(DATA_DIR)/osm
 GEOJSON_DIR := $(DATA_DIR)/test_geojson
 FMI_DIR := $(DATA_DIR)/fmi
 
+INTERNET_OSM := https://cloud.p-fruck.de/s/pf9JfNabwDjrNL8/download/planet-coastlinespbf-cleaned.osm.pbf
+NETWORK_OSM := $(OSM_DIR)/planet-coastlines.osm.pbf
+PLANET := $(GEOJSON_DIR)/planet.geojson
+NETWORK_GEOJSON := $(GEOJSON_DIR)/network.geojson
+
 NETWORK_FMI := $(FMI_DIR)/network.fmi
 NETWORK_CONTRACTED:= $(FMI_DIR)/network_contracted.json
 NETWORK_HUBS:= $(FMI_DIR)/network_hubs.json
@@ -23,13 +28,13 @@ dirs:
 
 
 download:
-	curl https://cloud.p-fruck.de/s/pf9JfNabwDjrNL8/download/planet-coastlinespbf-cleaned.osm.pbf -o tests/data/osm/planet-coastlines.osm.pbf
+	curl $(INTERNET_OSM) -o $(NETWORK_OSM)
 
 convert:
-	cargo run --release --bin osm_geojson_converter -- --input tests/data/osm/planet-coastlines.osm.pbf --output tests/data/test_geojson/planet.geojson
+	cargo run --release --bin osm_geojson_converter -- --input $(NETWORK_OSM) --output  $(PLANET)
 
 network:
-	cargo run --release --bin preprocessor -- --input tests/data/test_geojson/planet.geojson --num-nodes 4000000 --output-network tests/data/fmi/network.fmi --output-geojson tests/data/test_geojson/network.geojson --output-image tests/data/test_geojson/network.png
+	cargo run --release --bin preprocessor -- --input $(PLANET) --num-nodes 4000000 --output-network $(NETWORK_FMI) --output-geojson $(NETWORK_GEOJSON) --output-image tests/data/test_geojson/network.png
 
 leaflet:
 	docker run -dit --name leaflet -p 8080:80 -v ./public-html:/usr/local/apache2/htdocs/ httpd:2.4
