@@ -39,16 +39,16 @@ fn main() {
 
     println!("starting hub label calculation");
     let start = Instant::now();
-    let mut hub_graph = HubGraph::new(&dijkstra, 2);
+    let hub_graph = HubGraph::new(&dijkstra, 2);
     println!("took {:?} to get hub graph", start.elapsed());
 
     println!("avg label size is {}", hub_graph.get_avg_label_size());
 
-    let start = Instant::now();
-    hub_graph.prune();
-    println!("took {:?} to prune hub graph", start.elapsed());
+    // let start = Instant::now();
+    // hub_graph.prune();
+    // println!("took {:?} to prune hub graph", start.elapsed());
 
-    println!("avg label size is {}", hub_graph.get_avg_label_size());
+    // println!("avg label size is {}", hub_graph.get_avg_label_size());
 
     {
         let writer = BufWriter::new(File::create(args.hub_graph).unwrap());

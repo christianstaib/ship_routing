@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use ahash::HashMap;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator, ProgressStyle};
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
@@ -36,6 +35,40 @@ impl Label {
         labels.shrink_to_fit();
 
         Label { label: labels }
+    }
+
+    pub fn prune_forward(&mut self, source: u32, dijkstra: &ChDijkstra) {
+        self.label = self
+            .label
+            .par_iter()
+            .progress()
+            .filter(|entry| {
+                let request = RouteRequest {
+                    source: source as u32,
+                    target: entry.id,
+                };
+                let true_cost = dijkstra.get_cost(&request).unwrap();
+                entry.cost == true_cost
+            })
+            .cloned()
+            .collect();
+    }
+
+    pub fn prune_backward(&mut self, target: u32, dijkstra: &ChDijkstra) {
+        self.label = self
+            .label
+            .par_iter()
+            .progress()
+            .filter(|entry| {
+                let request = RouteRequest {
+                    source: entry.id,
+                    target: target as u32,
+                };
+                let true_cost = dijkstra.get_cost(&request).unwrap();
+                entry.cost == true_cost
+            })
+            .cloned()
+            .collect();
     }
 
     pub fn minimal_overlapp(&self, other: &Label) -> Option<LabelEntry> {

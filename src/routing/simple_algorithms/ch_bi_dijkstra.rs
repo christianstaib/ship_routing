@@ -1,7 +1,6 @@
-use std::{
-    collections::{BinaryHeap, HashMap, HashSet},
-    usize,
-};
+use std::collections::BinaryHeap;
+
+use ahash::{HashMap, HashMapExt, HashSet, HashSetExt};
 
 use crate::routing::{
     ch::contractor::ContractedGraph,
@@ -273,6 +272,102 @@ impl ChDijkstra {
         costs
     }
 
+    /// (contact_node, cost)
+    pub fn get_cost(&self, request: &RouteRequest) -> Option<u32> {
+        let mut forward_costs = HashMap::new();
+        let mut backward_costs = HashMap::new();
+
+        let mut forward_open = BinaryHeap::new();
+        let mut backward_open = BinaryHeap::new();
+
+        let mut forward_expanded = HashSet::new();
+        let mut backward_expaned = HashSet::new();
+
+        forward_open.push(State {
+            key: 0,
+            value: request.source,
+        });
+        forward_costs.insert(request.source, 0);
+
+        backward_open.push(State {
+            key: 0,
+            value: request.target,
+        });
+        backward_costs.insert(request.target, 0);
+
+        let mut minimal_cost = u32::MAX;
+
+        while !forward_open.is_empty() || !backward_open.is_empty() {
+            if let Some(forward_state) = forward_open.pop() {
+                let current_node = forward_state.value;
+                if !forward_expanded.contains(&current_node) {
+                    forward_expanded.insert(current_node);
+
+                    if backward_expaned.contains(&current_node) {
+                        let contact_cost = forward_costs.get(&current_node).unwrap()
+                            + backward_costs.get(&current_node).unwrap();
+                        if contact_cost < minimal_cost {
+                            minimal_cost = contact_cost;
+                        }
+                    }
+
+                    self.graph
+                        .outgoing_edges(forward_state.value)
+                        .iter()
+                        .for_each(|edge| {
+                            let alternative_cost =
+                                forward_costs.get(&current_node).unwrap() + edge.cost;
+                            let current_cost =
+                                *forward_costs.get(&edge.target).unwrap_or(&u32::MAX);
+                            if alternative_cost < current_cost {
+                                forward_costs.insert(edge.target, alternative_cost);
+                                forward_open.push(State {
+                                    key: alternative_cost,
+                                    value: edge.target,
+                                });
+                            }
+                        });
+                }
+            }
+
+            if let Some(backward_state) = backward_open.pop() {
+                let current_node = backward_state.value;
+                if !backward_expaned.contains(&current_node) {
+                    backward_expaned.insert(current_node);
+
+                    if forward_expanded.contains(&current_node) {
+                        let contact_cost = forward_costs.get(&current_node).unwrap()
+                            + backward_costs.get(&current_node).unwrap();
+                        if contact_cost < minimal_cost {
+                            minimal_cost = contact_cost;
+                        }
+                    }
+
+                    self.graph
+                        .incoming_edges(backward_state.value)
+                        .iter()
+                        .for_each(|edge| {
+                            let alternative_cost =
+                                backward_costs.get(&current_node).unwrap() + edge.cost;
+                            let current_cost =
+                                *backward_costs.get(&edge.target).unwrap_or(&u32::MAX);
+                            if alternative_cost < current_cost {
+                                backward_costs.insert(edge.target, alternative_cost);
+                                backward_open.push(State {
+                                    key: alternative_cost,
+                                    value: edge.target,
+                                });
+                            }
+                        });
+                }
+            }
+        }
+
+        if minimal_cost != u32::MAX {
+            return Some(minimal_cost);
+        }
+        None
+    }
     /// (contact_node, cost)
     pub fn get_route(&self, request: &RouteRequest) -> Option<Route> {
         let mut forward_costs = HashMap::new();
