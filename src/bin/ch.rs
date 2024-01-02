@@ -11,7 +11,6 @@ use osm_test::routing::{
         contractor::Contractor,
         graph_cleaner::{remove_edge_to_self, removing_double_edges},
     },
-    fast_graph::FastGraph,
     graph::Graph,
     naive_graph::NaiveGraph,
     route::RouteValidationRequest,
@@ -42,15 +41,13 @@ fn main() {
     remove_edge_to_self(&mut graph);
 
     let start = Instant::now();
-    let contraced_graph = Contractor::get_graph_2(&graph);
+    let contracted_graph = Contractor::get_graph_2(&graph);
     println!("contracting took {:?}", start.elapsed());
 
     let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
-    serde_json::to_writer(writer, &contraced_graph).unwrap();
+    serde_json::to_writer(writer, &contracted_graph).unwrap();
 
-    let graph = FastGraph::from_graph(&contraced_graph.graph);
-    let shortcuts = &contraced_graph.map.into_iter().collect();
-    let dijkstra = ChDijkstra::new(&graph, shortcuts);
+    let dijkstra = ChDijkstra::new(&contracted_graph);
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();

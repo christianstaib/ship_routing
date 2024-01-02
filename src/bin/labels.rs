@@ -7,8 +7,8 @@ use std::{
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    ch::contractor::ContractedGraph, fast_graph::FastGraph, hl::label::HubGraph,
-    route::RouteValidationRequest, simple_algorithms::ch_bi_dijkstra::ChDijkstra,
+    ch::contractor::ContractedGraph, hl::label::HubGraph, route::RouteValidationRequest,
+    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -30,14 +30,12 @@ fn main() {
     let args = Args::parse();
 
     let reader = BufReader::new(File::open(args.contracted_graph).unwrap());
-    let contraced_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
+    let contracted_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
-    let shortcuts = &contraced_graph.map.into_iter().collect();
-    let graph = FastGraph::from_graph(&contraced_graph.graph);
-    let dijkstra = ChDijkstra::new(&graph, shortcuts);
+    let dijkstra = ChDijkstra::new(&contracted_graph);
 
     println!("starting hub label calculation");
     let start = Instant::now();

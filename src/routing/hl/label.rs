@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator, ProgressStyle};
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
@@ -75,7 +75,11 @@ impl Label {
 
 impl HubGraph {
     pub fn new(dijkstra: &ChDijkstra, depth_limit: u32) -> HubGraph {
+        let style =
+            ProgressStyle::with_template("{wide_bar} {human_pos}/{human_len} {eta_precise}")
+                .unwrap();
         let pb = ProgressBar::new((dijkstra.graph.num_nodes * 2) as u64);
+        pb.set_style(style);
         let forward_labels: Vec<_> = (0..dijkstra.graph.num_nodes)
             .into_par_iter()
             .progress_with(pb.clone())

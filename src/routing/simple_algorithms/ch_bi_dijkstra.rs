@@ -4,22 +4,22 @@ use std::{
 };
 
 use crate::routing::{
+    ch::contractor::ContractedGraph,
     fast_graph::FastGraph,
     queue::heap_queue::State,
     route::{Route, RouteRequest},
 };
 
 #[derive(Clone)]
-pub struct ChDijkstra<'a> {
-    pub graph: &'a FastGraph,
-    pub shortcuts: &'a HashMap<(u32, u32), Vec<(u32, u32)>>,
+pub struct ChDijkstra {
+    pub graph: FastGraph,
+    pub shortcuts: HashMap<(u32, u32), Vec<(u32, u32)>>,
 }
 
-impl<'a> ChDijkstra<'a> {
-    pub fn new(
-        graph: &'a FastGraph,
-        shortcuts: &'a HashMap<(u32, u32), Vec<(u32, u32)>>,
-    ) -> ChDijkstra<'a> {
+impl ChDijkstra {
+    pub fn new(contracted_grap: &ContractedGraph) -> ChDijkstra {
+        let shortcuts = contracted_grap.map.iter().cloned().collect();
+        let graph = FastGraph::from_graph(&contracted_grap.graph);
         ChDijkstra { graph, shortcuts }
     }
 
