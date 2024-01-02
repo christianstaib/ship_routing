@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::routing::{route::RouteRequest, simple_algorithms::ch_bi_dijkstra::ChDijkstra};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct LabelEntry {
     pub id: u32,
     pub cost: u32,
@@ -90,6 +90,53 @@ impl HubGraph {
         HubGraph {
             forward_labels,
             backward_labels,
+        }
+    }
+
+    pub fn get_avg_label_size(&self) -> f32 {
+        let summed_label_size: u32 = self
+            .forward_labels
+            .iter()
+            .map(|label| label.label.len() as u32)
+            .sum::<u32>()
+            + self
+                .backward_labels
+                .iter()
+                .map(|label| label.label.len() as u32)
+                .sum::<u32>();
+        summed_label_size as f32 / (2 * self.forward_labels.len()) as f32
+    }
+
+    pub fn prune(&mut self) {
+        for source in (0..self.forward_labels.len()).progress() {
+            self.forward_labels[source as usize].label = self.forward_labels[source as usize]
+                .label
+                .par_iter()
+                .filter(|entry| {
+                    let request = RouteRequest {
+                        source: source as u32,
+                        target: entry.id,
+                    };
+                    let true_cost = self.get_route(&request).unwrap().cost;
+                    entry.cost == true_cost
+                })
+                .cloned()
+                .collect();
+        }
+        for target in (0..self.backward_labels.len()).progress() {
+            self.backward_labels[target as usize].label = self.backward_labels[target as usize]
+                .label
+                .par_iter()
+                .filter(|entry| {
+                    let request = RouteRequest {
+                        source: entry.id,
+                        target: target as u32,
+                    };
+                    let true_cost = self.get_route(&request).unwrap().cost;
+                    entry.cost == true_cost
+                })
+                .cloned()
+                .collect();
         }
     }
 

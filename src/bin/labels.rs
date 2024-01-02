@@ -41,8 +41,17 @@ fn main() {
 
     println!("starting hub label calculation");
     let start = Instant::now();
-    let hub_graph = HubGraph::new(&dijkstra, 2);
+    let mut hub_graph = HubGraph::new(&dijkstra, 2);
     println!("took {:?} to get hub graph", start.elapsed());
+
+    println!("avg label size is {}", hub_graph.get_avg_label_size());
+
+    let start = Instant::now();
+    hub_graph.prune();
+    println!("took {:?} to prune hub graph", start.elapsed());
+
+    println!("avg label size is {}", hub_graph.get_avg_label_size());
+
     {
         let writer = BufWriter::new(File::create(args.hub_graph).unwrap());
         serde_json::to_writer(writer, &hub_graph).unwrap();
@@ -69,9 +78,5 @@ fn main() {
     println!(
         "took {:?} per search",
         time_hl.iter().sum::<Duration>() / time_hl.len() as u32
-    );
-    println!(
-        "took {:?} per label creation",
-        time_hl.iter().sum::<Duration>() / (2 * time_hl.len()) as u32
     );
 }
