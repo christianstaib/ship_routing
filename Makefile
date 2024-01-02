@@ -1,3 +1,20 @@
+DATA_DIR := tests/data
+OSM_DIR := $(DATA_DIR)/osm
+GEOJSON_DIR := $(DATA_DIR)/test_geojson
+FMI_DIR := $(DATA_DIR)/fmi
+
+NETWORK_FMI := $(FMI_DIR)/network.fmi
+NETWORK_CONTRACTED:= $(FMI_DIR)/network_contracted.json
+NETWORK_HUBS:= $(FMI_DIR)/network_hubs.json
+NETWORK_TESTS := $(FMI_DIR)/network_tests.json
+
+STGT_FMI := $(FMI_DIR)/stgtregbz.fmi
+STGT_CONTRACTED:= $(FMI_DIR)/stgtregbz_contracted.json
+STGT_HUBS:= $(FMI_DIR)/stgtregbz_hubs.json
+STGT_TESTS_JSON := $(FMI_DIR)/stgtregbz_tests.json
+
+NUM_TESTS := 1000
+
 dirs:
 	mkdir tests/data/test_geojson/
 	mkdir tests/data/image/
@@ -23,29 +40,24 @@ server:
 test:
 	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi --tests-path tests/data/fmi/tests.json --number-of-tests 1000
 
-create_tests:
-	cargo run --bin create_test --release -- --fmi-path tests/data/fmi/network.fmi --tests-path tests/data/fmi/network_tests.json --number-of-tests 1000
 
 create_tests_stgt:
-	cargo run --bin create_test --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --tests-path tests/data/fmi/stgtregbz_tests.json --number-of-tests 1000
+	cargo run --bin create_test --release -- --fmi-path $(STGT_FMI) --tests-path $(STGT_TESTS_JSON) --number-of-tests $(NUM_TESTS)
+
+create_tests:
+	cargo run --bin create_test --release -- --fmi-path $(NETWORK_FMI) --tests-path $(NETWORK_TESTS) --number-of-tests $(NUM_TESTS)
 
 
 test_ch_stgt:
-	cargo run --bin ch --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --contracted-graph tests/data/fmi/stgtregbz_contracted.json --test-path tests/data/fmi/stgtregbz_tests.json
+	cargo run --bin ch --release -- --fmi-path $(STGT_FMI) --contracted-graph $(STGT_CONTRACTED) --test-path $(STGT_TESTS_JSON)
 
 test_ch:
-	cargo run --bin ch --release -- --fmi-path tests/data/fmi/network.fmi --contracted-graph tests/data/fmi/network_contracted.json --test-path tests/data/fmi/network_tests.json
+	cargo run --bin ch --release -- --fmi-path $(NETWORK_FMI) --contracted-graph $(NETWORK_CONTRACTED) --test-path $(NETWORK_TESTS)
 
 
 test_labels_stgt:
-	cargo run --bin labels --release -- --contracted-graph tests/data/fmi/stgtregbz_contracted.json --test-path tests/data/fmi/stgtregbz_tests.json
+	cargo run --bin labels --release -- --contracted-graph $(STGT_CONTRACTED) --hub-graph $(STGT_HUBS) --test-path $(STGT_TESTS_JSON)
 
 test_labels:
-	cargo run --bin labels --release -- --contracted-graph tests/data/fmi/network_contracted.json --test-path tests/data/fmi/network_tests.json
+	cargo run --bin labels --release -- --contracted-graph $(NETWORK_CONTRACTED) --hub-graph $(NETWORK_HUBS) --test-path $(NETWORK_TESTS)
 
-
-test_better_labels:
-	cargo run --bin better_labels --release -- --fmi-path tests/data/fmi/stgtregbz.fmi --test-path tests/data/fmi/stgtregbz_tests.json
-
-test_labels_network:
-	cargo run --bin labels --release -- --fmi-path tests/data/fmi/network.fmi --test-path tests/data/fmi/tests.json

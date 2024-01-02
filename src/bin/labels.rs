@@ -10,7 +10,6 @@ use osm_test::routing::{
     ch::contractor::ContractedGraph, fast_graph::FastGraph, hl::label::HubGraph,
     route::RouteValidationRequest, simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
-use rayon::iter::ParallelIterator;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -19,6 +18,9 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     contracted_graph: String,
+    /// Path of .fmi file
+    #[arg(short, long)]
+    hub_graph: String,
     /// Path of .fmi file
     #[arg(short, long)]
     test_path: String,
@@ -42,7 +44,7 @@ fn main() {
     let hub_graph = HubGraph::new(&dijkstra, 2);
     println!("took {:?} to get hub graph", start.elapsed());
     {
-        let writer = BufWriter::new(File::create("hub_graph.json").unwrap());
+        let writer = BufWriter::new(File::create(args.hub_graph).unwrap());
         serde_json::to_writer(writer, &hub_graph).unwrap();
     }
 
