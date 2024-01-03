@@ -112,7 +112,6 @@ impl HubGraph {
             ProgressStyle::with_template("{wide_bar} {human_pos}/{human_len} {eta_precise}")
                 .unwrap();
         let pb = ProgressBar::new((dijkstra.graph.num_nodes * 2) as u64);
-        let mut i = 0;
         pb.set_style(style);
         let forward_labels = (0..dijkstra.graph.num_nodes)
             .into_par_iter()

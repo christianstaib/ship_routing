@@ -24,6 +24,9 @@ struct Args {
     /// Path of .fmi file
     #[arg(short, long)]
     test_path: String,
+    /// Path of .fmi file
+    #[arg(short, long)]
+    hop_limit: u32,
 }
 
 fn main() {
@@ -39,7 +42,7 @@ fn main() {
 
     println!("starting hub label calculation");
     let start = Instant::now();
-    let hub_graph = HubGraph::new(&dijkstra, 2);
+    let hub_graph = HubGraph::new(&dijkstra, args.hop_limit);
     println!("took {:?} to get hub graph", start.elapsed());
 
     println!("avg label size is {}", hub_graph.get_avg_label_size());
