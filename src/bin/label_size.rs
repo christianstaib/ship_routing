@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::Parser;
-use indicatif::ParallelProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressIterator};
 use osm_test::routing::{
     ch::contractor::ContractedGraph, hl::label::Label, route::RouteValidationRequest,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
@@ -50,9 +50,8 @@ fn main() {
             // f_label.prune_forward(test.request.source, &dijkstra);
             // b_label.prune_backward(test.request.target, &dijkstra);
 
-            vec![f_label.label.len(), b_label.label.len()]
+            vec![f_label, b_label]
         })
-        .flatten()
         .collect();
     println!(
         "took {:?}, which is {:?} for all nodes",
@@ -63,8 +62,40 @@ fn main() {
         )
     );
 
+    let mut time_hl = Vec::new();
+    tests
+        .iter()
+        .zip(label_size.iter())
+        .progress()
+        .for_each(|(test, labels)| {
+            let start = Instant::now();
+            let minimal_overlapp = labels[0].minimal_overlapp(&labels[1]);
+            time_hl.push(start.elapsed());
+
+            if let Some(true_cost) = test.cost {
+                let my_cost = minimal_overlapp.unwrap().cost;
+                assert_eq!(
+                    my_cost, true_cost,
+                    "should be {} but is {}",
+                    true_cost, my_cost
+                );
+            } else {
+                assert!(minimal_overlapp.is_none());
+            }
+        });
+
+    println!(
+        "took {:?} per search",
+        time_hl.iter().sum::<Duration>() / time_hl.len() as u32
+    );
+
     println!(
         "avg label size is {:?} ",
-        label_size.iter().sum::<usize>() as f32 / label_size.len() as f32
+        label_size
+            .iter()
+            .flatten()
+            .map(|label| label.label.len())
+            .sum::<usize>() as f32
+            / label_size.iter().flatten().count() as f32
     );
 }
