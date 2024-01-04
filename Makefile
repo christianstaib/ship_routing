@@ -72,7 +72,7 @@ labels_test_stgt:
 	cargo run --bin labels_test --release -- --hub-graph $(STGT_HUBS) --test-path $(STGT_TESTS_JSON)
 
 labels_test:
-	cargo run --bin labels_test --release -- -hub-graph $(NETWORK_HUBS) --test-path $(NETWORK_TESTS)
+	cargo run --bin labels_test --release -- --hub-graph $(NETWORK_HUBS) --test-path $(NETWORK_TESTS)
 
 
 labels_size_stgt:
