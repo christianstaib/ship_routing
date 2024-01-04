@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::Parser;
-use osm_test::routing::{ch::contractor::ContractedGraph, hl::label::HubGraph};
+use osm_test::routing::hl::label::HubGraph;
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]

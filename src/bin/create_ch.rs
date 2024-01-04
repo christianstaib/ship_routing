@@ -1,11 +1,6 @@
-use std::{
-    fs::File,
-    io::{BufReader, BufWriter},
-    time::{Duration, Instant},
-};
+use std::{fs::File, io::BufWriter, time::Instant};
 
 use clap::Parser;
-use indicatif::ProgressIterator;
 use osm_test::routing::{
     ch::{
         contractor::Contractor,
@@ -13,8 +8,6 @@ use osm_test::routing::{
     },
     graph::Graph,
     naive_graph::NaiveGraph,
-    route::RouteValidationRequest,
-    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
 /// Starts a routing service on localhost:3030/route
@@ -46,28 +39,4 @@ fn main() {
 
     let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
     bincode::serialize_into(writer, &contracted_graph).unwrap();
-
-    let dijkstra = ChDijkstra::new(&contracted_graph);
-
-    let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
-    let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
-
-    let mut times = Vec::new();
-    for test in tests.iter().progress() {
-        let before = Instant::now();
-        let route = dijkstra.get_route(&test.request);
-        times.push(before.elapsed());
-
-        let mut cost = None;
-        if let Some(route) = route {
-            cost = Some(route.cost);
-        }
-        assert_eq!(cost, test.cost);
-    }
-
-    println!("all correct");
-    println!(
-        "average time was {:?}",
-        times.iter().sum::<Duration>() / times.len() as u32
-    );
 }

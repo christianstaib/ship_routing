@@ -9,15 +9,15 @@ PLANET := $(GEOJSON_DIR)/planet.geojson
 NETWORK_GEOJSON := $(GEOJSON_DIR)/network.geojson
 
 NETWORK_FMI := $(FMI_DIR)/network.fmi
-NETWORK_CONTRACTED:= $(FMI_DIR)/network_contracted.json
-NETWORK_HUBS:= $(FMI_DIR)/network_hubs.json
-NETWORK_HUBS_PRUNED:= $(FMI_DIR)/network_hubs_pruned.json
+NETWORK_CONTRACTED:= $(FMI_DIR)/network_contracted.bincode
+NETWORK_HUBS:= $(FMI_DIR)/network_hubs.bincode
+NETWORK_HUBS_PRUNED:= $(FMI_DIR)/network_hubs_pruned.bincode
 NETWORK_TESTS := $(FMI_DIR)/network_tests.json
 
 STGT_FMI := $(FMI_DIR)/stgtregbz.fmi
-STGT_CONTRACTED:= $(FMI_DIR)/stgtregbz_contracted.json
-STGT_HUBS:= $(FMI_DIR)/stgtregbz_hubs.json
-STGT_HUBS_PRUNED:= $(FMI_DIR)/stgtregbz_hubs_pruned.json
+STGT_CONTRACTED:= $(FMI_DIR)/stgtregbz_contracted.bincode
+STGT_HUBS:= $(FMI_DIR)/stgtregbz_hubs.bincode
+STGT_HUBS_PRUNED:= $(FMI_DIR)/stgtregbz_hubs_pruned.bincode
 STGT_TESTS_JSON := $(FMI_DIR)/stgtregbz_tests.json
 
 NUM_TESTS := 10000

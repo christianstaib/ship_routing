@@ -1,19 +1,13 @@
 use std::{
     fs::File,
-    io::{BufReader, BufWriter},
+    io::BufReader,
     time::{Duration, Instant},
 };
 
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    ch::{
-        contractor::{ContractedGraph, Contractor},
-        graph_cleaner::{remove_edge_to_self, removing_double_edges},
-    },
-    graph::Graph,
-    naive_graph::NaiveGraph,
-    route::RouteValidationRequest,
+    ch::contractor::ContractedGraph, route::RouteValidationRequest,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 
@@ -37,7 +31,7 @@ fn main() {
     let dijkstra = ChDijkstra::new(&contracted_graph);
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
-    let tests: Vec<RouteValidationRequest> = bincode::deserialize_from(reader).unwrap();
+    let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
     let mut times = Vec::new();
     for test in tests.iter().progress() {
