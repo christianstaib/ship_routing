@@ -75,6 +75,13 @@ labels_test:
 	cargo run --bin labels_test --release -- --hub-graph $(NETWORK_HUBS) --test-path $(NETWORK_TESTS)
 
 
+labels_prune_stgt:
+	cargo run --bin labels_prune --release -- --hub-graph $(STGT_HUBS) --test-path $(STGT_TESTS_JSON)
+
+labels_prune:
+	cargo run --bin labels_prune --release -- --hub-graph $(NETWORK_HUBS) --test-path $(NETWORK_TESTS)
+
+
 labels_size_stgt:
 	cargo run --bin label_size --release -- --contracted-graph $(STGT_CONTRACTED) --test-path $(STGT_TESTS_JSON) --hop-limit $(HOP_LIMIT)
 
