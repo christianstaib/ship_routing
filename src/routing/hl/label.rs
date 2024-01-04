@@ -45,7 +45,7 @@ impl Label {
             .progress()
             .filter(|entry| {
                 let request = RouteRequest {
-                    source: source as u32,
+                    source,
                     target: entry.id,
                 };
                 let true_cost = dijkstra.get_cost(&request).unwrap();
@@ -63,7 +63,7 @@ impl Label {
             .filter(|entry| {
                 let request = RouteRequest {
                     source: entry.id,
-                    target: target as u32,
+                    target,
                 };
                 let true_cost = dijkstra.get_cost(&request).unwrap();
                 entry.cost == true_cost
@@ -147,7 +147,7 @@ impl HubGraph {
 
     pub fn prune(&mut self) {
         for source in (0..self.forward_labels.len()).progress() {
-            self.forward_labels[source as usize].label = self.forward_labels[source as usize]
+            self.forward_labels[source].label = self.forward_labels[source]
                 .label
                 .par_iter()
                 .filter(|entry| {
@@ -162,7 +162,7 @@ impl HubGraph {
                 .collect();
         }
         for target in (0..self.backward_labels.len()).progress() {
-            self.backward_labels[target as usize].label = self.backward_labels[target as usize]
+            self.backward_labels[target].label = self.backward_labels[target]
                 .label
                 .par_iter()
                 .filter(|entry| {

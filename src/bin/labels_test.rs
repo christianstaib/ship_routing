@@ -1,14 +1,13 @@
 use std::{
     fs::File,
-    io::{BufRead, BufReader, BufWriter},
+    io::{BufReader},
     time::{Duration, Instant},
 };
 
 use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
-    ch::contractor::ContractedGraph, hl::label::HubGraph, route::RouteValidationRequest,
-    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
+    hl::label::HubGraph, route::RouteValidationRequest,
 };
 
 /// Starts a routing service on localhost:3030/route
