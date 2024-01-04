@@ -19,7 +19,7 @@ STGT_HUBS:= $(FMI_DIR)/stgtregbz_hubs.json
 STGT_TESTS_JSON := $(FMI_DIR)/stgtregbz_tests.json
 
 NUM_TESTS := 1000
-HOP_LIMIT := 3
+HOP_LIMIT := 2
 
 dirs:
 	mkdir tests/data/test_geojson/
@@ -66,6 +66,13 @@ labels_stgt:
 
 labels:
 	cargo run --bin labels --release -- --contracted-graph $(NETWORK_CONTRACTED) --hub-graph $(NETWORK_HUBS) --test-path $(NETWORK_TESTS) --hop-limit 1
+
+
+labels_test_stgt:
+	cargo run --bin labels_test --release -- --hub-graph $(STGT_HUBS) --test-path $(STGT_TESTS_JSON)
+
+labels_test:
+	cargo run --bin labels_test --release -- -hub-graph $(NETWORK_HUBS) --test-path $(NETWORK_TESTS)
 
 
 labels_size_stgt:
