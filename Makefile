@@ -56,37 +56,37 @@ create_tests:
 	cargo run --bin create_test --release -- --fmi-path $(NETWORK_FMI) --tests-path $(NETWORK_TESTS) --number-of-tests $(NUM_TESTS)
 
 
-test_ch_stgt:
+create_ch_stgt:
 	cargo run --bin ch --release -- --fmi-path $(STGT_FMI) --contracted-graph $(STGT_CONTRACTED) --test-path $(STGT_TESTS_JSON)
 
-test_ch:
+create_ch:
 	cargo run --bin ch --release -- --fmi-path $(NETWORK_FMI) --contracted-graph $(NETWORK_CONTRACTED) --test-path $(NETWORK_TESTS)
 
 
-labels_stgt:
+create_hl_stgt:
 	cargo run --bin labels --release -- --contracted-graph $(STGT_CONTRACTED) --hub-graph $(STGT_HUBS) --hop-limit $(HOP_LIMIT)
 
-labels:
+create_hl:
 	cargo run --bin labels --release -- --contracted-graph $(NETWORK_CONTRACTED) --hub-graph $(NETWORK_HUBS) --hop-limit $(HOP_LIMIT)
 
 
-labels_test_stgt:
+test_hl_stgt:
 	cargo run --bin labels_test --release -- --hub-graph $(STGT_HUBS) --test-path $(STGT_TESTS_JSON)
 
-labels_test:
+test_hl:
 	cargo run --bin labels_test --release -- --hub-graph $(NETWORK_HUBS) --test-path $(NETWORK_TESTS)
 
 
-labels_prune_stgt:
+prune_hl_stgt:
 	cargo run --bin labels_prune --release -- --hub-graph $(STGT_HUBS) --pruned-hub-graph $(STGT_HUBS_PRUNED) --test-path $(STGT_TESTS_JSON)
 
-labels_prune:
+prune_hl:
 	cargo run --bin labels_prune --release -- --hub-graph $(NETWORK_HUBS) --pruned-hub-graph $(NETWORK_HUBS_PRUNED) --test-path $(NETWORK_TESTS)
 
 
-labels_size_stgt:
+predict_hl:
 	cargo run --bin label_size --release -- --contracted-graph $(STGT_CONTRACTED) --test-path $(STGT_TESTS_JSON) --hop-limit $(HOP_LIMIT)
 
-labels_size:
+predict_hl:
 	cargo run --bin label_size --release -- --contracted-graph $(NETWORK_CONTRACTED) --test-path $(NETWORK_TESTS) --hop-limit $(HOP_LIMIT)
 
