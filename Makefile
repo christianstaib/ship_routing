@@ -62,10 +62,10 @@ test_ch:
 
 
 labels_stgt:
-	cargo run --bin labels --release -- --contracted-graph $(STGT_CONTRACTED) --hub-graph $(STGT_HUBS) --test-path $(STGT_TESTS_JSON) --hop-limit 1
+	cargo run --bin labels --release -- --contracted-graph $(STGT_CONTRACTED) --hub-graph $(STGT_HUBS) --hop-limit $(HOP_LIMIT)
 
 labels:
-	cargo run --bin labels --release -- --contracted-graph $(NETWORK_CONTRACTED) --hub-graph $(NETWORK_HUBS) --test-path $(NETWORK_TESTS) --hop-limit 1
+	cargo run --bin labels --release -- --contracted-graph $(NETWORK_CONTRACTED) --hub-graph $(NETWORK_HUBS) --hop-limit $(HOP_LIMIT)
 
 
 labels_test_stgt:
