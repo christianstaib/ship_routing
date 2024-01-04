@@ -132,16 +132,16 @@ impl HubGraph {
     }
 
     pub fn get_avg_label_size(&self) -> f32 {
-        let summed_label_size: u32 = self
+        let summed_label_size: u64 = self
             .forward_labels
             .iter()
-            .map(|label| label.label.len() as u32)
-            .sum::<u32>()
+            .map(|label| label.label.len() as u64)
+            .sum::<u64>()
             + self
                 .backward_labels
                 .iter()
-                .map(|label| label.label.len() as u32)
-                .sum::<u32>();
+                .map(|label| label.label.len() as u64)
+                .sum::<u64>();
         summed_label_size as f32 / (2 * self.forward_labels.len()) as f32
     }
 
