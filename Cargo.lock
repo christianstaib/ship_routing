@@ -1167,6 +1167,7 @@ dependencies = [
  "clap",
  "env_logger",
  "geojson",
+ "humantime",
  "image",
  "imageproc",
  "indicatif",

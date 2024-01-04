@@ -72,7 +72,7 @@ impl Label {
             .collect();
     }
 
-    pub fn minimal_overlapp(&self, other: &Label) -> Option<LabelEntry> {
+    pub fn get_cost(&self, other: &Label) -> Option<u32> {
         let mut i_self = 0;
         let mut i_other = 0;
 
@@ -100,7 +100,7 @@ impl Label {
         }
 
         if cost != u32::MAX {
-            return Some(LabelEntry { id, cost });
+            return Some(cost);
         }
 
         None
@@ -181,6 +181,6 @@ impl HubGraph {
     pub fn get_cost(&self, request: &RouteRequest) -> Option<u32> {
         let forward_label = self.forward_labels.get(request.source as usize)?;
         let backward_label = self.backward_labels.get(request.target as usize)?;
-        Some(forward_label.minimal_overlapp(backward_label)?.cost)
+        forward_label.get_cost(backward_label)
     }
 }

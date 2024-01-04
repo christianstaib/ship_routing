@@ -5,6 +5,7 @@ use std::{
 };
 
 use clap::Parser;
+use humantime::format_duration;
 use indicatif::{ParallelProgressIterator, ProgressIterator};
 use osm_test::routing::{
     ch::contractor::ContractedGraph, hl::label::Label, route::RouteValidationRequest,
@@ -43,20 +44,22 @@ fn main() {
         .par_iter()
         .progress()
         .map(|test| {
-            let f_label =
-                Label::new(&dijkstra.get_forward_label(test.request.source, args.hop_limit));
-            let b_label =
-                Label::new(&dijkstra.get_backward_label(test.request.target, args.hop_limit));
+            let request = &test.request;
+            let f_label = Label::new(&dijkstra.get_forward_label(request.source, args.hop_limit));
+            let b_label = Label::new(&dijkstra.get_backward_label(request.target, args.hop_limit));
 
             vec![f_label, b_label]
         })
         .collect();
+    let num_nodes = contracted_graph.graph.forward_edges.len();
+    let duration = start.elapsed().as_secs_f32();
+    let duration = duration / tests.len() as f32 * num_nodes as f32;
+    let duration = Duration::from_secs_f32(duration.round());
+
     println!(
-        "Generating hl will take approx {:?}",
-        Duration::from_secs_f32(
-            start.elapsed().as_secs_f32() / tests.len() as f32
-                * contracted_graph.graph.forward_edges.len() as f32
-        )
+        "Generating hl will take approx {:?}, which {}",
+        duration,
+        format_duration(duration).to_string()
     );
 
     let mut time_hl = Vec::new();
@@ -66,19 +69,10 @@ fn main() {
         .progress()
         .for_each(|(test, labels)| {
             let start = Instant::now();
-            let minimal_overlapp = labels[0].minimal_overlapp(&labels[1]);
+            let cost = labels[0].get_cost(&labels[1]);
             time_hl.push(start.elapsed());
 
-            if let Some(true_cost) = test.cost {
-                let my_cost = minimal_overlapp.unwrap().cost;
-                assert_eq!(
-                    my_cost, true_cost,
-                    "should be {} but is {}",
-                    true_cost, my_cost
-                );
-            } else {
-                assert!(minimal_overlapp.is_none());
-            }
+            assert_eq!(cost, test.cost);
         });
 
     println!(
