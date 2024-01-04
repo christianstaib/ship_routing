@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::{BufReader, BufWriter},
-    time::{Instant},
+    time::Instant,
 };
 
 use clap::Parser;
@@ -10,6 +10,7 @@ use osm_test::routing::{
     ch::contractor::ContractedGraph, hl::label::HubGraph,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
+use speedy::{Readable, Writable};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -40,6 +41,14 @@ fn main() {
     println!("took {:?} to get hub graph", start.elapsed());
 
     println!("avg label size is {}", hub_graph.get_avg_label_size());
+
+    let start = Instant::now();
+    hub_graph.write_to_file("test.speedy").unwrap();
+    println!("speedy: took {:?} to write pruned graph", start.elapsed());
+
+    let start = Instant::now();
+    let _ = HubGraph::read_from_file("test.speedy").unwrap();
+    println!("speedy: took {:?} to read pruned graph", start.elapsed());
 
     let writer = BufWriter::new(File::create(args.hub_graph.as_str()).unwrap());
     serde_json::to_writer(writer, &hub_graph).unwrap();
