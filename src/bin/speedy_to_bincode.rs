@@ -5,7 +5,7 @@ use std::{
 };
 
 use clap::Parser;
-use osm_test::routing::ch::contractor::ContractedGraph;
+use osm_test::routing::{ch::contractor::ContractedGraph, hl::label::HubGraph};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -24,7 +24,7 @@ fn main() {
 
     let start = Instant::now();
     let reader = BufReader::new(File::open(args.contracted_graph_json).unwrap());
-    let contracted_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
+    let contracted_graph: HubGraph = serde_json::from_reader(reader).unwrap();
     println!("took {:?} to read from serde", start.elapsed());
 
     let start = Instant::now();
