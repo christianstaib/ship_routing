@@ -39,11 +39,21 @@ fn main() {
 
     let start = Instant::now();
     hub_graph.write_to_file("test.speedy").unwrap();
-    println!("speedy: took {:?} to write pruned graph", start.elapsed());
+    println!("speedy: took {:?} to write graph", start.elapsed());
 
     let start = Instant::now();
     let _ = HubGraph::read_from_file("test.speedy").unwrap();
-    println!("speedy: took {:?} to read pruned graph", start.elapsed());
+    println!("speedy: took {:?} to read graph", start.elapsed());
+
+    let start = Instant::now();
+    let writer = BufWriter::new(File::create("test.bincode").unwrap());
+    bincode::serialize_into(writer, &hub_graph).unwrap();
+    println!("bincode: took {:?} to write graph", start.elapsed());
+
+    let start = Instant::now();
+    let reader = BufReader::new(File::open("test.bincode").unwrap());
+    let _: HubGraph = bincode::deserialize_from(reader).unwrap();
+    println!("bincode: took {:?} to read graph", start.elapsed());
 
     hub_graph.prune();
 
