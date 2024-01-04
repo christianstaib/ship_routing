@@ -33,9 +33,7 @@ fn main() {
     let start = Instant::now();
     let reader = BufReader::new(File::open(args.hub_graph).unwrap());
     let mut hub_graph: HubGraph = serde_json::from_reader(reader).unwrap();
-    println!("took {:?} to read graph", start.elapsed());
-
-    println!("avg label size is {}", hub_graph.get_avg_label_size());
+    println!("serde: took {:?} to read graph", start.elapsed());
 
     let start = Instant::now();
     hub_graph.write_to_file("test.speedy").unwrap();
@@ -55,8 +53,8 @@ fn main() {
     let _: HubGraph = bincode::deserialize_from(reader).unwrap();
     println!("bincode: took {:?} to read graph", start.elapsed());
 
+    println!("avg label size is {}", hub_graph.get_avg_label_size());
     hub_graph.prune();
-
     println!("avg label size is {}", hub_graph.get_avg_label_size());
 
     let start = Instant::now();

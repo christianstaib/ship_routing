@@ -63,6 +63,13 @@ create_ch:
 	cargo run --bin create_ch --release -- --fmi-path $(NETWORK_FMI) --contracted-graph $(NETWORK_CONTRACTED) --test-path $(NETWORK_TESTS)
 
 
+test_ch_stgt:
+	cargo run --bin test_ch --release -- --contracted-graph $(STGT_CONTRACTED) --test-path $(STGT_TESTS_JSON)
+
+test_ch:
+	cargo run --bin test_ch --release -- --contracted-graph $(NETWORK_CONTRACTED) --test-path $(NETWORK_TESTS)
+
+
 create_hl_stgt:
 	cargo run --bin create_hl --release -- --contracted-graph $(STGT_CONTRACTED) --hub-graph $(STGT_HUBS) --hop-limit $(HOP_LIMIT)
 

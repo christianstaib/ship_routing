@@ -8,7 +8,7 @@ use clap::Parser;
 use indicatif::ProgressIterator;
 use osm_test::routing::{
     ch::{
-        contractor::Contractor,
+        contractor::{ContractedGraph, Contractor},
         graph_cleaner::{remove_edge_to_self, removing_double_edges},
     },
     graph::Graph,
@@ -21,9 +21,6 @@ use osm_test::routing::{
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Path of .fmi file
-    #[arg(short, long)]
-    fmi_path: String,
     /// Path of contracted_graph (output)
     #[arg(short, long)]
     contracted_graph: String,
@@ -35,18 +32,8 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let naive_graph = NaiveGraph::from_file(args.fmi_path.as_str());
-    let mut graph = Graph::from_naive_graph(&naive_graph);
-    removing_double_edges(&mut graph);
-    remove_edge_to_self(&mut graph);
-
-    let start = Instant::now();
-    let contracted_graph = Contractor::get_graph_2(&graph);
-    println!("contracting took {:?}", start.elapsed());
-
-    let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
-    bincode::serialize_into(writer, &contracted_graph).unwrap();
-
+    let reader = BufReader::new(File::open(args.contracted_graph).unwrap());
+    let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
     let dijkstra = ChDijkstra::new(&contracted_graph);
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
