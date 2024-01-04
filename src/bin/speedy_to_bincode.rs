@@ -5,20 +5,30 @@ use std::{
 };
 
 use clap::Parser;
+use osm_test::routing::ch::contractor::ContractedGraph;
 
-use osm_test::routing::{
-    ch::contractor::ContractedGraph, hl::label::HubGraph,
-    simple_algorithms::ch_bi_dijkstra::ChDijkstra,
-};
-use speedy::Readable;
+/// Starts a routing service on localhost:3030/route
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Path of .fmi file
+    #[arg(short, long)]
+    contracted_graph_json: String,
+    /// Path of .fmi file
+    #[arg(short, long)]
+    contracted_graph_bincode: String,
+}
 
 fn main() {
-    let start = Instant::now();
-    let contracted_graph: ContractedGraph = ContractedGraph::read_from_file("test.speedy").unwrap();
-    println!("took {:?} to read from speedy", start.elapsed());
+    let args = Args::parse();
 
     let start = Instant::now();
-    let writer = BufWriter::new(File::create("test.bincode").unwrap());
+    let reader = BufReader::new(File::open(args.contracted_graph_json).unwrap());
+    let contracted_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
+    println!("took {:?} to read from serde", start.elapsed());
+
+    let start = Instant::now();
+    let writer = BufWriter::new(File::create(args.contracted_graph_bincode).unwrap());
     bincode::serialize_into(writer, &contracted_graph).unwrap();
     println!("took {:?} to write to bincode", start.elapsed());
 }
