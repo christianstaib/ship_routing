@@ -2,21 +2,22 @@ use ahash::HashMap;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator, ProgressStyle};
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
+use speedy::{Readable, Writable};
 
 use crate::routing::{route::RouteRequest, simple_algorithms::ch_bi_dijkstra::ChDijkstra};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Readable, Writable)]
 pub struct LabelEntry {
     pub id: u32,
     pub cost: u32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Readable, Writable)]
 pub struct Label {
     pub label: Vec<LabelEntry>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Readable, Writable)]
 pub struct HubGraph {
     pub forward_labels: Vec<Label>,
     pub backward_labels: Vec<Label>,
