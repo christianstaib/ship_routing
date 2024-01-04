@@ -20,6 +20,9 @@ struct Args {
     hub_graph: String,
     /// Path of .fmi file
     #[arg(short, long)]
+    pruned_hub_graph: String,
+    /// Path of .fmi file
+    #[arg(short, long)]
     test_path: String,
 }
 
@@ -37,6 +40,9 @@ fn main() {
     hub_graph.prune();
 
     println!("avg label size is {}", hub_graph.get_avg_label_size());
+
+    let writer = BufWriter::new(File::create(args.pruned_hub_graph).unwrap());
+    serde_json::to_writer(writer, &hub_graph).unwrap();
 
     let mut time_hl = Vec::new();
     tests.iter().progress().for_each(|test| {

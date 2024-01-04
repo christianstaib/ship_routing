@@ -11,11 +11,13 @@ NETWORK_GEOJSON := $(GEOJSON_DIR)/network.geojson
 NETWORK_FMI := $(FMI_DIR)/network.fmi
 NETWORK_CONTRACTED:= $(FMI_DIR)/network_contracted.json
 NETWORK_HUBS:= $(FMI_DIR)/network_hubs.json
+NETWORK_HUBS_PRUNED:= $(FMI_DIR)/network_hubs_pruned.json
 NETWORK_TESTS := $(FMI_DIR)/network_tests.json
 
 STGT_FMI := $(FMI_DIR)/stgtregbz.fmi
 STGT_CONTRACTED:= $(FMI_DIR)/stgtregbz_contracted.json
 STGT_HUBS:= $(FMI_DIR)/stgtregbz_hubs.json
+STGT_HUBS_PRUNED:= $(FMI_DIR)/stgtregbz_hubs_pruned.json
 STGT_TESTS_JSON := $(FMI_DIR)/stgtregbz_tests.json
 
 NUM_TESTS := 1000
@@ -76,10 +78,10 @@ labels_test:
 
 
 labels_prune_stgt:
-	cargo run --bin labels_prune --release -- --hub-graph $(STGT_HUBS) --test-path $(STGT_TESTS_JSON)
+	cargo run --bin labels_prune --release -- --hub-graph $(STGT_HUBS) --pruned-hub-graph $(STGT_HUBS_PRUNED) --test-path $(STGT_TESTS_JSON)
 
 labels_prune:
-	cargo run --bin labels_prune --release -- --hub-graph $(NETWORK_HUBS) --test-path $(NETWORK_TESTS)
+	cargo run --bin labels_prune --release -- --hub-graph $(NETWORK_HUBS) --pruned_hub_graph $(NETWORK_HUBS_PRUNED) --test-path $(NETWORK_TESTS)
 
 
 labels_size_stgt:
