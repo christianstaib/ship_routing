@@ -81,7 +81,7 @@ labels_prune_stgt:
 	cargo run --bin labels_prune --release -- --hub-graph $(STGT_HUBS) --pruned-hub-graph $(STGT_HUBS_PRUNED) --test-path $(STGT_TESTS_JSON)
 
 labels_prune:
-	cargo run --bin labels_prune --release -- --hub-graph $(NETWORK_HUBS) --pruned_hub_graph $(NETWORK_HUBS_PRUNED) --test-path $(NETWORK_TESTS)
+	cargo run --bin labels_prune --release -- --hub-graph $(NETWORK_HUBS) --pruned-hub-graph $(NETWORK_HUBS_PRUNED) --test-path $(NETWORK_TESTS)
 
 
 labels_size_stgt:
