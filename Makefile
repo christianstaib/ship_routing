@@ -21,7 +21,7 @@ STGT_HUBS_PRUNED:= $(FMI_DIR)/stgtregbz_hubs_pruned.json
 STGT_TESTS_JSON := $(FMI_DIR)/stgtregbz_tests.json
 
 NUM_TESTS := 1000
-HOP_LIMIT := 0
+HOP_LIMIT := 3
 
 dirs:
 	mkdir tests/data/test_geojson/

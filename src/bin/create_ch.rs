@@ -42,7 +42,7 @@ fn main() {
 
     let start = Instant::now();
     let contracted_graph = Contractor::get_graph_2(&graph);
-    println!("contracting took {:?}", start.elapsed());
+    println!("Generating ch took {:?}", start.elapsed());
 
     let writer = BufWriter::new(File::create(args.contracted_graph).unwrap());
     bincode::serialize_into(writer, &contracted_graph).unwrap();

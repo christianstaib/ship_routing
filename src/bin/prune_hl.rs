@@ -30,32 +30,10 @@ fn main() {
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
-    let start = Instant::now();
     let reader = BufReader::new(File::open(args.hub_graph).unwrap());
-    let mut hub_graph: HubGraph = serde_json::from_reader(reader).unwrap();
-    println!("serde: took {:?} to read graph", start.elapsed());
+    let mut hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
 
-    let start = Instant::now();
-    hub_graph.write_to_file("test.speedy").unwrap();
-    println!("speedy: took {:?} to write graph", start.elapsed());
-
-    let start = Instant::now();
-    let _ = HubGraph::read_from_file("test.speedy").unwrap();
-    println!("speedy: took {:?} to read graph", start.elapsed());
-
-    let start = Instant::now();
-    let writer = BufWriter::new(File::create("test.bincode").unwrap());
-    bincode::serialize_into(writer, &hub_graph).unwrap();
-    println!("bincode: took {:?} to write graph", start.elapsed());
-
-    let start = Instant::now();
-    let reader = BufReader::new(File::open("test.bincode").unwrap());
-    let _: HubGraph = bincode::deserialize_from(reader).unwrap();
-    println!("bincode: took {:?} to read graph", start.elapsed());
-
-    println!("avg label size is {}", hub_graph.get_avg_label_size());
     hub_graph.prune();
-    println!("avg label size is {}", hub_graph.get_avg_label_size());
 
     let start = Instant::now();
     let writer = BufWriter::new(File::create(args.pruned_hub_graph).unwrap());
@@ -65,19 +43,10 @@ fn main() {
     let mut time_hl = Vec::new();
     tests.iter().progress().for_each(|test| {
         let start = Instant::now();
-        let minimal_overlapp = hub_graph.get_route(&test.request);
+        let cost = hub_graph.get_cost(&test.request);
         time_hl.push(start.elapsed());
 
-        if let Some(true_cost) = test.cost {
-            let my_cost = minimal_overlapp.unwrap().cost;
-            assert_eq!(
-                my_cost, true_cost,
-                "should be {} but is {}",
-                true_cost, my_cost
-            );
-        } else {
-            assert!(minimal_overlapp.is_none());
-        }
+        assert_eq!(cost, test.cost);
     });
 
     println!("all correct");

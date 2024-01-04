@@ -37,18 +37,14 @@ fn main() {
     let dijkstra = ChDijkstra::new(&contracted_graph);
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
-    let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
+    let tests: Vec<RouteValidationRequest> = bincode::deserialize_from(reader).unwrap();
 
     let mut times = Vec::new();
     for test in tests.iter().progress() {
         let before = Instant::now();
-        let route = dijkstra.get_route(&test.request);
+        let cost = dijkstra.get_cost(&test.request);
         times.push(before.elapsed());
 
-        let mut cost = None;
-        if let Some(route) = route {
-            cost = Some(route.cost);
-        }
         assert_eq!(cost, test.cost);
     }
 

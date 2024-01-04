@@ -31,7 +31,7 @@ fn main() {
     let args = Args::parse();
 
     let reader = BufReader::new(File::open(args.contracted_graph).unwrap());
-    let contracted_graph: ContractedGraph = serde_json::from_reader(reader).unwrap();
+    let contracted_graph: ContractedGraph = bincode::deserialize_from(reader).unwrap();
 
     let reader = BufReader::new(File::open(args.test_path.as_str()).unwrap());
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
@@ -47,15 +47,12 @@ fn main() {
                 Label::new(&dijkstra.get_forward_label(test.request.source, args.hop_limit));
             let b_label =
                 Label::new(&dijkstra.get_backward_label(test.request.target, args.hop_limit));
-            // f_label.prune_forward(test.request.source, &dijkstra);
-            // b_label.prune_backward(test.request.target, &dijkstra);
 
             vec![f_label, b_label]
         })
         .collect();
     println!(
-        "took {:?}, which is {:?} for all nodes",
-        start.elapsed(),
+        "Generating hl will take approx {:?}",
         Duration::from_secs_f32(
             start.elapsed().as_secs_f32() / tests.len() as f32
                 * contracted_graph.graph.forward_edges.len() as f32

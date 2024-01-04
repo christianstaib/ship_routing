@@ -155,7 +155,7 @@ impl HubGraph {
                         source: source as u32,
                         target: entry.id,
                     };
-                    let true_cost = self.get_route(&request).unwrap().cost;
+                    let true_cost = self.get_cost(&request).unwrap();
                     entry.cost == true_cost
                 })
                 .cloned()
@@ -170,7 +170,7 @@ impl HubGraph {
                         source: entry.id,
                         target: target as u32,
                     };
-                    let true_cost = self.get_route(&request).unwrap().cost;
+                    let true_cost = self.get_cost(&request).unwrap();
                     entry.cost == true_cost
                 })
                 .cloned()
@@ -178,9 +178,9 @@ impl HubGraph {
         }
     }
 
-    pub fn get_route(&self, request: &RouteRequest) -> Option<LabelEntry> {
+    pub fn get_cost(&self, request: &RouteRequest) -> Option<u32> {
         let forward_label = self.forward_labels.get(request.source as usize)?;
         let backward_label = self.backward_labels.get(request.target as usize)?;
-        forward_label.minimal_overlapp(backward_label)
+        Some(forward_label.minimal_overlapp(backward_label)?.cost)
     }
 }

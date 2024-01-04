@@ -1,14 +1,12 @@
 use std::{
     fs::File,
-    io::{BufReader},
+    io::BufReader,
     time::{Duration, Instant},
 };
 
 use clap::Parser;
 use indicatif::ProgressIterator;
-use osm_test::routing::{
-    hl::label::HubGraph, route::RouteValidationRequest,
-};
+use osm_test::routing::{hl::label::HubGraph, route::RouteValidationRequest};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
@@ -29,26 +27,17 @@ fn main() {
     let tests: Vec<RouteValidationRequest> = serde_json::from_reader(reader).unwrap();
 
     let reader = BufReader::new(File::open(args.hub_graph).unwrap());
-    let hub_graph: HubGraph = serde_json::from_reader(reader).unwrap();
+    let hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
 
     println!("avg label size is {}", hub_graph.get_avg_label_size());
 
     let mut time_hl = Vec::new();
     tests.iter().progress().for_each(|test| {
         let start = Instant::now();
-        let minimal_overlapp = hub_graph.get_route(&test.request);
+        let cost = hub_graph.get_cost(&test.request);
         time_hl.push(start.elapsed());
 
-        if let Some(true_cost) = test.cost {
-            let my_cost = minimal_overlapp.unwrap().cost;
-            assert_eq!(
-                my_cost, true_cost,
-                "should be {} but is {}",
-                true_cost, my_cost
-            );
-        } else {
-            assert!(minimal_overlapp.is_none());
-        }
+        assert_eq!(cost, test.cost);
     });
 
     println!("all correct");
