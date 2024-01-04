@@ -76,12 +76,12 @@ fn main() {
         });
 
     println!(
-        "took {:?} per search",
+        "hl will take approx {:?} per search",
         time_hl.iter().sum::<Duration>() / time_hl.len() as u32
     );
 
     println!(
-        "avg label size is {:?} ",
+        "avg label size will be approx {:?}",
         label_size
             .iter()
             .flatten()
