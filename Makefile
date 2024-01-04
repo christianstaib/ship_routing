@@ -50,10 +50,10 @@ test:
 
 
 create_tests_stgt:
-	cargo run --bin create_test --release -- --fmi-path $(STGT_FMI) --tests-path $(STGT_TESTS_JSON) --number-of-tests $(NUM_TESTS)
+	cargo run --bin create_tests --release -- --fmi-path $(STGT_FMI) --tests-path $(STGT_TESTS_JSON) --number-of-tests $(NUM_TESTS)
 
 create_tests:
-	cargo run --bin create_test --release -- --fmi-path $(NETWORK_FMI) --tests-path $(NETWORK_TESTS) --number-of-tests $(NUM_TESTS)
+	cargo run --bin create_tests --release -- --fmi-path $(NETWORK_FMI) --tests-path $(NETWORK_TESTS) --number-of-tests $(NUM_TESTS)
 
 
 create_ch_stgt:
@@ -84,7 +84,7 @@ prune_hl:
 	cargo run --bin prune_hl --release -- --hub-graph $(NETWORK_HUBS) --pruned-hub-graph $(NETWORK_HUBS_PRUNED) --test-path $(NETWORK_TESTS)
 
 
-predict_hl:
+predict_hl_stgt:
 	cargo run --bin predict_hl --release -- --contracted-graph $(STGT_CONTRACTED) --test-path $(STGT_TESTS_JSON) --hop-limit $(HOP_LIMIT)
 
 predict_hl:
