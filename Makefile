@@ -20,7 +20,7 @@ STGT_HUBS:= $(FMI_DIR)/stgtregbz_hubs.json
 STGT_HUBS_PRUNED:= $(FMI_DIR)/stgtregbz_hubs_pruned.json
 STGT_TESTS_JSON := $(FMI_DIR)/stgtregbz_tests.json
 
-NUM_TESTS := 1000
+NUM_TESTS := 10000
 HOP_LIMIT := 3
 
 dirs:
@@ -30,14 +30,6 @@ dirs:
 	mkdir tests/data/fmi/
 
 
-download:
-	curl $(INTERNET_OSM) -o $(NETWORK_OSM)
-
-convert:
-	cargo run --release --bin osm_geojson_converter -- --input $(NETWORK_OSM) --output  $(PLANET)
-
-network:
-	cargo run --release --bin preprocessor -- --input $(PLANET) --num-nodes 4000000 --output-network $(NETWORK_FMI) --output-geojson $(NETWORK_GEOJSON) --output-image tests/data/test_geojson/network.png
 
 leaflet:
 	docker run -dit --name leaflet -p 8080:80 -v ./public-html:/usr/local/apache2/htdocs/ httpd:2.4
@@ -46,7 +38,17 @@ server:
 	cargo run --bin server --release  -- --fmi-path tests/data/fmi/network.fmi
 
 test:
-	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi --tests-path tests/data/fmi/tests.json --number-of-tests 1000
+	cargo run --bin test --release -- --fmi-path tests/data/fmi/network.fmi --tests-path tests/data/fmi/tests.json --number-of-tests $(NUM_TESTS)
+
+
+download:
+	curl $(INTERNET_OSM) -o $(NETWORK_OSM)
+
+convert_osm:
+	cargo run --release --bin convert_osm -- --input $(NETWORK_OSM) --output  $(PLANET)
+
+generate_geojson:
+	cargo run --release --bin generate_network -- --input $(PLANET) --num-nodes 4000000 --output-network $(NETWORK_FMI) --output-geojson $(NETWORK_GEOJSON) --output-image tests/data/test_geojson/network.png
 
 
 create_tests_stgt:
