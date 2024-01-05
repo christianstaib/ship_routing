@@ -8,7 +8,7 @@ NETWORK_OSM := $(OSM_DIR)/planet-coastlines.osm.pbf
 PLANET := $(GEOJSON_DIR)/planet.geojson
 NETWORK_GEOJSON := $(GEOJSON_DIR)/network.geojson
 
-NETWORK_FMI := $(FMI_DIR)/network.fmi
+NETWORK_FMI := $(FMI_DIR)/germany.fmi
 NETWORK_CONTRACTED:= $(FMI_DIR)/network_contracted.bincode
 NETWORK_HUBS:= $(FMI_DIR)/network_hubs.bincode
 NETWORK_HUBS_PRUNED:= $(FMI_DIR)/network_hubs_pruned.bincode
