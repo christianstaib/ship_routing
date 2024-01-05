@@ -28,34 +28,26 @@ impl Label {
         Label { label: labels }
     }
 
-    pub fn prune_forward(&mut self, source: u32, dijkstra: &ChDijkstra) {
+    pub fn prune_forward(&mut self, backward_labels: &Vec<Label>) {
         self.label = self
             .label
-            .par_iter()
-            .progress()
+            .iter()
             .filter(|entry| {
-                let request = RouteRequest {
-                    source,
-                    target: entry.id,
-                };
-                let true_cost = dijkstra.get_cost(&request).unwrap();
+                let backward_label = backward_labels.get(entry.id as usize).unwrap();
+                let true_cost = self.get_cost(backward_label).unwrap();
                 entry.cost == true_cost
             })
             .cloned()
             .collect();
     }
 
-    pub fn prune_backward(&mut self, target: u32, dijkstra: &ChDijkstra) {
+    pub fn prune_backward(&mut self, forward_label: &Vec<Label>) {
         self.label = self
             .label
-            .par_iter()
-            .progress()
+            .iter()
             .filter(|entry| {
-                let request = RouteRequest {
-                    source: entry.id,
-                    target,
-                };
-                let true_cost = dijkstra.get_cost(&request).unwrap();
+                let forward_label = forward_label.get(entry.id as usize).unwrap();
+                let true_cost = self.get_cost(forward_label).unwrap();
                 entry.cost == true_cost
             })
             .cloned()

@@ -1,5 +1,8 @@
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator, ProgressStyle};
-use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::{
+    iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator},
+    prelude::IntoParallelRefMutIterator,
+};
 use serde_derive::{Deserialize, Serialize};
 use speedy::{Readable, Writable};
 
@@ -52,36 +55,14 @@ impl HubGraph {
     }
 
     pub fn prune(&mut self) {
-        for source in (0..self.forward_labels.len()).progress() {
-            self.forward_labels[source].label = self.forward_labels[source]
-                .label
-                .par_iter()
-                .filter(|entry| {
-                    let request = RouteRequest {
-                        source: source as u32,
-                        target: entry.id,
-                    };
-                    let true_cost = self.get_cost(&request).unwrap();
-                    entry.cost == true_cost
-                })
-                .cloned()
-                .collect();
-        }
-        for target in (0..self.backward_labels.len()).progress() {
-            self.backward_labels[target].label = self.backward_labels[target]
-                .label
-                .par_iter()
-                .filter(|entry| {
-                    let request = RouteRequest {
-                        source: entry.id,
-                        target: target as u32,
-                    };
-                    let true_cost = self.get_cost(&request).unwrap();
-                    entry.cost == true_cost
-                })
-                .cloned()
-                .collect();
-        }
+        self.forward_labels
+            .par_iter_mut()
+            .progress()
+            .for_each(|forward_label| forward_label.prune_forward(&self.backward_labels));
+        self.backward_labels
+            .par_iter_mut()
+            .progress()
+            .for_each(|backward_label| backward_label.prune_forward(&self.forward_labels));
     }
 
     pub fn get_cost(&self, request: &RouteRequest) -> Option<u32> {
