@@ -7,7 +7,7 @@ use std::{
 use clap::Parser;
 
 use osm_test::routing::{
-    ch::contractor::ContractedGraph, hl::label::HubGraph,
+    ch::contractor::ContractedGraph, hl::hub_graph::HubGraph,
     simple_algorithms::ch_bi_dijkstra::ChDijkstra,
 };
 

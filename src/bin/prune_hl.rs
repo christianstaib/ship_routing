@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser;
 use indicatif::ProgressIterator;
-use osm_test::routing::{hl::label::HubGraph, route::RouteValidationRequest};
+use osm_test::routing::{hl::hub_graph::HubGraph, route::RouteValidationRequest};
 
 /// Starts a routing service on localhost:3030/route
 #[derive(Parser, Debug)]
