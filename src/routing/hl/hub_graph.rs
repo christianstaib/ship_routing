@@ -1,6 +1,6 @@
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressIterator, ProgressStyle};
 use rayon::{
-    iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator},
+    iter::{IntoParallelIterator, ParallelIterator},
     prelude::IntoParallelRefMutIterator,
 };
 use serde_derive::{Deserialize, Serialize};
@@ -55,13 +55,19 @@ impl HubGraph {
     }
 
     pub fn prune(&mut self) {
+        let style =
+            ProgressStyle::with_template("{wide_bar} {human_pos}/{human_len} {eta_precise}")
+                .unwrap();
+        let pb = ProgressBar::new((self.forward_labels.len() * 2) as u64);
+        pb.set_style(style);
         self.forward_labels
             .par_iter_mut()
-            .progress()
+            .progress_with(pb.clone())
             .for_each(|forward_label| forward_label.prune_forward(&self.backward_labels));
+        pb.set_position(self.forward_labels.len() as u64);
         self.backward_labels
             .par_iter_mut()
-            .progress()
+            .progress_with(pb)
             .for_each(|backward_label| backward_label.prune_forward(&self.forward_labels));
     }
 

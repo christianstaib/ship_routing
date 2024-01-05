@@ -32,12 +32,12 @@ fn main() {
     let reader = BufReader::new(File::open(args.hub_graph).unwrap());
     let mut hub_graph: HubGraph = bincode::deserialize_from(reader).unwrap();
 
-    hub_graph.prune();
-
     let start = Instant::now();
+    hub_graph.prune();
+    println!("took {:?} to prune graph", start.elapsed());
+
     let writer = BufWriter::new(File::create(args.pruned_hub_graph).unwrap());
     serde_json::to_writer(writer, &hub_graph).unwrap();
-    println!("took {:?} to write pruned graph", start.elapsed());
 
     let mut time_hl = Vec::new();
     tests.iter().progress().for_each(|test| {
